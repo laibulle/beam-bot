@@ -6,6 +6,7 @@ config :beam_bot, BeamBot.Repo,
   password: "postgres",
   hostname: "localhost",
   database: "beam_bot_dev",
+  port: 5465,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
