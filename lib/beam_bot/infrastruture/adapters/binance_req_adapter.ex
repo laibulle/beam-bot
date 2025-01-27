@@ -40,12 +40,12 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
       iex> BinanceAdapter.get_account_info(adapter)
       {:ok, account_info}
   """
-  def get_account_info(%__MODULE__{} = adapter) do
+  def get_account_info() do
     timestamp = :os.system_time(:millisecond)
     params = %{timestamp: timestamp}
-    signed_params = sign_params(adapter.secret_key, params)
+    signed_params = sign_params(@secret_key, params)
 
-    request("/api/v3/account", signed_params, adapter.api_key)
+    request("/api/v3/account", signed_params, @api_key)
   end
 
   defp request(endpoint, params \\ %{}, api_key \\ nil) do
