@@ -12,7 +12,6 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
   @doc """
   Creates a new BinanceAdapter struct.
 
-  @doc \"""
   Fetches the current exchange information from Binance.
   """
   def get_exchange_info() do
