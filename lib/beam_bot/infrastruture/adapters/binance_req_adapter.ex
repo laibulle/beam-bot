@@ -12,19 +12,7 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
   @doc """
   Creates a new BinanceAdapter struct.
 
-  ## Examples
-
-      iex> BinanceAdapter.new("api_key", "secret_key")
-      %BinanceAdapter{api_key: "api_key", secret_key: "secret_key"}
-  """
-  def new(api_key, secret_key) do
-    %__MODULE__{
-      api_key: api_key,
-      secret_key: secret_key
-    }
-  end
-
-  @doc """
+  @doc \"""
   Fetches the current exchange information from Binance.
   """
   def get_exchange_info() do
