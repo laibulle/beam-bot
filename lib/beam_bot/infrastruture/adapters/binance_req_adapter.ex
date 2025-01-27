@@ -5,9 +5,9 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
 
   require Logger
 
-  @base_url "https://api.binance.com"
-
-  defstruct [:api_key, :secret_key]
+  @api_key Application.compile_env(:beam_bot, :binance_api_key)
+  @api_secret_key Application.compile_env(:beam_bot, :binance_api_secret_key)
+  @base_url Application.compile_env(:beam_bot, :binance_base_url, "https://api.binance.com")
 
   @doc """
   Creates a new BinanceAdapter struct.
