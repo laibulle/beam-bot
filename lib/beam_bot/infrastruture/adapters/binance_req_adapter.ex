@@ -13,6 +13,10 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
   Creates a new BinanceReqAdapter struct.
 
   Fetches the current exchange information from Binance.
+  ## Examples
+
+      iex> BinanceReqAdapter.get_exchange_info()
+      {:ok, %{symbols: [%{baseAsset: "BTC", quoteAsset: "USDT", symbol: "BTCUSDT", baseAssetPrecision: 8, quotePrecision: 8, orderTypes: ["LIMIT", "MARKET"]}}
   """
   def get_exchange_info() do
     request("/api/v3/exchangeInfo")
