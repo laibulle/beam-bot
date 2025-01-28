@@ -10,7 +10,7 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
   @base_url Application.compile_env(:beam_bot, :binance_base_url, "https://api.binance.com")
 
   @doc """
-  Creates a new BinanceAdapter struct.
+  Creates a new BinanceReqAdapter struct.
 
   Fetches the current exchange information from Binance.
   """
@@ -23,7 +23,7 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
 
   ## Examples
 
-      iex> BinanceAdapter.get_ticker_price("BTCUSDT")
+      iex> BinanceReqAdapter.get_ticker_price("BTCUSDT")
       {:ok, %{symbol: "BTCUSDT", price: "42000.00"}}
   """
   def get_ticker_price(symbol) do
@@ -37,7 +37,7 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
 
   ## Examples
 
-      iex> BinanceAdapter.get_account_info(adapter)
+      iex> BinanceReqAdapter.get_account_info(adapter)
       {:ok, account_info}
   """
   def get_account_info() do
