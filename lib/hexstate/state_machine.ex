@@ -1,3 +1,3 @@
 defmodule Hexstate.StateMachine do
-  defstruct [:init, :transitions, :callbacks]
+  defstruct [:id, :context, :initial, :events, :state]
 end
