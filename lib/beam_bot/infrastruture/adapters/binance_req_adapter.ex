@@ -41,13 +41,13 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
 
   ## Examples
 
-      iex> BinanceReqAdapter.get_account_info(adapter)
+      iex> BinanceReqAdapter.get_account_info()
       {:ok, account_info}
   """
   def get_account_info() do
     timestamp = :os.system_time(:millisecond)
     params = %{timestamp: timestamp}
-    signed_params = sign_params(@secret_key, params)
+    signed_params = sign_params(params)
 
     request("/api/v3/account", signed_params, @api_key)
   end
@@ -75,9 +75,12 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
     {:error, %{status: status, body: body}}
   end
 
-  defp sign_params(secret_key, params) do
+  defp sign_params(params) do
     query_string = URI.encode_query(params)
-    signature = :crypto.hmac(:sha256, secret_key, query_string) |> Base.encode16(case: :lower)
+
+    signature =
+      :crypto.mac(:hmac, :sha256, @api_secret_key, query_string) |> Base.encode16(case: :lower)
+
     Map.put(params, :signature, signature)
   end
 end
