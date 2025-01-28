@@ -1,3 +1,3 @@
-defmodule Hexstate.StateMachine do
+defmodule HexTate.StateMachine do
   defstruct [:id, :context, :initial, :events, :state]
 end
