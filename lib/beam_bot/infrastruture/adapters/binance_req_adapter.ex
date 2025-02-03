@@ -15,7 +15,7 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
   Fetches the current exchange information from Binance.
   ## Examples
 
-      iex> BinanceReqAdapter.get_exchange_info()
+      iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_exchange_info()
       {:ok, %{symbols: [%{baseAsset: "BTC", quoteAsset: "USDT", symbol: "BTCUSDT", baseAssetPrecision: 8, quotePrecision: 8, orderTypes: ["LIMIT", "MARKET"]}}
   """
   def get_exchange_info() do
@@ -27,7 +27,7 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
 
   ## Examples
 
-      iex> BinanceReqAdapter.get_ticker_price("BTCUSDT")
+      iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_ticker_price("BTCUSDT")
       {:ok, %{symbol: "BTCUSDT", price: "42000.00"}}
   """
   def get_ticker_price(symbol) do
@@ -41,7 +41,7 @@ defmodule BeamBot.Infrastructure.Adapters.BinanceReqAdapter do
 
   ## Examples
 
-      iex> BinanceReqAdapter.get_account_info()
+      iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_account_info()
       {:ok, account_info}
   """
   def get_account_info() do
