@@ -2,7 +2,7 @@ defmodule BeamBotWeb.HomeLive do
   use Phoenix.LiveView
 
   def render(assigns) do
-    ~L"""
+    ~H"""
     Hello
     """
   end
