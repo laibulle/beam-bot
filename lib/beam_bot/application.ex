@@ -7,6 +7,11 @@ defmodule BeamBot.Application do
 
   @impl true
   def start(_type, _args) do
+    initial_streams = [
+      "btcusdt@aggTrade",
+      "btcusdt@markPrice"
+    ]
+
     children = [
       BeamBotWeb.Telemetry,
       BeamBot.Repo,
@@ -17,7 +22,8 @@ defmodule BeamBot.Application do
       # Start a worker by calling: BeamBot.Worker.start_link(arg)
       # {BeamBot.Worker, arg},
       # Start to serve requests, typically the last entry
-      BeamBotWeb.Endpoint
+      BeamBotWeb.Endpoint,
+      {BeamBot.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
