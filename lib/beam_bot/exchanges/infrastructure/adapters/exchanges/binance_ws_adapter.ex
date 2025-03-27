@@ -9,6 +9,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   @base_url "wss://fstream.binance.com"
 
   def start_link(streams, state \\ %{}) when is_list(streams) do
+    Logger.info("Starting Binance WebSocket adapter with streams: #{inspect(streams)}")
     url = build_url(streams)
     WebSockex.start_link(url, __MODULE__, state, name: __MODULE__)
   end
