@@ -1,4 +1,4 @@
-defmodule BeamBot.Infrastructure.Adapters.BinanceWsAdapter do
+defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   @moduledoc """
   WebSocket client for Binance USDⓈ-M Futures streams.
   Handles connection and message processing for market data streams.
