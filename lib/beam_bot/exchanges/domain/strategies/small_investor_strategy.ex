@@ -1,0 +1,248 @@
+defmodule BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy do
+  @moduledoc """
+  A trading strategy designed for small investors with limited capital.
+  This strategy aims to compete with paid Binance bots by focusing on:
+  1. Dollar-cost averaging with optimized timing
+  2. Momentum-based entry/exit points
+  3. Risk management suitable for small portfolios
+  """
+
+  require Logger
+  alias BeamBot.Exchanges.Domain.Strategies.Indicators
+  alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter
+
+  @type t :: %__MODULE__{
+          trading_pair: String.t(),
+          investment_amount: Decimal.t(),
+          max_risk_percentage: Decimal.t(),
+          rsi_oversold_threshold: integer(),
+          rsi_overbought_threshold: integer(),
+          ma_short_period: integer(),
+          ma_long_period: integer(),
+          timeframe: String.t(),
+          activated_at: DateTime.t() | nil
+        }
+
+  defstruct [
+    :trading_pair,
+    :investment_amount,
+    :max_risk_percentage,
+    :rsi_oversold_threshold,
+    :rsi_overbought_threshold,
+    :ma_short_period,
+    :ma_long_period,
+    :timeframe,
+    :activated_at
+  ]
+
+  @doc """
+  Creates a new small investor strategy with sensible defaults.
+
+  ## Parameters
+    - trading_pair: The trading pair symbol (e.g., "BTCUSDT")
+    - investment_amount: Total amount to invest (in quote currency)
+    - options: Additional options to customize the strategy
+
+  ## Options
+    - max_risk_percentage: Maximum percentage of capital at risk (default: 2%)
+    - rsi_oversold_threshold: RSI threshold for oversold condition (default: 30)
+    - rsi_overbought_threshold: RSI threshold for overbought condition (default: 70)
+    - ma_short_period: Short moving average period (default: 7)
+    - ma_long_period: Long moving average period (default: 25)
+    - timeframe: Candle timeframe (default: "1h")
+
+  ## Examples
+      iex> SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"))
+      %SmallInvestorStrategy{trading_pair: "BTCUSDT", investment_amount: #Decimal<500>...}
+  """
+  def new(trading_pair, investment_amount, options \\ []) do
+    %__MODULE__{
+      trading_pair: trading_pair,
+      investment_amount: investment_amount,
+      max_risk_percentage: Keyword.get(options, :max_risk_percentage, Decimal.new("2")),
+      rsi_oversold_threshold: Keyword.get(options, :rsi_oversold_threshold, 30),
+      rsi_overbought_threshold: Keyword.get(options, :rsi_overbought_threshold, 70),
+      ma_short_period: Keyword.get(options, :ma_short_period, 7),
+      ma_long_period: Keyword.get(options, :ma_long_period, 25),
+      timeframe: Keyword.get(options, :timeframe, "1h"),
+      activated_at: DateTime.utc_now()
+    }
+  end
+
+  @doc """
+  Analyzes market data and generates buy/sell signals based on strategy parameters.
+
+  Returns a map with signal type and additional information.
+  """
+  def analyze_market(strategy) do
+    with {:ok, klines} <- fetch_market_data(strategy),
+         {:ok, indicators} <- calculate_indicators(klines, strategy) do
+      generate_signals(indicators, strategy)
+    else
+      {:error, reason} ->
+        Logger.error("Failed to analyze market: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Executes a dollar-cost averaging (DCA) strategy, optimized for the small investor.
+  Gradually invests by splitting the capital into smaller parts and investing at optimal times.
+  """
+  def execute_dca(strategy, num_parts \\ 4) do
+    part_amount = Decimal.div(strategy.investment_amount, Decimal.new(num_parts))
+
+    # Implementation would periodically check market conditions
+    # and invest the part_amount when conditions are favorable
+    # based on the analyze_market function
+
+    # Simplified simulation for demonstration purposes
+    {:ok, %{dca_part_amount: part_amount, strategy: strategy}}
+  end
+
+  # Private functions
+
+  defp fetch_market_data(strategy) do
+    # Fetch historical candlestick data
+    limit = max(strategy.ma_long_period * 3, 100)
+    BinanceReqAdapter.get_klines(strategy.trading_pair, strategy.timeframe, limit)
+  end
+
+  defp calculate_indicators(klines, strategy) do
+    # Extract closing prices
+    closing_prices =
+      Enum.map(klines, fn [_, _, _, _, close | _] ->
+        {close_float, _} = Float.parse(close)
+        close_float
+      end)
+
+    # Calculate technical indicators using our Indicators module
+    ma_short = Indicators.sma(closing_prices, strategy.ma_short_period)
+    ma_long = Indicators.sma(closing_prices, strategy.ma_long_period)
+    rsi = Indicators.rsi(closing_prices, 14)
+    bollinger = Indicators.bollinger_bands(closing_prices)
+    macd = Indicators.macd(closing_prices)
+
+    {:ok,
+     %{
+       closing_prices: closing_prices,
+       ma_short: ma_short,
+       ma_long: ma_long,
+       rsi: rsi,
+       bollinger: bollinger,
+       macd: macd,
+       latest_price: List.last(closing_prices)
+     }}
+  end
+
+  defp generate_signals(indicators, strategy) do
+    signal_data = %{
+      rsi: check_rsi_signals(indicators.rsi, strategy),
+      ma: check_ma_signals(indicators.ma_short, indicators.ma_long),
+      bollinger: check_bollinger_signals(indicators.latest_price, indicators.bollinger),
+      macd: check_macd_signals(indicators.macd)
+    }
+
+    # Combined signals
+    buy_signal = buy_signal?(signal_data)
+    sell_signal = sell_signal?(signal_data)
+
+    # Determine final signal
+    signal =
+      cond do
+        buy_signal -> :buy
+        sell_signal -> :sell
+        true -> :hold
+      end
+
+    # Calculate position size based on risk management
+    max_risk_amount = calculate_max_risk(strategy)
+
+    # Build signal reasons
+    reasons = build_signal_reasons(signal_data, indicators)
+
+    {:ok,
+     %{
+       signal: signal,
+       price: indicators.latest_price,
+       max_risk_amount: max_risk_amount,
+       indicators: indicators,
+       reasons: reasons
+     }}
+  end
+
+  defp check_rsi_signals(rsi, strategy) do
+    %{
+      buy: rsi <= strategy.rsi_oversold_threshold,
+      sell: rsi >= strategy.rsi_overbought_threshold,
+      value: rsi
+    }
+  end
+
+  defp check_ma_signals(ma_short, ma_long) do
+    %{
+      buy: ma_short > ma_long,
+      sell: ma_short < ma_long
+    }
+  end
+
+  defp check_bollinger_signals(latest_price, bollinger) do
+    %{
+      buy: latest_price < bollinger.lower_band,
+      sell: latest_price > bollinger.upper_band
+    }
+  end
+
+  defp check_macd_signals(macd) do
+    histogram_increasing = macd && macd.histogram > macd.histogram
+    histogram_decreasing = macd && macd.histogram < macd.histogram
+
+    %{
+      buy: macd && macd.histogram > 0 && histogram_increasing,
+      sell: macd && macd.histogram < 0 && histogram_decreasing
+    }
+  end
+
+  defp buy_signal?(signal_data) do
+    (signal_data.rsi.buy and signal_data.ma.buy) or
+      (signal_data.bollinger.buy and signal_data.rsi.buy) or
+      (signal_data.macd.buy and signal_data.rsi.buy)
+  end
+
+  defp sell_signal?(signal_data) do
+    (signal_data.rsi.sell and signal_data.ma.sell) or
+      (signal_data.bollinger.sell and signal_data.rsi.sell) or
+      (signal_data.macd.sell and signal_data.rsi.sell)
+  end
+
+  defp calculate_max_risk(strategy) do
+    Decimal.mult(
+      strategy.investment_amount,
+      Decimal.div(strategy.max_risk_percentage, Decimal.new("100"))
+    )
+  end
+
+  defp build_signal_reasons(signal_data, indicators) do
+    []
+    |> add_reason_if(
+      signal_data.rsi.buy or signal_data.rsi.sell,
+      "RSI: #{Float.round(indicators.rsi, 2)}"
+    )
+    |> add_reason_if(
+      signal_data.ma.buy or signal_data.ma.sell,
+      "MA crossover"
+    )
+    |> add_reason_if(
+      signal_data.bollinger.buy or signal_data.bollinger.sell,
+      "Bollinger band breakout"
+    )
+    |> add_reason_if(
+      signal_data.macd.buy or signal_data.macd.sell,
+      "MACD momentum"
+    )
+  end
+
+  defp add_reason_if(reasons, condition, reason) do
+    if condition, do: [reason | reasons], else: reasons
+  end
+end

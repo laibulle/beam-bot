@@ -26,7 +26,9 @@ defmodule BeamBot.Application do
       # Start the trading pairs sync worker
       BeamBot.Exchanges.Workers.TradingPairsSyncWorker,
       # Start the Redis client
-      BeamBot.Infrastructure.RedisClient
+      BeamBot.Infrastructure.RedisClient,
+      # Start the small investor strategy worker
+      BeamBot.Exchanges.Workers.SmallInvestorStrategyWorker
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker
       # {BeamBot.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]}
