@@ -174,6 +174,21 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
     end
   end
 
+  @doc """
+  Get the list of streams the WebSocket is currently subscribed to
+  """
+  def get_streams do
+    case alive?() do
+      true ->
+        pid = Process.whereis(__MODULE__)
+        state = :sys.get_state(pid)
+        {:ok, state.streams || []}
+
+      false ->
+        {:error, :disconnected}
+    end
+  end
+
   # Private functions
 
   defp build_url([]) do

@@ -43,6 +43,8 @@ defmodule BeamBot.Exchanges.CLI.BinanceCmd do
       {_, message_queue_len} = status.message_queue_len
       IO.puts("Message queue length: #{message_queue_len}")
 
+      IO.puts("Current streams: #{inspect(BinanceWsAdapter.get_streams())}")
+
       # Try a ping
       case BinanceWsAdapter.ping() do
         {:ok, message} -> IO.puts("Ping result: #{message}")
@@ -56,6 +58,9 @@ defmodule BeamBot.Exchanges.CLI.BinanceCmd do
 
   @doc """
   Check if messages are being received from Binance WebSocket
+
+  ## Examples
+  iex> BeamBot.Exchanges.CLI.BinanceCmd.check_messages()
   """
   def check_messages do
     if BinanceWsAdapter.alive?() do
