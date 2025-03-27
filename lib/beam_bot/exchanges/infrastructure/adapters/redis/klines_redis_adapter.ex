@@ -61,19 +61,29 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
   """
   def get_klines(symbol, interval, limit \\ 500, start_time \\ nil, end_time \\ nil) do
     pattern = "klines:#{symbol}:#{interval}:*"
-    keys = @redis_client.keys(pattern)
 
-    klines =
-      keys
-      |> Enum.map(fn key ->
-        @redis_client.ts_get(key) |> decode_values()
-      end)
-      |> Enum.reject(&is_nil/1)
-      |> Enum.sort_by(&List.first/1)
-      |> filter_by_time_range(start_time, end_time)
-      |> Enum.take(limit)
+    case @redis_client.keys(pattern) do
+      {:ok, keys} ->
+        klines =
+          keys
+          |> Enum.map(fn key ->
+            @redis_client.ts_get(key) |> decode_values()
+          end)
+          |> Enum.reject(&is_nil/1)
+          |> Enum.sort_by(&List.first/1)
+          |> filter_by_time_range(start_time, end_time)
+          |> Enum.take(limit)
 
-    {:ok, klines}
+        {:ok, klines}
+
+      {:error, error} ->
+        Logger.error("Failed to retrieve klines: #{inspect(error)}")
+        {:error, "Failed to retrieve klines: #{inspect(error)}"}
+
+      error ->
+        Logger.error("Failed to retrieve klines: #{inspect(error)}")
+        {:error, "Failed to retrieve klines: #{inspect(error)}"}
+    end
   rescue
     error ->
       Logger.error("Failed to retrieve klines: #{inspect(error)}")
