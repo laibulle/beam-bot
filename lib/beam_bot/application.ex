@@ -28,10 +28,10 @@ defmodule BeamBot.Application do
       # Start the Redis client
       BeamBot.Infrastructure.RedisClient,
       # Start the small investor strategy worker
-      BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker
+      BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker,
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker
-      # {BeamBot.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]}
+      {BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
