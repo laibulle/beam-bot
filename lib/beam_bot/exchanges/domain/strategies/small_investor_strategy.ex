@@ -56,10 +56,20 @@ defmodule BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy do
       %SmallInvestorStrategy{trading_pair: "BTCUSDT", investment_amount: #Decimal<500>...}
   """
   def new(trading_pair, investment_amount, options \\ []) do
+    # Ensure max_risk_percentage is a Decimal
+    max_risk_percentage =
+      case Keyword.get(options, :max_risk_percentage) do
+        nil -> Decimal.new("2")
+        value when is_binary(value) -> Decimal.new(value)
+        value when is_float(value) -> Decimal.from_float(value)
+        value when is_integer(value) -> Decimal.new(value)
+        value when is_struct(value, Decimal) -> value
+      end
+
     %__MODULE__{
       trading_pair: trading_pair,
       investment_amount: investment_amount,
-      max_risk_percentage: Keyword.get(options, :max_risk_percentage, Decimal.new("2")),
+      max_risk_percentage: max_risk_percentage,
       rsi_oversold_threshold: Keyword.get(options, :rsi_oversold_threshold, 30),
       rsi_overbought_threshold: Keyword.get(options, :rsi_overbought_threshold, 70),
       ma_short_period: Keyword.get(options, :ma_short_period, 7),
@@ -220,6 +230,14 @@ defmodule BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy do
       strategy.investment_amount,
       Decimal.div(strategy.max_risk_percentage, Decimal.new("100"))
     )
+  rescue
+    e in ArgumentError ->
+      Logger.error("Error calculating max risk: #{inspect(e)}")
+      # Return a default risk of 2% if there's an error
+      Decimal.mult(
+        strategy.investment_amount,
+        Decimal.div(Decimal.new("2"), Decimal.new("100"))
+      )
   end
 
   defp build_signal_reasons(signal_data, indicators) do

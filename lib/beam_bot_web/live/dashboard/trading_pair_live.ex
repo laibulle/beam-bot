@@ -28,7 +28,9 @@ defmodule BeamBotWeb.TradingPairLive do
      |> assign(data: data)
      |> assign(trading_pair: trading_pair)
      |> assign(strategy_status: strategy_status)
-     |> assign(strategy_message: nil)}
+     |> assign(strategy_message: nil)
+     |> assign(simulation_results: nil)
+     |> assign(simulating: false)}
   end
 
   @impl true
@@ -46,7 +48,7 @@ defmodule BeamBotWeb.TradingPairLive do
   def handle_event(
         "start_strategy",
         %{"investment_amount" => investment_amount, "max_risk_percentage" => max_risk_percentage} =
-          params,
+          _params,
         socket
       ) do
     trading_pair = socket.assigns.trading_pair
@@ -54,9 +56,17 @@ defmodule BeamBotWeb.TradingPairLive do
     # Convert string amount to Decimal
     decimal_amount = Decimal.new(investment_amount)
 
+    # Convert and validate max_risk_percentage (use Decimal to avoid float conversion issues)
+    decimal_max_risk =
+      case max_risk_percentage do
+        risk when is_binary(risk) -> Decimal.new(risk)
+        risk when is_float(risk) -> Decimal.from_float(risk)
+        risk when is_integer(risk) -> Decimal.new(risk)
+      end
+
     # Prepare options
     options = [
-      max_risk_percentage: String.to_float(max_risk_percentage)
+      max_risk_percentage: decimal_max_risk
     ]
 
     # Start the strategy worker
@@ -110,6 +120,77 @@ defmodule BeamBotWeb.TradingPairLive do
      socket
      |> assign(strategy_status: strategy_status)
      |> assign(strategy_message: "Strategy executed manually")}
+  end
+
+  @impl true
+  def handle_event("simulate_strategy", params, socket) do
+    %{
+      "investment_amount" => investment_amount,
+      "timeframe" => timeframe,
+      "rsi_oversold" => rsi_oversold,
+      "rsi_overbought" => rsi_overbought,
+      "days" => days
+    } = params
+
+    trading_pair = socket.assigns.trading_pair
+
+    # Set simulating status to show loading indicator
+    socket = assign(socket, simulating: true, simulation_results: nil)
+
+    # Convert params to appropriate types
+    decimal_amount = Decimal.new(investment_amount)
+    days_ago = String.to_integer(days)
+    oversold = String.to_integer(rsi_oversold)
+    overbought = String.to_integer(rsi_overbought)
+
+    # Create options
+    options = [
+      timeframe: timeframe,
+      rsi_oversold_threshold: oversold,
+      rsi_overbought_threshold: overbought
+    ]
+
+    # Create strategy
+    strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
+
+    # Calculate start and end dates
+    end_date = DateTime.utc_now()
+    start_date = DateTime.add(end_date, -days_ago * 24 * 60 * 60, :second)
+
+    # Execute simulation in Task to avoid blocking the LiveView process
+    Task.async(fn ->
+      case StrategyRunner.run_simulation(strategy, start_date, end_date) do
+        {:ok, results} -> {:simulation_complete, results}
+        {:error, reason} -> {:simulation_error, reason}
+      end
+    end)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({ref, {:simulation_complete, results}}, socket) when is_reference(ref) do
+    # Demonitor the task to avoid memory leaks
+    Process.demonitor(ref, [:flush])
+
+    # Update socket with simulation results
+    {:noreply, socket |> assign(simulation_results: results, simulating: false)}
+  end
+
+  @impl true
+  def handle_info({ref, {:simulation_error, reason}}, socket) when is_reference(ref) do
+    # Demonitor the task to avoid memory leaks
+    Process.demonitor(ref, [:flush])
+
+    # Update socket with error
+    error_results = %{error: reason}
+    {:noreply, socket |> assign(simulation_results: error_results, simulating: false)}
+  end
+
+  # Handle DOWN messages from the spawned task
+  @impl true
+  def handle_info({:DOWN, _ref, :process, _pid, _reason}, socket) do
+    {:noreply, socket}
   end
 
   @impl true
@@ -288,6 +369,198 @@ defmodule BeamBotWeb.TradingPairLive do
         </div>
       <% end %>
 
+      <div class="mt-8">
+        <h6 class="text-lg font-semibold mb-4">Strategy Simulation</h6>
+        <div class="bg-white rounded-lg shadow p-6">
+          <form phx-submit="simulate_strategy" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Investment Amount (USDT)
+              </label>
+              <input
+                type="number"
+                name="investment_amount"
+                value="500"
+                min="10"
+                step="10"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Timeframe</label>
+              <select
+                name="timeframe"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="1m">1 minute</option>
+                <option value="5m">5 minutes</option>
+                <option value="15m">15 minutes</option>
+                <option value="1h" selected>1 hour</option>
+                <option value="4h">4 hours</option>
+                <option value="1d">1 day</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Days to Simulate</label>
+              <input
+                type="number"
+                name="days"
+                value="30"
+                min="1"
+                max="365"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                RSI Oversold Threshold
+              </label>
+              <input
+                type="number"
+                name="rsi_oversold"
+                value="30"
+                min="1"
+                max="49"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                RSI Overbought Threshold
+              </label>
+              <input
+                type="number"
+                name="rsi_overbought"
+                value="70"
+                min="51"
+                max="99"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div class="self-end">
+              <button
+                type="submit"
+                disabled={@simulating}
+                class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <%= if @simulating do %>
+                  <span class="flex items-center justify-center">
+                    <svg
+                      class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        class="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        stroke-width="4"
+                      >
+                      </circle>
+                      <path
+                        class="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      >
+                      </path>
+                    </svg>
+                    Simulating...
+                  </span>
+                <% else %>
+                  Run Simulation
+                <% end %>
+              </button>
+            </div>
+          </form>
+
+          <%= if @simulation_results do %>
+            <div class="mt-6">
+              <%= if Map.has_key?(@simulation_results, :error) do %>
+                <div class="p-4 bg-red-100 text-red-800 rounded">
+                  <p class="font-medium">Simulation failed:</p>
+                  <p>{inspect(@simulation_results.error)}</p>
+                </div>
+              <% else %>
+                <div class="mb-6">
+                  <h7 class="text-md font-medium mb-4 block">Simulation Results</h7>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                      <div class="text-sm text-gray-600">Initial Investment</div>
+                      <div class="text-lg font-medium">
+                        {@simulation_results.initial_investment} USDT
+                      </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                      <div class="text-sm text-gray-600">Final Value</div>
+                      <div class="text-lg font-medium">{@simulation_results.final_value} USDT</div>
+                    </div>
+                    <div class={"bg-gray-50 p-3 rounded-lg #{if Decimal.to_float(@simulation_results.roi_percentage) > 0, do: "text-green-600", else: "text-red-600"}"}>
+                      <div class="text-sm text-gray-600">ROI</div>
+                      <div class="text-lg font-medium">
+                        {Decimal.to_float(@simulation_results.roi_percentage)}%
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="font-medium text-gray-700 mb-3">
+                      Trade History ({length(@simulation_results.trades)} trades)
+                    </div>
+
+                    <div class="overflow-x-auto">
+                      <table class="min-w-full text-sm divide-y divide-gray-200">
+                        <thead>
+                          <tr>
+                            <th class="px-4 py-2 text-left font-medium text-gray-500">Date</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-500">Type</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-500">Price</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                          <%= for trade <- @simulation_results.trades do %>
+                            <tr class="hover:bg-gray-50">
+                              <td class="px-4 py-2">
+                                {Calendar.strftime(trade.date, "%Y-%m-%d %H:%M:%S")}
+                              </td>
+                              <td class={"px-4 py-2 capitalize #{if trade.type == :buy, do: "text-green-600", else: "text-red-600"}"}>
+                                {trade.type}
+                              </td>
+                              <td class="px-4 py-2">{trade.price} USDT</td>
+                            </tr>
+                          <% end %>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <%= if !@strategy_status || @strategy_status.status != :running do %>
+                  <div class="text-center mt-4">
+                    <form phx-submit="start_strategy" class="inline-block">
+                      <input
+                        type="hidden"
+                        name="investment_amount"
+                        value={@simulation_results.initial_investment}
+                      />
+                      <input type="hidden" name="max_risk_percentage" value="2.0" />
+                      <button
+                        type="submit"
+                        class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 cursor-pointer"
+                      >
+                        Start Trading with These Settings
+                      </button>
+                    </form>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
       <%= if !@strategy_status || @strategy_status.status != :running do %>
         <div class="mt-8">
           <h6 class="text-lg font-semibold mb-4">Start Trading</h6>
@@ -313,7 +586,7 @@ defmodule BeamBotWeb.TradingPairLive do
                 <input
                   type="number"
                   name="max_risk_percentage"
-                  value="2"
+                  value="2.0"
                   min="0.5"
                   max="10"
                   step="0.5"
