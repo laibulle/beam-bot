@@ -31,6 +31,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   end
 
   def handle_frame({:ping, _}, state) do
+    Logger.debug("Received ping from Binance WebSocket server")
     {:reply, :pong, state}
   end
 
@@ -60,6 +61,50 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
     WebSockex.send_frame(__MODULE__, {:text, Jason.encode!(unsubscription_msg)})
   end
 
+  @doc """
+  Ping the WebSocket server to check connectivity
+  """
+  def ping do
+    case WebSockex.send_frame(__MODULE__, :ping) do
+      :ok ->
+        {:ok, "Connection is alive"}
+
+      error ->
+        {:error, "WebSocket connection error: #{inspect(error)}"}
+    end
+  end
+
+  @doc """
+  Check if the WebSocket process is alive
+  """
+  def alive? do
+    case Process.whereis(__MODULE__) do
+      nil -> false
+      pid -> Process.alive?(pid)
+    end
+  end
+
+  @doc """
+  Get current connection status and details
+  """
+  def connection_status do
+    case alive?() do
+      true ->
+        pid = Process.whereis(__MODULE__)
+
+        %{
+          status: :connected,
+          pid: pid,
+          connected_since: Process.info(pid, :registered_name),
+          memory_usage: Process.info(pid, :memory),
+          message_queue_len: Process.info(pid, :message_queue_len)
+        }
+
+      false ->
+        %{status: :disconnected}
+    end
+  end
+
   # Private functions
 
   defp build_url([]) do
@@ -72,13 +117,14 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   end
 
   defp handle_message(%{"stream" => stream, "data" => data}, state) do
-    # Handle different stream types here
-    # You can pattern match on the stream name and process accordingly
+    # Broadcast the message to subscribers
     Logger.info("Received data from stream #{stream}: #{inspect(data)}")
+    Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:#{stream}", {:binance_data, stream, data})
     {:ok, state}
   end
 
   defp handle_message(message, state) do
+    # Handle other message types (like subscription responses)
     Logger.info("Received message: #{inspect(message)}")
     {:ok, state}
   end

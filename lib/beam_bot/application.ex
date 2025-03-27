@@ -31,7 +31,9 @@ defmodule BeamBot.Application do
       BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker,
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker
-      {BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]}
+      {BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]},
+      # Start the Binance WebSocket subscriber
+      BeamBot.Exchanges.Infrastructure.Subscribers.BinanceWsSubscriber
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
