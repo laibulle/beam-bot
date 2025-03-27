@@ -26,107 +26,133 @@ defmodule BeamBotWeb.Layouts.DashboardComponent do
       ])
 
     ~H"""
-    <div class="min-h-screen flex flex-col">
-      <header class="z-20 sticky top-0 w-full border-b border-purple-200 bg-white/90 backdrop-blur-sm">
-        <div class="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div class="flex items-center gap-3">
-            <.link navigate={~p"/"} class="flex items-center gap-3">
-              <span class="text-2xl">✨</span>
-              <span class="text-xl font-semibold text-purple-900">{gettext("FaryTell")}</span>
-            </.link>
-          </div>
-
-          <nav class="hidden md:flex items-center gap-6">
-            <%= for link <- @nav_links do %>
-              <.link
-                navigate={link.path}
-                class="text-sm font-medium text-purple-700 hover:text-purple-900 transition-colors"
-              >
-                {link.label}
+    <div class="min-h-screen flex">
+      <!-- Left Sidebar -->
+      <div class="hidden md:flex md:w-64 md:flex-col">
+        <div class="flex min-h-0 flex-1 flex-col border-r border-gray-200 bg-white">
+          <div class="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
+            <div class="flex flex-shrink-0 items-center px-4">
+              <.link navigate={~p"/"} class="flex items-center gap-2">
+                <span class="text-xl">✨</span>
+                <span class="text-lg font-semibold text-gray-900">{gettext("FaryTell")}</span>
               </.link>
-            <% end %>
-          </nav>
-
-          <div class="flex items-center gap-4">
-            <div class="relative">
-              <button
-                type="button"
-                phx-click={show_menu()}
-                class="flex items-center gap-2 rounded-full bg-purple-50 p-2 text-sm font-medium text-purple-900 hover:bg-purple-100 transition-colors"
-                aria-label={gettext("Open user menu")}
-              >
-                <span class="hidden sm:inline-block">
-                  {@current_user.email}
-                </span>
-                <span class="text-lg" aria-hidden="true">👤</span>
-              </button>
-
-              <div
-                id="user-menu"
-                class="hidden absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5"
-              >
+            </div>
+            <nav class="mt-5 flex-1 space-y-1 bg-white px-2">
+              <%= for link <- @nav_links do %>
                 <.link
-                  navigate={~p"/users/settings"}
-                  class="block px-4 py-2 text-sm text-purple-700 hover:bg-purple-50"
+                  navigate={link.path}
+                  class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 >
-                  {gettext("Profile")}
+                  {link.label}
                 </.link>
-                <.link
-                  href={~p"/users/log_out"}
-                  method="delete"
-                  class="block px-4 py-2 text-sm text-purple-700 hover:bg-purple-50"
+              <% end %>
+            </nav>
+          </div>
+        </div>
+      </div>
+      
+    <!-- Main Content -->
+      <div class="flex flex-1 flex-col">
+        <!-- Top Header -->
+        <div class="sticky top-0 z-10 flex h-16 flex-shrink-0 bg-white shadow">
+          <button
+            type="button"
+            class="md:hidden px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500"
+            phx-click={show_mobile_menu()}
+          >
+            <span class="sr-only">{gettext("Open sidebar")}</span>
+            <span class="text-xl">☰</span>
+          </button>
+          <div class="flex flex-1 justify-between px-4">
+            <div class="flex flex-1">
+              <!-- Add search or other controls here if needed -->
+            </div>
+            <div class="ml-4 flex items-center md:ml-6">
+              <div class="relative ml-3">
+                <button
+                  type="button"
+                  phx-click={show_menu()}
+                  class="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                  aria-label={gettext("Open user menu")}
                 >
-                  {gettext("Log out")}
-                </.link>
+                  <span class="sr-only">{gettext("Open user menu")}</span>
+                  <div class="flex items-center gap-2 rounded-full bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                    <span class="hidden sm:inline-block">{@current_user.email}</span>
+                    <span class="text-lg" aria-hidden="true">👤</span>
+                  </div>
+                </button>
+
+                <div
+                  id="user-menu"
+                  class="hidden absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5"
+                >
+                  <.link
+                    navigate={~p"/users/settings"}
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    {gettext("Profile")}
+                  </.link>
+                  <.link
+                    href={~p"/users/log_out"}
+                    method="delete"
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    {gettext("Log out")}
+                  </.link>
+                </div>
               </div>
             </div>
-
-            <button
-              type="button"
-              phx-click={show_mobile_menu()}
-              class="md:hidden rounded-lg p-2 text-purple-700 hover:bg-purple-50"
-              aria-label={gettext("Toggle mobile menu")}
-            >
-              <span class="sr-only">{gettext("Toggle navigation")}</span>
-              <span class="text-xl" aria-hidden="true">☰</span>
-            </button>
           </div>
         </div>
-
-        <div id="mobile-menu" class="hidden md:hidden border-t border-purple-200 bg-white">
-          <div class="px-4 py-3 space-y-1">
-            <%= for link <- @nav_links do %>
-              <.link
-                navigate={link.path}
-                class="block px-3 py-2 rounded-md text-base font-medium text-purple-700 hover:bg-purple-50"
+        
+    <!-- Main Content Area -->
+        <main class="flex-1">
+          <div class="py-6">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
+              <div class="relative">
+                {render_slot(@inner_block)}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+      
+    <!-- Mobile menu -->
+      <div id="mobile-menu" class="hidden md:hidden">
+        <div class="fixed inset-0 flex z-40">
+          <div class="fixed inset-0 bg-gray-600 bg-opacity-75" phx-click={hide_mobile_menu()}></div>
+          <div class="relative flex w-full max-w-xs flex-1 flex-col bg-white">
+            <div class="absolute top-0 right-0 -mr-12 pt-2">
+              <button
+                type="button"
+                class="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                phx-click={hide_mobile_menu()}
               >
-                {link.label}
-              </.link>
-            <% end %>
+                <span class="sr-only">{gettext("Close sidebar")}</span>
+                <span class="text-xl">×</span>
+              </button>
+            </div>
+            <div class="h-0 flex-1 overflow-y-auto pt-5 pb-4">
+              <div class="flex flex-shrink-0 items-center px-4">
+                <.link navigate={~p"/"} class="flex items-center gap-2">
+                  <span class="text-xl">✨</span>
+                  <span class="text-lg font-semibold text-gray-900">{gettext("FaryTell")}</span>
+                </.link>
+              </div>
+              <nav class="mt-5 space-y-1 px-2">
+                <%= for link <- @nav_links do %>
+                  <.link
+                    navigate={link.path}
+                    class="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  >
+                    {link.label}
+                  </.link>
+                <% end %>
+              </nav>
+            </div>
           </div>
         </div>
-      </header>
-
-      <main class="flex-1 bg-gradient-to-br from-purple-50/50 to-pink-50/50">
-        <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <!-- Magical sparkles -->
-          <div class="fixed inset-0 pointer-events-none overflow-hidden">
-            <div class="animate-float-slow absolute top-20 left-1/4">
-              <span class="block text-3xl opacity-20">✨</span>
-            </div>
-            <div class="animate-float-medium absolute top-40 right-1/3">
-              <span class="block text-2xl opacity-10">⭐</span>
-            </div>
-            <div class="animate-float-fast absolute bottom-1/4 left-1/3">
-              <span class="block text-2xl opacity-15">🌟</span>
-            </div>
-          </div>
-
-          <div class="relative">
-            {render_slot(@inner_block)}
-          </div>
-        </div>
-      </main>
+      </div>
     </div>
     """
   end
@@ -137,15 +163,15 @@ defmodule BeamBotWeb.Layouts.DashboardComponent do
     |> JS.remove_class("hidden", to: "#user-menu")
   end
 
-  defp show_processes_menu(js \\ %JS{}) do
-    js
-    |> JS.toggle(to: "#processes-menu")
-    |> JS.remove_class("hidden", to: "#processes-menu")
-  end
-
   defp show_mobile_menu(js \\ %JS{}) do
     js
     |> JS.toggle(to: "#mobile-menu")
     |> JS.remove_class("hidden", to: "#mobile-menu")
+  end
+
+  defp hide_mobile_menu(js \\ %JS{}) do
+    js
+    |> JS.toggle(to: "#mobile-menu")
+    |> JS.add_class("hidden", to: "#mobile-menu")
   end
 end
