@@ -230,14 +230,6 @@ defmodule BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy do
       strategy.investment_amount,
       Decimal.div(strategy.max_risk_percentage, Decimal.new("100"))
     )
-  rescue
-    e in ArgumentError ->
-      Logger.error("Error calculating max risk: #{inspect(e)}")
-      # Return a default risk of 2% if there's an error
-      Decimal.mult(
-        strategy.investment_amount,
-        Decimal.div(Decimal.new("2"), Decimal.new("100"))
-      )
   end
 
   defp build_signal_reasons(signal_data, indicators) do
