@@ -1,10 +1,10 @@
-defmodule BeamBot.Exchanges.Domain.Strategies.StrategyRunner do
+defmodule BeamBot.Strategies.Domain.StrategyRunner do
   @moduledoc """
   A runner for trading strategies that handles execution, tracking, and reporting.
   """
 
   require Logger
-  alias BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy
+  alias BeamBot.Strategies.Domain.SmallInvestorStrategy
 
   @type execution_result :: %{
           timestamp: DateTime.t(),

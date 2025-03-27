@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.Domain.Strategies.Indicators do
+defmodule BeamBot.Strategies.Domain.Indicators do
   @moduledoc """
   Technical indicators used in trading strategies.
   This module provides functions for calculating various technical indicators

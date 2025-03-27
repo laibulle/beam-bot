@@ -6,9 +6,8 @@ defmodule BeamBotWeb.TradingPairLive do
   # Define refresh interval in milliseconds
   @refresh_interval 10_000
 
-  alias BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy
-  alias BeamBot.Exchanges.Domain.Strategies.StrategyRunner
   alias BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker
+  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
 
   @impl true
   def mount(%{"symbol" => symbol}, _session, socket) do

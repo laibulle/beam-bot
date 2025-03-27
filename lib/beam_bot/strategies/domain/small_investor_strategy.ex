@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy do
+defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
   @moduledoc """
   A trading strategy designed for small investors with limited capital.
   This strategy aims to compete with paid Binance bots by focusing on:
@@ -8,8 +8,8 @@ defmodule BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy do
   """
 
   require Logger
-  alias BeamBot.Exchanges.Domain.Strategies.Indicators
   alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter
+  alias BeamBot.Strategies.Domain.Indicators
 
   @type t :: %__MODULE__{
           trading_pair: String.t(),

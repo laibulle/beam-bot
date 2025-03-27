@@ -8,8 +8,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker d
   use GenServer
   require Logger
 
-  alias BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy
-  alias BeamBot.Exchanges.Domain.Strategies.StrategyRunner
+  alias BeamBot.Strategies.Domain.SmallInvestorStrategy
+  alias BeamBot.Strategies.Domain.StrategyRunner
 
   # Default interval is 30 minutes
   @check_interval :timer.minutes(30)
