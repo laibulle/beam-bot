@@ -115,8 +115,10 @@ defmodule BeamBot.MixProject do
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["tailwind beam_bot", "esbuild beam_bot"],
       "assets.deploy": [
+        "cmd --cd assets node build.js --deploy",
+        "phx.digest",
         "tailwind beam_bot --minify",
-        "esbuild beam_bot --minify",
+        # "esbuild beam_bot --minify",
         "phx.digest"
       ]
     ]

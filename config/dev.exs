@@ -52,7 +52,8 @@ config :beam_bot, BeamBotWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "8+WSAljwetlaWXcm0fNIngINfYdDNCl1nXNZi6nyefXzJbCUoX4vi7EziMbrh0Sc",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:beam_bot, ~w(--sourcemap=inline --watch)]},
+    node: ["build.js", "--watch", cd: Path.expand("../assets", __DIR__)],
+    # esbuild: {Esbuild, :install_and_run, [:beam_bot, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:beam_bot, ~w(--watch)]}
   ]
 

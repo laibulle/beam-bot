@@ -22,6 +22,15 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
+// Import Chart.js and plugins
+import Chart from 'chart.js/auto';
+import { DateTime } from 'luxon';
+import 'chartjs-adapter-luxon';
+import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
+
+// Register the candlestick elements
+Chart.register(CandlestickController, CandlestickElement);
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
@@ -40,32 +49,39 @@ let liveSocket = new LiveSocket("/live", Socket, {
         const data = JSON.parse(this.el.dataset.chartData);
         
         // Process the data for the chart
-        const labels = data.map(d => new Date(d[0]).toLocaleString());
-        const prices = data.map(d => parseFloat(d[4])); // Using closing prices
+        const candlesticks = data.map(d => ({
+          x: DateTime.fromMillis(new Date(d[0]).getTime()).toJSDate(),
+          o: parseFloat(d[1]), // open
+          h: parseFloat(d[2]), // high
+          l: parseFloat(d[3]), // low
+          c: parseFloat(d[4])  // close
+        }));
         
         if (this.chart) {
           this.chart.destroy();
         }
 
         this.chart = new Chart(ctx, {
-          type: 'line',
+          type: 'candlestick',
           data: {
-            labels: labels,
             datasets: [{
-              label: 'Price',
-              data: prices,
-              borderColor: 'rgb(59, 130, 246)',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              tension: 0.1,
-              fill: true
+              label: 'OHLC',
+              data: candlesticks,
+              color: {
+                up: '#22c55e',
+                down: '#ef4444',
+              }
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: false,
+            parsing: false,
+            normalized: true,
             plugins: {
               legend: {
-                position: 'top',
+                display: false
               },
               title: {
                 display: true,
@@ -73,7 +89,21 @@ let liveSocket = new LiveSocket("/live", Socket, {
               }
             },
             scales: {
+              x: {
+                type: 'time',
+                time: {
+                  unit: 'day',
+                  displayFormats: {
+                    day: 'MMM d'
+                  }
+                },
+                ticks: {
+                  source: 'auto',
+                  maxRotation: 0
+                }
+              },
               y: {
+                position: 'right',
                 beginAtZero: false
               }
             }
