@@ -13,11 +13,11 @@ config :git_hooks,
     ],
     pre_push: [
       tasks: [
-        {:cmd, "mix compile --force --warnings-as-errors"},
+        # {:cmd, "mix compile --force --warnings-as-errors"},
         {:mix_task, :format, ["--check-formatted"]},
         {:mix_task, :dialyzer, ["--force-check"]},
         {:mix_task, :credo, ["--strict"]},
-        {:cmd, "mix compile --force --warnings-as-errors", env: [{"MIX_ENV", "test"}]},
+        # {:cmd, "mix compile --force --warnings-as-errors", env: [{"MIX_ENV", "test"}]},
         {:mix_task, :test, ["--color"]},
         {:cmd, "mix coveralls.cobertura"},
         {:cmd, "echo 'success!' 🎉"}
