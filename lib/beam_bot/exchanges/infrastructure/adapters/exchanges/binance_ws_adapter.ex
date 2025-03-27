@@ -7,11 +7,22 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   require Logger
 
   @base_url "wss://fstream.binance.com"
+  # 5 seconds
+  @reconnect_delay 5_000
 
   def start_link(streams, state \\ %{}) when is_list(streams) do
     Logger.info("Starting Binance WebSocket adapter with streams: #{inspect(streams)}")
     url = build_url(streams)
-    WebSockex.start_link(url, __MODULE__, state, name: __MODULE__)
+
+    initial_state =
+      Map.merge(state, %{
+        streams: streams,
+        connected: false,
+        reconnect_count: 0,
+        last_message_time: nil
+      })
+
+    WebSockex.start_link(url, __MODULE__, initial_state, name: __MODULE__)
   end
 
   @doc """
@@ -21,18 +32,72 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
     case Jason.decode(msg) do
       {:ok, decoded_msg} ->
         Logger.debug("Received message: #{inspect(decoded_msg)}")
-        handle_message(decoded_msg, state)
+
+        updated_state = %{
+          state
+          | connected: true,
+            last_message_time: DateTime.utc_now()
+        }
+
+        handle_message(decoded_msg, updated_state)
 
       {:error, error} ->
         Logger.error("Failed to decode message: #{inspect(error)}")
+        {:ok, state}
     end
-
-    {:ok, state}
   end
 
   def handle_frame({:ping, _}, state) do
     Logger.debug("Received ping from Binance WebSocket server")
     {:reply, :pong, state}
+  end
+
+  def handle_frame({:pong, _}, state) do
+    Logger.debug("Received pong response from Binance WebSocket server")
+    {:ok, state}
+  end
+
+  @doc """
+  Handle WebSocket connection established
+  """
+  def handle_connect(_conn, state) do
+    Logger.info("Connected to Binance WebSocket server")
+
+    # For reconnections, resubscribe to streams
+    if state[:reconnect_count] > 0 do
+      streams = state[:streams] || []
+
+      if streams != [] do
+        Logger.info("Resubscribing to streams after reconnection: #{inspect(streams)}")
+        subscribe(streams)
+      end
+    end
+
+    {:ok, %{state | connected: true}}
+  end
+
+  @doc """
+  Handle WebSocket disconnection
+  """
+  def handle_disconnect(%{reason: reason}, state) do
+    reconnect_count = (state[:reconnect_count] || 0) + 1
+
+    Logger.warning(
+      "Disconnected from Binance WebSocket server: #{inspect(reason)}. Reconnect attempt #{reconnect_count}"
+    )
+
+    # Reconnect with a delay
+    Process.sleep(@reconnect_delay)
+
+    {:reconnect, %{state | connected: false, reconnect_count: reconnect_count}}
+  end
+
+  @doc """
+  Handle WebSocket errors
+  """
+  def handle_info({:EXIT, _, reason}, state) do
+    Logger.error("WebSockex process exited: #{inspect(reason)}")
+    {:ok, state}
   end
 
   @doc """
@@ -91,11 +156,15 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
     case alive?() do
       true ->
         pid = Process.whereis(__MODULE__)
+        state = :sys.get_state(pid)
 
         %{
-          status: :connected,
+          status: if(state.connected, do: :connected, else: :connecting),
           pid: pid,
-          connected_since: Process.info(pid, :registered_name),
+          connected: state.connected,
+          reconnect_count: state.reconnect_count,
+          last_message_time: state.last_message_time,
+          registered_name: Process.info(pid, :registered_name),
           memory_usage: Process.info(pid, :memory),
           message_queue_len: Process.info(pid, :message_queue_len)
         }
@@ -120,6 +189,12 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
     # Broadcast the message to subscribers
     Logger.info("Received data from stream #{stream}: #{inspect(data)}")
     Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:#{stream}", {:binance_data, stream, data})
+    {:ok, state}
+  end
+
+  defp handle_message(%{"result" => nil, "id" => id}, state) do
+    # Handle subscription/unsubscription confirmations
+    Logger.info("Received confirmation for request ID #{id}")
     {:ok, state}
   end
 
