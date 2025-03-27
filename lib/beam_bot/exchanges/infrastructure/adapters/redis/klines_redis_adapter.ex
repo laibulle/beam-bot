@@ -30,10 +30,15 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
     results =
       Enum.map(klines, fn [timestamp, open, high, low, close, volume | rest] ->
         key = "klines:#{symbol}:#{interval}:#{timestamp}"
-        value = Jason.encode!([open, high, low, close, volume | rest])
 
-        case @redis_client.ts_add(key, timestamp, value) do
-          {:ok, _} -> {:ok, key}
+        # Store each value as a separate time series
+        with {:ok, _} <- @redis_client.ts_add("#{key}:open", timestamp, open),
+             {:ok, _} <- @redis_client.ts_add("#{key}:high", timestamp, high),
+             {:ok, _} <- @redis_client.ts_add("#{key}:low", timestamp, low),
+             {:ok, _} <- @redis_client.ts_add("#{key}:close", timestamp, close),
+             {:ok, _} <- @redis_client.ts_add("#{key}:volume", timestamp, volume) do
+          {:ok, key}
+        else
           {:error, error} -> {:error, error}
           error -> {:error, error}
         end
@@ -76,15 +81,36 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
 
     case @redis_client.keys(pattern) do
       {:ok, keys} ->
-        klines =
+        # Get unique timestamps from keys
+        timestamps =
           keys
           |> Enum.map(fn key ->
-            @redis_client.ts_get(key) |> decode_values()
+            key
+            |> String.split(":")
+            |> List.last()
+            |> String.to_integer()
           end)
-          |> Enum.reject(&is_nil/1)
-          |> Enum.sort_by(&List.first/1)
+          |> Enum.uniq()
+          |> Enum.sort()
           |> filter_by_time_range(start_time, end_time)
           |> Enum.take(limit)
+
+        klines =
+          timestamps
+          |> Enum.map(fn timestamp ->
+            key_prefix = "klines:#{symbol}:#{interval}:#{timestamp}"
+
+            with {:ok, {_, open}} <- @redis_client.ts_get("#{key_prefix}:open"),
+                 {:ok, {_, high}} <- @redis_client.ts_get("#{key_prefix}:high"),
+                 {:ok, {_, low}} <- @redis_client.ts_get("#{key_prefix}:low"),
+                 {:ok, {_, close}} <- @redis_client.ts_get("#{key_prefix}:close"),
+                 {:ok, {_, volume}} <- @redis_client.ts_get("#{key_prefix}:volume") do
+              [timestamp, open, high, low, close, volume]
+            else
+              _ -> nil
+            end
+          end)
+          |> Enum.reject(&is_nil/1)
 
         {:ok, klines}
 
