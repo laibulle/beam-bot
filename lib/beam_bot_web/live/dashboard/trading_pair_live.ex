@@ -78,6 +78,13 @@ defmodule BeamBotWeb.TradingPairLive do
     </div>
 
     <div class="mt-8">
+      <h6 class="text-lg font-semibold mb-4">Price Chart</h6>
+      <div class="bg-white rounded-lg shadow p-6">
+        <canvas id="priceChart" phx-hook="PriceChart" data-chart-data={Jason.encode!(@data)}></canvas>
+      </div>
+    </div>
+
+    <div class="mt-8">
       <h6 class="text-lg font-semibold mb-4">Strategy Analysis</h6>
       <div class="bg-white rounded-lg shadow p-6">
         <div class="mb-6">
@@ -167,11 +174,5 @@ defmodule BeamBotWeb.TradingPairLive do
       </div>
     </div>
     """
-  end
-
-  defp format_datetime(datetime) do
-    datetime
-    |> DateTime.shift_zone!("Etc/UTC")
-    |> Calendar.strftime("%Y-%m-%d %H:%M:%S")
   end
 end
