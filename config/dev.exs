@@ -1,5 +1,31 @@
 import Config
 
+{project_path, 0} = System.cmd("pwd", [])
+project_path = String.replace(project_path, ~r/\n/, "/")
+
+config :git_hooks,
+  hooks: [
+    pre_commit: [
+      tasks: [
+        {:mix_task, :format},
+        {:mix_task, :credo, ["--strict"]}
+      ]
+    ],
+    pre_push: [
+      tasks: [
+        {:cmd, "mix compile --force --warnings-as-errors"},
+        {:mix_task, :format, ["--check-formatted"]},
+        {:mix_task, :dialyzer, ["--force-check"]},
+        {:mix_task, :credo, ["--strict"]},
+        {:cmd, "mix compile --force --warnings-as-errors", env: [{"MIX_ENV", "test"}]},
+        {:mix_task, :test, ["--color"]},
+        {:cmd, "mix coveralls.cobertura"},
+        {:cmd, "echo 'success!' 🎉"}
+      ]
+    ]
+  ],
+  project_path: project_path
+
 # Configure your database
 config :beam_bot, BeamBot.Repo,
   username: "postgres",

@@ -60,7 +60,12 @@ defmodule BeamBot.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:req, "~> 0.5.8"},
-      {:websockex, "~> 0.4.3"}
+      {:websockex, "~> 0.4.3"},
+      {:mox, "~> 1.0", only: :test},
+      {:faker, "~> 0.19.0-alpha.1", only: :test},
+      {:git_hooks, "~> 0.8.0", only: [:dev], runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev], runtime: false}
     ]
   end
 
