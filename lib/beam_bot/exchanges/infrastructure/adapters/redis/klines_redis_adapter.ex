@@ -27,14 +27,26 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
   iex > BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter.store_klines("BTCUSDT", "1h", [[1716864000000, 20000, 20000, 20000, 20000, 10000]])
   """
   def store_klines(symbol, interval, klines) when is_list(klines) do
-    Enum.each(klines, fn [timestamp, open, high, low, close, volume | rest] ->
-      key = "klines:#{symbol}:#{interval}:#{timestamp}"
-      value = Jason.encode!([open, high, low, close, volume | rest])
+    results =
+      Enum.map(klines, fn [timestamp, open, high, low, close, volume | rest] ->
+        key = "klines:#{symbol}:#{interval}:#{timestamp}"
+        value = Jason.encode!([open, high, low, close, volume | rest])
 
-      @redis_client.ts_add(key, timestamp, value)
-    end)
+        case @redis_client.ts_add(key, timestamp, value) do
+          {:ok, _} -> {:ok, key}
+          {:error, error} -> {:error, error}
+          error -> {:error, error}
+        end
+      end)
 
-    {:ok, :stored}
+    case Enum.find(results, &match?({:error, _}, &1)) do
+      {:error, error} ->
+        Logger.error("Failed to store klines: #{inspect(error)}")
+        {:error, "Failed to store klines: #{inspect(error)}"}
+
+      nil ->
+        {:ok, :stored}
+    end
   rescue
     error ->
       Logger.error("Failed to store klines: #{inspect(error)}")
