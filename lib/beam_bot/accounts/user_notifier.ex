@@ -1,4 +1,7 @@
 defmodule BeamBot.Accounts.UserNotifier do
+  @moduledoc """
+  This module is responsible for managing the user notifier.
+  """
   import Swoosh.Email
 
   alias BeamBot.Mailer

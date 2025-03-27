@@ -18,7 +18,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceReqAdapter do
       iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_exchange_info()
       {:ok, %{symbols: [%{baseAsset: "BTC", quoteAsset: "USDT", symbol: "BTCUSDT", baseAssetPrecision: 8, quotePrecision: 8, orderTypes: ["LIMIT", "MARKET"]}}
   """
-  def get_exchange_info() do
+  def get_exchange_info do
     request("/api/v3/exchangeInfo")
   end
 
@@ -44,7 +44,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceReqAdapter do
       iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_account_info()
       {:ok, account_info}
   """
-  def get_account_info() do
+  def get_account_info do
     timestamp = :os.system_time(:millisecond)
     params = %{timestamp: timestamp}
     signed_params = sign_params(params)

@@ -21,7 +21,7 @@ defmodule BeamBotWeb.HomeLive do
 
   def mount(_params, _session, socket) do
     {:ok, account_info} = BinanceReqAdapter.get_account_info()
-    {:ok, exchange_info} = BinanceReqAdapter.get_exchange_info() |> dbg()
+    {:ok, exchange_info} = BinanceReqAdapter.get_exchange_info()
     {:ok, socket |> assign(account_info: account_info, exchange_info: exchange_info)}
   end
 

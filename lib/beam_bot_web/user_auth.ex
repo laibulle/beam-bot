@@ -1,4 +1,7 @@
 defmodule BeamBotWeb.UserAuth do
+  @moduledoc """
+  This module is responsible for authenticating users.
+  """
   use BeamBotWeb, :verified_routes
 
   import Plug.Conn

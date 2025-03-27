@@ -1,4 +1,7 @@
 defmodule BeamBot.Accounts.User do
+  @moduledoc """
+  This module is responsible for managing the user.
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

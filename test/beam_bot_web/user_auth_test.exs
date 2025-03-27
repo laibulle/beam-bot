@@ -1,9 +1,10 @@
 defmodule BeamBotWeb.UserAuthTest do
   use BeamBotWeb.ConnCase, async: true
 
-  alias Phoenix.LiveView
   alias BeamBot.Accounts
   alias BeamBotWeb.UserAuth
+  alias Phoenix.LiveView
+
   import BeamBot.AccountsFixtures
 
   @remember_me_cookie "_beam_bot_web_user_remember_me"

@@ -6,7 +6,7 @@ defmodule BeamBot.Accounts do
   import Ecto.Query, warn: false
   alias BeamBot.Repo
 
-  alias BeamBot.Accounts.{User, UserToken, UserNotifier}
+  alias BeamBot.Accounts.{User, UserNotifier, UserToken}
 
   ## Database getters
 

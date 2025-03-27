@@ -1,4 +1,7 @@
 defmodule BeamBot.Accounts.UserToken do
+  @moduledoc """
+  This module is responsible for managing the user tokens.
+  """
   use Ecto.Schema
   import Ecto.Query
   alias BeamBot.Accounts.UserToken
