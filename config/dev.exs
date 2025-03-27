@@ -3,6 +3,9 @@ import Config
 {project_path, 0} = System.cmd("pwd", [])
 project_path = String.replace(project_path, ~r/\n/, "/")
 
+config :beam_bot,
+  redis_url: "redis://localhost:6381"
+
 config :git_hooks,
   hooks: [
     pre_commit: [
