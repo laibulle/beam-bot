@@ -33,8 +33,8 @@ defmodule BeamBotWeb.Layouts.DashboardComponent do
           <div class="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
             <div class="flex flex-shrink-0 items-center px-4">
               <.link navigate={~p"/"} class="flex items-center gap-2">
-                <span class="text-xl">✨</span>
-                <span class="text-lg font-semibold text-gray-900">{gettext("FaryTell")}</span>
+                <span class="text-xl"></span>
+                <span class="text-lg font-semibold text-gray-900">{gettext("BeamBot")}</span>
               </.link>
             </div>
             <nav class="mt-5 flex-1 space-y-1 bg-white px-2">
@@ -136,7 +136,7 @@ defmodule BeamBotWeb.Layouts.DashboardComponent do
               <div class="flex flex-shrink-0 items-center px-4">
                 <.link navigate={~p"/"} class="flex items-center gap-2">
                   <span class="text-xl">✨</span>
-                  <span class="text-lg font-semibold text-gray-900">{gettext("FaryTell")}</span>
+                  <span class="text-lg font-semibold text-gray-900">{gettext("BeamBot")}</span>
                 </.link>
               </div>
               <nav class="mt-5 space-y-1 px-2">
