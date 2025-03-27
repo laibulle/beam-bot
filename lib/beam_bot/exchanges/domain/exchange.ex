@@ -19,6 +19,7 @@ defmodule BeamBot.Exchanges.Domain.Exchange do
     field :name, :string
     field :identifier, :string
     field :is_active, :boolean, default: true
+    has_many :trading_pairs, TradingPair
 
     timestamps()
   end
