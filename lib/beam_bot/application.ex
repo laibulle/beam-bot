@@ -22,7 +22,9 @@ defmodule BeamBot.Application do
       # Start a worker by calling: BeamBot.Worker.start_link(arg)
       # {BeamBot.Worker, arg},
       # Start to serve requests, typically the last entry
-      BeamBotWeb.Endpoint
+      BeamBotWeb.Endpoint,
+      # Start the trading pairs sync worker
+      BeamBot.Exchanges.Workers.TradingPairsSyncWorker
       # {BeamBot.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]}
     ]
 
