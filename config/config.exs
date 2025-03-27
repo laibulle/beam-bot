@@ -9,7 +9,8 @@ import Config
 
 config :beam_bot,
   ecto_repos: [BeamBot.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  telegram_bot_token: System.get_env("TELEGRAM_BOT_TOKEN")
 
 # Configures the endpoint
 config :beam_bot, BeamBotWeb.Endpoint,
