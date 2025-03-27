@@ -3,9 +3,10 @@ defmodule BeamBot.Exchanges.UseCases.SyncTradingPairsUseCase do
   This module is responsible for managing the sync trading pairs use case.
   """
   alias BeamBot.Exchanges.Domain.TradingPair
-  alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.TradingPairsRepositoryEcto
-  alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter
   alias BeamBot.Repo
+
+  @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
+  @binance_req_adapter Application.compile_env(:beam_bot, :binance_req_adapter)
 
   @doc """
   Fetches trading pairs from Binance and stores them in the database.
@@ -18,10 +19,10 @@ defmodule BeamBot.Exchanges.UseCases.SyncTradingPairsUseCase do
       {:ok, trading_pairs}
   """
   def sync_trading_pairs do
-    with {:ok, %{"symbols" => symbols}} <- BinanceReqAdapter.get_exchange_info(),
+    with {:ok, %{"symbols" => symbols}} <- @binance_req_adapter.get_exchange_info(),
          {:ok, exchange} <- get_or_create_binance_exchange(),
          trading_pairs <- Enum.map(symbols, &create_trading_pair(&1, exchange.id)) do
-      TradingPairsRepositoryEcto.upsert_trading_pairs(trading_pairs)
+      @trading_pairs_repository.upsert_trading_pairs(trading_pairs)
     else
       {:error, reason} -> {:error, reason}
       error -> {:error, "Failed to sync trading pairs: #{inspect(error)}"}
