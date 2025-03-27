@@ -6,7 +6,7 @@ defmodule BeamBotWeb.TradingPairLive do
   # Define refresh interval in milliseconds
   @refresh_interval 10_000
 
-  alias BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker
+  alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker
   alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
 
   @impl true

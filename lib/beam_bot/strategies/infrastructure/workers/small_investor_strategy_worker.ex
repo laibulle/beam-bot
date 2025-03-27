@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker do
+defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker do
   @moduledoc """
   A worker that periodically executes the small investor strategy.
   This worker runs as a GenServer and executes the strategy on a defined interval.
