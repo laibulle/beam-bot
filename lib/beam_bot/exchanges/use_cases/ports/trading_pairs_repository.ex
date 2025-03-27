@@ -7,4 +7,7 @@ defmodule BeamBot.Exchanges.UseCases.Ports.TradingPairsRepository do
   @callback get_trading_pairs(String.t()) :: {:ok, list(TradingPair.t())} | {:error, String.t()}
 
   @callback list_trading_pairs() :: {:ok, list(TradingPair.t())} | {:error, String.t()}
+
+  @callback upsert_trading_pairs(list(TradingPair.t())) ::
+              {:ok, list(TradingPair.t())} | {:error, String.t()}
 end

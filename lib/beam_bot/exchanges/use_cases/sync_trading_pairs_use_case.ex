@@ -21,17 +21,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncTradingPairsUseCase do
     with {:ok, %{"symbols" => symbols}} <- BinanceReqAdapter.get_exchange_info(),
          {:ok, exchange} <- get_or_create_binance_exchange(),
          trading_pairs <- Enum.map(symbols, &create_trading_pair(&1, exchange.id)) do
-      Repo.transaction(fn ->
-        Enum.each(trading_pairs, fn trading_pair ->
-          Repo.insert!(
-            trading_pair,
-            on_conflict: {:replace_all_except, [:id, :inserted_at]},
-            conflict_target: [:symbol, :exchange_id]
-          )
-        end)
-      end)
-
-      {:ok, trading_pairs}
+      TradingPairsRepositoryEcto.upsert_trading_pairs(trading_pairs)
     else
       {:error, reason} -> {:error, reason}
       error -> {:error, "Failed to sync trading pairs: #{inspect(error)}"}
