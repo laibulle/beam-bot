@@ -87,7 +87,7 @@ defmodule BeamBotWeb.HomeLive do
                 </div>
                 <div class="space-y-2">
                   <.link
-                    navigate={~p"/exchange/symbol/#{symbol.symbol}"}
+                    navigate={~p"/dashboard/trading-pair/#{symbol.symbol}"}
                     class="block w-full text-center bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                   >
                     View Details

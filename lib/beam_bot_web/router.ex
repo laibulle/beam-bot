@@ -21,6 +21,8 @@ defmodule BeamBotWeb.Router do
     pipe_through :browser
 
     live "/", HomeLive
+    live "/dashboard", HomeLive
+    live "/dashboard/trading-pair/:symbol", TradingPairLive
   end
 
   # Other scopes may use custom stacks.

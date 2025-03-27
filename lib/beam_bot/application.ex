@@ -24,9 +24,9 @@ defmodule BeamBot.Application do
       # Start to serve requests, typically the last entry
       BeamBotWeb.Endpoint,
       # Start the trading pairs sync worker
-      BeamBot.Exchanges.Workers.TradingPairsSyncWorker,
+      BeamBot.Exchanges.Workers.TradingPairsSyncWorker
       # Start the Telegram messages sync worker
-      BeamBot.Socials.Workers.TelegramMessagesSyncWorker
+      # BeamBot.Socials.Workers.TelegramMessagesSyncWorker
       # {BeamBot.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]}
     ]
 
