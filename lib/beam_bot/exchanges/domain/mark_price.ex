@@ -32,8 +32,8 @@ defmodule BeamBot.Exchanges.Domain.MarkPriceUpdate do
   ## Examples
 
       iex> data = %{"E" => 1743112926001, "P" => "87598.14166728", "T" => 1743120000000, "e" => "markPriceUpdate", "i" => "87588.32755556", "p" => "87559.90000000", "r" => "0.00000536", "s" => "BTCUSDT"}
-      iex> BeamBot.Exchanges.Domain.MarkPrice.Update.from_binance(data)
-      %BeamBot.Exchanges.Domain.MarkPrice.Update{
+      iex> BeamBot.Exchanges.Domain.MarkPriceUpdate.from_binance(data)
+      %BeamBot.Exchanges.Domain.MarkPriceUpdate{
         exchange: "binance",
         symbol: "BTCUSDT",
         event_time: DateTime.from_unix!(1743112926001, :millisecond),

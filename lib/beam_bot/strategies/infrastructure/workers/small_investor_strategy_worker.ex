@@ -8,8 +8,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker 
   use GenServer
   require Logger
 
-  alias BeamBot.Strategies.Domain.SmallInvestorStrategy
-  alias BeamBot.Strategies.Domain.StrategyRunner
+  alias BeamBot.Exchanges.Domain.MarkPriceUpdate
+  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
 
   # Default interval is 30 minutes
   @check_interval :timer.minutes(30)
@@ -65,7 +65,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker 
       timer_ref: nil,
       last_check: nil,
       last_result: nil,
-      status: :idle
+      status: :idle,
+      current_mark_price: nil
     }
 
     {:ok, state}
@@ -78,6 +79,11 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker 
 
     # Create new strategy
     strategy = SmallInvestorStrategy.new(trading_pair, investment_amount, options)
+
+    # Subscribe to mark price updates for this trading pair
+    Phoenix.PubSub.subscribe(BeamBot.PubSub, "binance:markPrice:#{trading_pair}")
+
+    Logger.info("Subscribed to mark price updates for #{trading_pair}")
 
     # Schedule first execution
     # First run after 5 seconds
@@ -102,13 +108,22 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker 
     # Cancel the timer
     if state.timer_ref, do: Process.cancel_timer(state.timer_ref)
 
+    # Unsubscribe from mark price updates if a strategy is active
+    if state.strategy do
+      Phoenix.PubSub.unsubscribe(
+        BeamBot.PubSub,
+        "binance:markPrice:#{state.strategy.trading_pair}"
+      )
+    end
+
     Logger.info("Stopped small investor strategy")
 
     new_state = %{
       state
       | strategy: nil,
         timer_ref: nil,
-        status: :idle
+        status: :idle,
+        current_mark_price: nil
     }
 
     {:noreply, new_state}
@@ -132,10 +147,23 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker 
       status: state.status,
       strategy: state.strategy && Map.from_struct(state.strategy),
       last_check: state.last_check,
-      last_result: state.last_result
+      last_result: state.last_result,
+      current_mark_price: state.current_mark_price
     }
 
     {:reply, status_info, state}
+  end
+
+  @impl true
+  def handle_info(%MarkPriceUpdate{} = mark_price, state) do
+    Logger.debug("Received mark price update: #{inspect(mark_price)}")
+
+    # Store the latest mark price in state
+    new_state = %{state | current_mark_price: mark_price}
+
+    send(self(), :execute_strategy)
+
+    {:noreply, new_state}
   end
 
   @impl true
@@ -161,7 +189,15 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker 
   defp execute_strategy(state) do
     now = DateTime.utc_now()
 
-    case StrategyRunner.run_once(state.strategy) do
+    # Include current mark price in strategy execution if available
+    strategy_with_context =
+      if state.current_mark_price do
+        Map.put(state.strategy, :current_price, state.current_mark_price.mark_price)
+      else
+        state.strategy
+      end
+
+    case StrategyRunner.run_once(strategy_with_context) do
       {:ok, result} ->
         new_state = %{
           state
