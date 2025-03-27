@@ -6,6 +6,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   use WebSockex
   require Logger
 
+  alias BeamBot.Exchanges.Domain.MarkPriceUpdate
+  alias BeamBot.Exchanges.Domain.Trade.AggregateTrade
+
   @base_url "wss://fstream.binance.com"
   # 5 seconds
   @reconnect_delay 5_000
@@ -203,7 +206,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   defp handle_message(%{"stream" => stream, "data" => data}, state) do
     # Broadcast the message to subscribers
     Logger.info("Received data from stream #{stream}: #{inspect(data)}")
-    Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:#{stream}", {:binance_data, stream, data})
+
+    process_message(stream, data)
+
     {:ok, state}
   end
 
@@ -217,5 +222,25 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
     # Handle other message types (like subscription responses)
     Logger.info("Received message: #{inspect(message)}")
     {:ok, state}
+  end
+
+  defp process_message(stream, data) do
+    cond do
+      String.contains?(stream, "@aggTrade") ->
+        trade = AggregateTrade.from_binance(data)
+        Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:aggTrade:#{trade.symbol}", trade)
+
+      String.contains?(stream, "@markPrice") ->
+        mark_price = MarkPriceUpdate.from_binance(data)
+
+        Phoenix.PubSub.broadcast(
+          BeamBot.PubSub,
+          "binance:markPrice:#{mark_price.symbol}",
+          mark_price
+        )
+
+      true ->
+        Logger.warning("Unhandled stream type: #{stream}")
+    end
   end
 end

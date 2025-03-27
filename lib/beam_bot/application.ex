@@ -9,6 +9,9 @@ defmodule BeamBot.Application do
   def start(_type, _args) do
     initial_streams = [
       "btcusdt@aggTrade",
+      "ethusdt@aggTrade",
+      "solusdt@aggTrade",
+      "bnbusdt@aggTrade",
       "btcusdt@markPrice"
     ]
 
@@ -31,9 +34,7 @@ defmodule BeamBot.Application do
       BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker,
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker
-      {BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter, initial_streams},
-      # Start the Binance WebSocket subscriber
-      BeamBot.Exchanges.Infrastructure.Subscribers.BinanceWsSubscriber
+      {BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter, initial_streams}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
