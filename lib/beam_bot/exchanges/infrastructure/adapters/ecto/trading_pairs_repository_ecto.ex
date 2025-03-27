@@ -12,4 +12,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.TradingPairsRepositoryE
       exchange -> {:ok, exchange.trading_pairs}
     end
   end
+
+  @impl true
+  def list_trading_pairs do
+    Repo.all(BeamBot.Exchanges.Domain.TradingPair)
+  end
 end
