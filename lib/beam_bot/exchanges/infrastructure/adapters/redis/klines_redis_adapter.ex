@@ -80,52 +80,60 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
     pattern = "klines:#{symbol}:#{interval}:*"
 
     case @redis_client.keys(pattern) do
-      {:ok, keys} ->
-        # Get unique timestamps from keys
-        timestamps =
-          keys
-          |> Enum.map(fn key ->
-            key
-            |> String.split(":")
-            |> List.last()
-            |> String.to_integer()
-          end)
-          |> Enum.uniq()
-          |> Enum.sort()
-          |> filter_by_time_range(start_time, end_time)
-          |> Enum.take(limit)
-
-        klines =
-          timestamps
-          |> Enum.map(fn timestamp ->
-            key_prefix = "klines:#{symbol}:#{interval}:#{timestamp}"
-
-            with {:ok, {_, open}} <- @redis_client.ts_get("#{key_prefix}:open"),
-                 {:ok, {_, high}} <- @redis_client.ts_get("#{key_prefix}:high"),
-                 {:ok, {_, low}} <- @redis_client.ts_get("#{key_prefix}:low"),
-                 {:ok, {_, close}} <- @redis_client.ts_get("#{key_prefix}:close"),
-                 {:ok, {_, volume}} <- @redis_client.ts_get("#{key_prefix}:volume") do
-              [timestamp, open, high, low, close, volume]
-            else
-              _ -> nil
-            end
-          end)
-          |> Enum.reject(&is_nil/1)
-
-        {:ok, klines}
-
-      {:error, error} ->
-        Logger.error("Failed to retrieve klines: #{inspect(error)}")
-        {:error, "Failed to retrieve klines: #{inspect(error)}"}
-
-      error ->
-        Logger.error("Failed to retrieve klines: #{inspect(error)}")
-        {:error, "Failed to retrieve klines: #{inspect(error)}"}
+      {:ok, keys} -> process_keys(keys, symbol, interval, limit, start_time, end_time)
+      {:error, error} -> handle_error(error)
+      error -> handle_error(error)
     end
   rescue
-    error ->
-      Logger.error("Failed to retrieve klines: #{inspect(error)}")
-      {:error, "Failed to retrieve klines: #{inspect(error)}"}
+    error -> handle_error(error)
+  end
+
+  defp process_keys(keys, symbol, interval, limit, start_time, end_time) do
+    timestamps = extract_timestamps(keys, start_time, end_time, limit)
+    klines = fetch_klines(timestamps, symbol, interval)
+    {:ok, klines}
+  end
+
+  defp extract_timestamps(keys, start_time, end_time, limit) do
+    keys
+    |> Enum.map(&extract_timestamp/1)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.uniq()
+    |> Enum.sort()
+    |> filter_by_time_range(start_time, end_time)
+    |> Enum.take(limit)
+  end
+
+  defp extract_timestamp(key) do
+    case Regex.run(~r/klines:.*?:.*?:(\d+):/, key) do
+      [_, timestamp] -> String.to_integer(timestamp)
+      _ -> nil
+    end
+  end
+
+  defp fetch_klines(timestamps, symbol, interval) do
+    timestamps
+    |> Enum.map(fn timestamp -> fetch_kline(timestamp, symbol, interval) end)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp fetch_kline(timestamp, symbol, interval) do
+    key_prefix = "klines:#{symbol}:#{interval}:#{timestamp}"
+
+    with {:ok, {_, open}} <- @redis_client.ts_get("#{key_prefix}:open"),
+         {:ok, {_, high}} <- @redis_client.ts_get("#{key_prefix}:high"),
+         {:ok, {_, low}} <- @redis_client.ts_get("#{key_prefix}:low"),
+         {:ok, {_, close}} <- @redis_client.ts_get("#{key_prefix}:close"),
+         {:ok, {_, volume}} <- @redis_client.ts_get("#{key_prefix}:volume") do
+      [timestamp, open, high, low, close, volume]
+    else
+      _ -> nil
+    end
+  end
+
+  defp handle_error(error) do
+    Logger.error("Failed to retrieve klines: #{inspect(error)}")
+    {:error, "Failed to retrieve klines: #{inspect(error)}"}
   end
 
   defp decode_values({:ok, {timestamp, value}}) do
