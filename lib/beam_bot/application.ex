@@ -22,8 +22,8 @@ defmodule BeamBot.Application do
       # Start a worker by calling: BeamBot.Worker.start_link(arg)
       # {BeamBot.Worker, arg},
       # Start to serve requests, typically the last entry
-      BeamBotWeb.Endpoint,
-      {BeamBot.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]}
+      BeamBotWeb.Endpoint
+      # {BeamBot.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

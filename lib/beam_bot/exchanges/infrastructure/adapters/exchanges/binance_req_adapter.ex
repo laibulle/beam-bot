@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceReqAdapter do
+defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter do
   @moduledoc """
   An adapter for interacting with the Binance API using Req.
   """

@@ -4,7 +4,7 @@ defmodule BeamBot.Repo.Migrations.CreateExchanges do
   def change do
     create table(:exchanges) do
       add :name, :string, null: false
-      add :provider, :string, null: false
+      add :identifier, :string, null: false
       add :is_active, :boolean, default: true, null: false
 
       timestamps()
@@ -27,7 +27,6 @@ defmodule BeamBot.Repo.Migrations.CreateExchanges do
       timestamps()
     end
 
-    create index(:trading_pairs, [:exchange_id])
-    create index(:trading_pairs, [:symbol])
+    create unique_index(:trading_pairs, [:symbol, :exchange_id])
   end
 end
