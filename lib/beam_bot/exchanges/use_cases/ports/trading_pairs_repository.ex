@@ -10,4 +10,7 @@ defmodule BeamBot.Exchanges.UseCases.Ports.TradingPairsRepository do
 
   @callback upsert_trading_pairs(list(TradingPair.t())) ::
               {:ok, list(TradingPair.t())} | {:error, String.t()}
+
+  @callback get_trading_pair_by_symbol(String.t()) ::
+              {:ok, TradingPair.t()} | {:error, String.t()}
 end

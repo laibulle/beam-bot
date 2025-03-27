@@ -36,4 +36,12 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.TradingPairsRepositoryE
       error -> {:error, "Failed to upsert trading pairs: #{inspect(error)}"}
     end
   end
+
+  @impl true
+  def get_trading_pair_by_symbol(symbol) do
+    case Repo.get_by(BeamBot.Exchanges.Domain.TradingPair, symbol: symbol) do
+      nil -> {:error, "Trading pair not found"}
+      trading_pair -> {:ok, trading_pair}
+    end
+  end
 end

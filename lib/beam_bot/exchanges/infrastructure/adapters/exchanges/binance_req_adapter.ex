@@ -52,6 +52,43 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
     request("/api/v3/account", signed_params, @api_key)
   end
 
+  @doc """
+  Fetches historical klines/candlestick data for a symbol.
+
+  ## Parameters
+    - symbol: The trading pair symbol (e.g., "BTCUSDT")
+    - interval: The interval between candlesticks (e.g., "1h", "4h", "1d")
+    - limit: Number of candlesticks to fetch (default: 500, max: 1000)
+    - start_time: Start time in milliseconds (optional)
+    - end_time: End time in milliseconds (optional)
+
+  ## Examples
+
+      iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_klines("BTCUSDT", "1h")
+      {:ok, [[timestamp, open, high, low, close, volume, ...], ...]}
+  """
+  def get_klines(symbol, interval, limit \\ 500, start_time \\ nil, end_time \\ nil) do
+    params =
+      %{
+        symbol: symbol,
+        interval: interval,
+        limit: limit
+      }
+      |> maybe_add_time_range(start_time, end_time)
+
+    request("/api/v3/klines", params)
+  end
+
+  defp maybe_add_time_range(params, nil, nil), do: params
+  defp maybe_add_time_range(params, start_time, nil), do: Map.put(params, :startTime, start_time)
+  defp maybe_add_time_range(params, nil, end_time), do: Map.put(params, :endTime, end_time)
+
+  defp maybe_add_time_range(params, start_time, end_time) do
+    params
+    |> Map.put(:startTime, start_time)
+    |> Map.put(:endTime, end_time)
+  end
+
   defp request(endpoint, params \\ %{}, api_key \\ nil) do
     url = @base_url <> endpoint
 
