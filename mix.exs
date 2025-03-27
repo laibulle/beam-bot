@@ -9,7 +9,38 @@ defmodule BeamBot.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      test_coverage: [
+        tool: ExCoveralls,
+        output_dir: "cover/",
+        preferred_cli_env: [
+          coveralls: :test,
+          "coveralls.detail": :test,
+          "coveralls.post": :test,
+          "coveralls.html": :test,
+          "coveralls.cobertura": :test
+        ],
+        coverage_options: [
+          treat_no_relevant_lines_as_covered: true,
+          output_dir: "cover/",
+          xml_base_dir: "cover/"
+        ]
+      ],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.cobertura": :test
+      ],
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        plt_add_apps: [:mix, :ex_unit, :plug, :ecto, :phoenix, :phoenix_pubsub, :phoenix_template],
+        plt_core_path: "priv/plts/core.plt",
+        plt_add_deps: :apps_direct,
+        plt_ignore_apps: [:ffmpex],
+        flags: [:unmatched_returns, :error_handling, :no_opaque]
+      ]
     ]
   end
 
