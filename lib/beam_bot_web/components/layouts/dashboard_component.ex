@@ -51,16 +51,6 @@ defmodule BeamBotWeb.Layouts.DashboardComponent do
             <div class="relative">
               <button
                 type="button"
-                phx-click={show_processes_menu()}
-                class="flex items-center gap-2 rounded-full bg-purple-50 p-2 text-sm font-medium text-purple-900 hover:bg-purple-100 transition-colors"
-                aria-label={gettext("Open processes menu")}
-              >
-                <.icon name="hero-cpu-chip" class="h-5 w-5" />
-              </button>
-            </div>
-            <div class="relative">
-              <button
-                type="button"
                 phx-click={show_menu()}
                 class="flex items-center gap-2 rounded-full bg-purple-50 p-2 text-sm font-medium text-purple-900 hover:bg-purple-100 transition-colors"
                 aria-label={gettext("Open user menu")}
