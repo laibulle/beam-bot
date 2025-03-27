@@ -10,7 +10,10 @@ import Config
 config :beam_bot,
   ecto_repos: [BeamBot.Repo],
   generators: [timestamp_type: :utc_datetime],
-  telegram_bot_token: System.get_env("TELEGRAM_BOT_TOKEN")
+  telegram_bot_token: System.get_env("TELEGRAM_BOT_TOKEN"),
+  redis_url: System.get_env("REDIS_URL", "redis://localhost:6379"),
+  redis_client: BeamBot.Infrastructure.RedisClient,
+  klines_adapter: BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter
 
 # Configures the endpoint
 config :beam_bot, BeamBotWeb.Endpoint,
