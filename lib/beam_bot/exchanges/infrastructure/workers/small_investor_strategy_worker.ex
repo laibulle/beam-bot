@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.Workers.SmallInvestorStrategyWorker do
+defmodule BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker do
   @moduledoc """
   A worker that periodically executes the small investor strategy.
   This worker runs as a GenServer and executes the strategy on a defined interval.
@@ -121,7 +121,7 @@ defmodule BeamBot.Exchanges.Workers.SmallInvestorStrategyWorker do
       send(self(), :execute_strategy)
       {:noreply, state}
     else
-      Logger.warn("Cannot run strategy now: no strategy is configured")
+      Logger.warning("Cannot run strategy now: no strategy is configured")
       {:noreply, state}
     end
   end

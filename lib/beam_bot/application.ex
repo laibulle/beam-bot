@@ -24,11 +24,11 @@ defmodule BeamBot.Application do
       # Start to serve requests, typically the last entry
       BeamBotWeb.Endpoint,
       # Start the trading pairs sync worker
-      BeamBot.Exchanges.Workers.TradingPairsSyncWorker,
+      BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
       # Start the Redis client
       BeamBot.Infrastructure.RedisClient,
       # Start the small investor strategy worker
-      BeamBot.Exchanges.Workers.SmallInvestorStrategyWorker
+      BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker
       # {BeamBot.Infrastructure.Adapters.BinanceWsAdapter, [initial_streams]}

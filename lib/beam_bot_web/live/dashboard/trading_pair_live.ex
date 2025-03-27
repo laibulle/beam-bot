@@ -8,7 +8,7 @@ defmodule BeamBotWeb.TradingPairLive do
 
   alias BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy
   alias BeamBot.Exchanges.Domain.Strategies.StrategyRunner
-  alias BeamBot.Exchanges.Workers.SmallInvestorStrategyWorker
+  alias BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker
 
   @impl true
   def mount(%{"symbol" => symbol}, _session, socket) do

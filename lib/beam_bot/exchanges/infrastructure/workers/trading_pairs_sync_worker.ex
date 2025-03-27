@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.Workers.TradingPairsSyncWorker do
+defmodule BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker do
   @moduledoc """
   A GenServer that periodically syncs trading pairs from Binance.
   """

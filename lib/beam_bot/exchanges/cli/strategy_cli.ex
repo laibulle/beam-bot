@@ -7,7 +7,7 @@ defmodule BeamBot.Exchanges.CLI.StrategyCLI do
 
   alias BeamBot.Exchanges.Domain.Strategies.SmallInvestorStrategy
   alias BeamBot.Exchanges.Domain.Strategies.StrategyRunner
-  alias BeamBot.Exchanges.Workers.SmallInvestorStrategyWorker
+  alias BeamBot.Exchanges.Infrastructure.Workers.SmallInvestorStrategyWorker
 
   @doc """
   Starts a small investor strategy for a given trading pair.
