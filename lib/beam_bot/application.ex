@@ -8,10 +8,10 @@ defmodule BeamBot.Application do
   @impl true
   def start(_type, _args) do
     initial_streams = [
-      "btcusdt@aggTrade",
-      "ethusdt@aggTrade",
-      "solusdt@aggTrade",
-      "bnbusdt@aggTrade",
+      # "btcusdt@aggTrade",
+      # "ethusdt@aggTrade",
+      # "solusdt@aggTrade",
+      # "bnbusdt@aggTrade",
       "btcusdt@markPrice"
     ]
 
