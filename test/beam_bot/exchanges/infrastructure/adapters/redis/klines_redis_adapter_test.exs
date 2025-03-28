@@ -4,11 +4,11 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapterTest
 
   setup do
     # Clean up Redis before each test
-    {:ok, _} =
-      Application.get_env(:beam_bot, :redis_client).keys("klines:*")
-      |> Enum.each(fn key ->
-        {:ok, _} = Application.get_env(:beam_bot, :redis_client).del(key)
-      end)
+    {:ok, keys} = Application.get_env(:beam_bot, :redis_client).keys("klines:*")
+
+    Enum.each(keys, fn key ->
+      {:ok, _} = Application.get_env(:beam_bot, :redis_client).del(key)
+    end)
 
     :ok
   end
