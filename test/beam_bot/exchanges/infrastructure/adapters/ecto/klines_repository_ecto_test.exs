@@ -8,12 +8,14 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
   setup do
     # Create test data
     now = DateTime.utc_now()
+    now_ts = DateTime.to_unix(now)
+    past_ts = DateTime.to_unix(DateTime.add(now, -3600))
 
     klines = [
       %Kline{
         symbol: "BTC/USDT",
         interval: "1h",
-        timestamp: DateTime.add(now, -3600),
+        timestamp: past_ts,
         open: 50_000.0,
         high: 51_000.0,
         low: 49_000.0,
@@ -23,7 +25,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
       %Kline{
         symbol: "BTC/USDT",
         interval: "1h",
-        timestamp: now,
+        timestamp: now_ts,
         open: 50_500.0,
         high: 51_500.0,
         low: 49_500.0,
@@ -68,8 +70,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
 
     test "filters by time range" do
       now = DateTime.utc_now()
-      start_time = DateTime.add(now, -7200)
-      end_time = DateTime.add(now, 3600)
+      start_time = DateTime.to_unix(DateTime.add(now, -7200))
+      end_time = DateTime.to_unix(DateTime.add(now, 3600))
 
       assert {:ok, retrieved_klines} =
                KlinesRepositoryEcto.get_klines(

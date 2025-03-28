@@ -11,7 +11,40 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
   Stores a list of klines in the database.
   """
   def store_klines(klines) when is_list(klines) do
-    {n, _} = Repo.insert_all(Kline, klines, on_conflict: :replace_all)
+    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+
+    klines_maps =
+      Enum.map(klines, fn kline ->
+        kline
+        |> Map.from_struct()
+        |> Map.take([
+          :symbol,
+          :interval,
+          :timestamp,
+          :open,
+          :high,
+          :low,
+          :close,
+          :volume,
+          :close_time,
+          :quote_volume,
+          :trades_count,
+          :taker_buy_base_volume,
+          :taker_buy_quote_volume,
+          :ignore
+        ])
+        |> Map.put(:inserted_at, now)
+        |> Map.put(:updated_at, now)
+      end)
+
+    {n, _} =
+      Repo.insert_all(
+        Kline,
+        klines_maps,
+        on_conflict: {:replace, [:updated_at]},
+        conflict_target: [:symbol, :interval, :timestamp]
+      )
+
     {:ok, n}
   rescue
     error ->

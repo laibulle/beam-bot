@@ -1,16 +1,35 @@
 defmodule BeamBot.Exchanges.Domain.Kline do
   @moduledoc """
-  Schema for storing klines data in TimescaleDB.
+  Domain model for klines (candlestick data) from various exchanges.
+  Contains structures and functions for working with kline data.
   """
 
   use Ecto.Schema
   import Ecto.Changeset
 
-  @primary_key false
+  @type t :: %__MODULE__{
+          symbol: String.t(),
+          interval: String.t(),
+          timestamp: integer(),
+          open: float(),
+          high: float(),
+          low: float(),
+          close: float(),
+          volume: float(),
+          close_time: integer() | nil,
+          quote_volume: float() | nil,
+          trades_count: integer() | nil,
+          taker_buy_base_volume: float() | nil,
+          taker_buy_quote_volume: float() | nil,
+          ignore: float() | nil,
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
   schema "klines" do
-    field :symbol, :string, primary_key: true
-    field :interval, :string, primary_key: true
-    field :timestamp, :integer, primary_key: true
+    field :symbol, :string
+    field :interval, :string
+    field :timestamp, :integer
     field :open, :float
     field :high, :float
     field :low, :float
@@ -26,6 +45,7 @@ defmodule BeamBot.Exchanges.Domain.Kline do
     timestamps()
   end
 
+  @doc false
   def changeset(kline, attrs) do
     kline
     |> cast(attrs, [
@@ -55,4 +75,13 @@ defmodule BeamBot.Exchanges.Domain.Kline do
       :volume
     ])
   end
+end
+
+defimpl Enumerable, for: BeamBot.Exchanges.Domain.Kline do
+  def count(_kline), do: {:ok, 1}
+  def member?(_kline, _value), do: {:ok, false}
+  def slice(_kline), do: {:ok, 1, fn _ -> [] end}
+  def reduce(_kline, {:halt, acc}, _fun), do: {:halted, acc}
+  def reduce(_kline, {:suspend, acc}, _fun), do: {:suspended, acc}
+  def reduce(kline, {:cont, acc}, fun), do: {:done, fun.(Map.from_struct(kline), acc)}
 end
