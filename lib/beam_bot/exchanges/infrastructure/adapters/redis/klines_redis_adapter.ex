@@ -80,9 +80,15 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
     pattern = "klines:#{symbol}:#{interval}:*"
 
     case @redis_client.keys(pattern) do
-      {:ok, keys} -> process_keys(keys, symbol, interval, limit, start_time, end_time)
-      {:error, error} -> handle_error(error)
-      error -> handle_error(error)
+      {:ok, keys} ->
+        Logger.debug("Found Redis keys: #{inspect(keys)}")
+        process_keys(keys, symbol, interval, limit, start_time, end_time)
+
+      {:error, error} ->
+        handle_error(error)
+
+      error ->
+        handle_error(error)
     end
   rescue
     error -> handle_error(error)
@@ -90,6 +96,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
 
   defp process_keys(keys, symbol, interval, limit, start_time, end_time) do
     timestamps = extract_timestamps(keys, start_time, end_time, limit)
+    Logger.debug("Extracted timestamps: #{inspect(timestamps)}")
     klines = fetch_klines(timestamps, symbol, interval)
     {:ok, klines}
   end
@@ -105,9 +112,17 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
   end
 
   defp extract_timestamp(key) do
-    case Regex.run(~r/klines:.*?:.*?:(\d+):/, key) do
-      [_, timestamp] -> String.to_integer(timestamp)
-      _ -> nil
+    Logger.debug("Extracting timestamp from key: #{key}")
+
+    case String.split(key, ":") do
+      ["klines", _symbol, _interval, timestamp, field]
+      when field in ["open", "high", "low", "close", "volume"] ->
+        Logger.debug("Found timestamp: #{timestamp}")
+        String.to_integer(timestamp)
+
+      _ ->
+        Logger.debug("No timestamp found in key")
+        nil
     end
   end
 
