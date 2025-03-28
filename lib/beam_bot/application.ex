@@ -15,17 +15,18 @@ defmodule BeamBot.Application do
       "btcusdt@markPrice"
     ]
 
-    children = [
+    base_children = [
       BeamBotWeb.Telemetry,
       BeamBot.Repo,
       {DNSCluster, query: Application.get_env(:beam_bot, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: BeamBot.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: BeamBot.Finch},
-      # Start a worker by calling: BeamBot.Worker.start_link(arg)
-      # {BeamBot.Worker, arg},
       # Start to serve requests, typically the last entry
-      BeamBotWeb.Endpoint,
+      BeamBotWeb.Endpoint
+    ]
+
+    prod_children = [
       # Start the trading pairs sync worker
       BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
       # Start the Redis client
@@ -35,9 +36,15 @@ defmodule BeamBot.Application do
       # Start the historical data sync worker
       # BeamBot.Exchanges.Infrastructure.Workers.HistoricalDataSyncWorker,
       # Start the Telegram messages sync worker
-      # BeamBot.Socials.Workers.TelegramMessagesSyncWorker
+      # BeamBot.Socials.Workers.TelegramMessagesSyncWorker,
       {BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter, initial_streams}
     ]
+
+    children =
+      case Application.get_env(:beam_bot, :env) do
+        :test -> base_children
+        _ -> base_children ++ prod_children
+      end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
