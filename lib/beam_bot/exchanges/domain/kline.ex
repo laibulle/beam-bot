@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.Domain.Models.Kline do
+defmodule BeamBot.Exchanges.Domain.Kline do
   @moduledoc """
   Schema for storing klines data in TimescaleDB.
   """

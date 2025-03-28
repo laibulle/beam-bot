@@ -4,7 +4,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
   """
 
   import Ecto.Query
-  alias BeamBot.Exchanges.Domain.Models.Kline
+  alias BeamBot.Exchanges.Domain.Kline
   alias BeamBot.Repo
 
   @doc """
