@@ -32,6 +32,8 @@ defmodule BeamBot.Application do
       BeamBot.Infrastructure.RedisClient,
       # Start the small investor strategy worker
       BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker,
+      # Start the historical data sync worker
+      # BeamBot.Exchanges.Infrastructure.Workers.HistoricalDataSyncWorker,
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker
       {BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter, initial_streams}
