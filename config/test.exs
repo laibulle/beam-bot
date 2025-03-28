@@ -3,6 +3,9 @@ import Config
 # Only in tests, remove the complexity from the password hashing algorithm
 config :bcrypt_elixir, :log_rounds, 1
 
+config :beam_bot,
+  redis_url: "redis://localhost:6381"
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used

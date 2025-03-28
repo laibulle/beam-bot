@@ -1,8 +1,15 @@
 defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapterTest do
   use ExUnit.Case, async: true
   alias BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter
+  alias BeamBot.Infrastructure.RedisClient
 
   setup do
+    # Start Redis client if not already started
+    case Process.whereis(RedisClient) do
+      nil -> {:ok, _} = RedisClient.start_link([])
+      _pid -> :ok
+    end
+
     # Clean up Redis before each test
     {:ok, keys} = Application.get_env(:beam_bot, :redis_client).keys("klines:*")
 

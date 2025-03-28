@@ -34,6 +34,11 @@ defmodule BeamBot.Infrastructure.RedisClient do
     {:reply, result, state}
   end
 
+  def handle_call({:del, key}, _from, %{conn: conn} = state) do
+    result = Redix.command(conn, ["DEL", key])
+    {:reply, result, state}
+  end
+
   # Public API
 
   def ts_add(key, timestamp, value) do
@@ -46,5 +51,9 @@ defmodule BeamBot.Infrastructure.RedisClient do
 
   def keys(pattern) do
     GenServer.call(__MODULE__, {:keys, pattern})
+  end
+
+  def del(key) do
+    GenServer.call(__MODULE__, {:del, key})
   end
 end
