@@ -227,13 +227,22 @@ defmodule BeamBotWeb.TradingPairLive do
               <div class="font-medium text-gray-700 mb-2">Price Limits</div>
               <div class="space-y-1">
                 <div class="text-sm text-gray-600">
-                  <span class="font-medium">Min Price:</span> {@trading_pair.min_price}
+                  <span class="font-medium">Min Price:</span> {:erlang.float_to_binary(
+                    Decimal.to_float(@trading_pair.min_price),
+                    decimals: 4
+                  )}
                 </div>
                 <div class="text-sm text-gray-600">
-                  <span class="font-medium">Max Price:</span> {@trading_pair.max_price}
+                  <span class="font-medium">Max Price:</span> {:erlang.float_to_binary(
+                    Decimal.to_float(@trading_pair.max_price),
+                    decimals: 2
+                  )}
                 </div>
                 <div class="text-sm text-gray-600">
-                  <span class="font-medium">Tick Size:</span> {@trading_pair.tick_size}
+                  <span class="font-medium">Tick Size:</span> {:erlang.float_to_binary(
+                    Decimal.to_float(@trading_pair.tick_size),
+                    decimals: 4
+                  )}
                 </div>
               </div>
             </div>
@@ -241,13 +250,22 @@ defmodule BeamBotWeb.TradingPairLive do
               <div class="font-medium text-gray-700 mb-2">Quantity Limits</div>
               <div class="space-y-1">
                 <div class="text-sm text-gray-600">
-                  <span class="font-medium">Min Quantity:</span> {@trading_pair.min_qty}
+                  <span class="font-medium">Min Quantity:</span> {:erlang.float_to_binary(
+                    Decimal.to_float(@trading_pair.min_qty),
+                    decimals: 4
+                  )}
                 </div>
                 <div class="text-sm text-gray-600">
-                  <span class="font-medium">Max Quantity:</span> {@trading_pair.max_qty}
+                  <span class="font-medium">Max Quantity:</span> {:erlang.float_to_binary(
+                    Decimal.to_float(@trading_pair.max_qty),
+                    decimals: 2
+                  )}
                 </div>
                 <div class="text-sm text-gray-600">
-                  <span class="font-medium">Step Size:</span> {@trading_pair.step_size}
+                  <span class="font-medium">Step Size:</span> {:erlang.float_to_binary(
+                    Decimal.to_float(@trading_pair.step_size),
+                    decimals: 4
+                  )}
                 </div>
               </div>
             </div>
@@ -255,7 +273,10 @@ defmodule BeamBotWeb.TradingPairLive do
               <div class="font-medium text-gray-700 mb-2">Other Rules</div>
               <div class="space-y-1">
                 <div class="text-sm text-gray-600">
-                  <span class="font-medium">Min Notional:</span> {@trading_pair.min_notional}
+                  <span class="font-medium">Min Notional:</span> {:erlang.float_to_binary(
+                    Decimal.to_float(@trading_pair.min_notional),
+                    decimals: 2
+                  )}
                 </div>
               </div>
             </div>
@@ -495,13 +516,17 @@ defmodule BeamBotWeb.TradingPairLive do
                     <div class="bg-gray-50 p-3 rounded-lg">
                       <div class="text-sm text-gray-600">Final Value</div>
                       <div class="text-lg font-medium">
-                        {Float.round(Decimal.to_float(@simulation_results.final_value), 2)} USDT
+                        {:erlang.float_to_binary(Decimal.to_float(@simulation_results.final_value),
+                          decimals: 2
+                        )} USDT
                       </div>
                     </div>
                     <div class={"bg-gray-50 p-3 rounded-lg #{if Decimal.to_float(@simulation_results.roi_percentage) > 0, do: "text-green-600", else: "text-red-600"}"}>
                       <div class="text-sm text-gray-600">ROI</div>
                       <div class="text-lg font-medium">
-                        {Float.round(Decimal.to_float(@simulation_results.roi_percentage), 2)}%
+                        {:erlang.float_to_binary(Decimal.to_float(@simulation_results.roi_percentage),
+                          decimals: 2
+                        )}%
                       </div>
                     </div>
                   </div>
