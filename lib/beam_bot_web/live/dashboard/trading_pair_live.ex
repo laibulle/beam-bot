@@ -499,7 +499,7 @@ defmodule BeamBotWeb.TradingPairLive do
                     <div class={"bg-gray-50 p-3 rounded-lg #{if Decimal.to_float(@simulation_results.roi_percentage) > 0, do: "text-green-600", else: "text-red-600"}"}>
                       <div class="text-sm text-gray-600">ROI</div>
                       <div class="text-lg font-medium">
-                        {Decimal.to_float(@simulation_results.roi_percentage)}%
+                        {Float.round(Decimal.to_float(@simulation_results.roi_percentage), 2)}%
                       </div>
                     </div>
                   </div>
