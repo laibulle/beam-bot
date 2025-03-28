@@ -42,73 +42,91 @@ let liveSocket = new LiveSocket("/live", Socket, {
         this.renderChart();
       },
       updated() {
-        this.renderChart();
+        // Only update if the data has actually changed
+        const newData = JSON.parse(this.el.dataset.chartData);
+        if (this.chart && this.chart.data.datasets[0].data.length !== newData.length) {
+          this.renderChart();
+        }
       },
-      renderChart() {
-        const ctx = this.el.getContext('2d');
-        const data = JSON.parse(this.el.dataset.chartData);
-        
-        // Process the data for the chart
-        const candlesticks = data.map(d => ({
-          x: new Date(d[0]).getTime(), // Convert to milliseconds timestamp
-          o: parseFloat(d[1]), // open
-          h: parseFloat(d[2]), // high
-          l: parseFloat(d[3]), // low
-          c: parseFloat(d[4])  // close
-        }));
-        
+      destroyed() {
         if (this.chart) {
           this.chart.destroy();
+          this.chart = null;
         }
+      },
+      renderChart() {
+        try {
+          const ctx = this.el.getContext('2d');
+          const data = JSON.parse(this.el.dataset.chartData);
+          
+          // Process the data for the chart
+          const candlesticks = data.map(d => ({
+            x: new Date(d[0]).getTime(), // Convert to milliseconds timestamp
+            o: parseFloat(d[1]), // open
+            h: parseFloat(d[2]), // high
+            l: parseFloat(d[3]), // low
+            c: parseFloat(d[4])  // close
+          }));
+          
+          if (this.chart) {
+            this.chart.destroy();
+          }
 
-        this.chart = new Chart(ctx, {
-          type: 'candlestick',
-          data: {
-            datasets: [{
-              label: 'OHLC',
-              data: candlesticks,
-              color: {
-                up: '#22c55e',
-                down: '#ef4444',
-              }
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            parsing: false,
-            normalized: true,
-            plugins: {
-              legend: {
-                display: false
-              },
-              title: {
-                display: true,
-                text: 'Price History'
-              }
+          this.chart = new Chart(ctx, {
+            type: 'candlestick',
+            data: {
+              datasets: [{
+                label: 'OHLC',
+                data: candlesticks,
+                color: {
+                  up: '#22c55e',
+                  down: '#ef4444',
+                }
+              }]
             },
-            scales: {
-              x: {
-                type: 'time',
-                time: {
-                  unit: 'day',
-                  displayFormats: {
-                    day: 'MMM d'
-                  }
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              parsing: false,
+              normalized: true,
+              plugins: {
+                legend: {
+                  display: false
                 },
-                ticks: {
-                  source: 'auto',
-                  maxRotation: 0
+                title: {
+                  display: true,
+                  text: 'Price History'
                 }
               },
-              y: {
-                position: 'right',
-                beginAtZero: false
+              scales: {
+                x: {
+                  type: 'time',
+                  time: {
+                    unit: 'day',
+                    displayFormats: {
+                      day: 'MMM d'
+                    }
+                  },
+                  ticks: {
+                    source: 'auto',
+                    maxRotation: 0
+                  }
+                },
+                y: {
+                  position: 'right',
+                  beginAtZero: false
+                }
               }
             }
+          });
+        } catch (error) {
+          console.error('Error rendering chart:', error);
+          if (this.chart) {
+            this.chart.destroy();
+            this.chart = null;
           }
-        });
+        }
       }
     }
   }
