@@ -543,6 +543,8 @@ defmodule BeamBotWeb.TradingPairLive do
                             <th class="px-4 py-2 text-left font-medium text-gray-500">Date</th>
                             <th class="px-4 py-2 text-left font-medium text-gray-500">Type</th>
                             <th class="px-4 py-2 text-left font-medium text-gray-500">Price</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-500">Amount</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-500">Fee</th>
                           </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
@@ -556,7 +558,15 @@ defmodule BeamBotWeb.TradingPairLive do
                               <td class={"px-4 py-2 capitalize #{if trade.type == :buy, do: "text-green-600", else: "text-red-600"}"}>
                                 {trade.type}
                               </td>
-                              <td class="px-4 py-2">{trade.price} USDT</td>
+                              <td class="px-4 py-2">
+                                {:erlang.float_to_binary(Decimal.to_float(trade.price), decimals: 4)} USDT
+                              </td>
+                              <td class="px-4 py-2">
+                                {:erlang.float_to_binary(Decimal.to_float(trade.amount), decimals: 8)} BTC
+                              </td>
+                              <td class="px-4 py-2 text-gray-600">
+                                {:erlang.float_to_binary(Decimal.to_float(trade.fee), decimals: 2)} USDT
+                              </td>
                             </tr>
                           <% end %>
                         </tbody>

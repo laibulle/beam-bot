@@ -20,7 +20,9 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
           ma_short_period: integer(),
           ma_long_period: integer(),
           timeframe: String.t(),
-          activated_at: DateTime.t() | nil
+          activated_at: DateTime.t() | nil,
+          maker_fee: Decimal.t(),
+          taker_fee: Decimal.t()
         }
 
   defstruct [
@@ -32,7 +34,9 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
     :ma_short_period,
     :ma_long_period,
     :timeframe,
-    :activated_at
+    :activated_at,
+    :maker_fee,
+    :taker_fee
   ]
 
   @doc """
@@ -50,6 +54,8 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
     - ma_short_period: Short moving average period (default: 7)
     - ma_long_period: Long moving average period (default: 25)
     - timeframe: Candle timeframe (default: "1h")
+    - maker_fee: Maker fee percentage (default: 0.02%)
+    - taker_fee: Taker fee percentage (default: 0.1%)
 
   ## Examples
       iex> SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"))
@@ -66,6 +72,10 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
         value when is_struct(value, Decimal) -> value
       end
 
+    # Parse fee percentages
+    maker_fee = Keyword.get(options, :maker_fee, Decimal.new("0.02"))
+    taker_fee = Keyword.get(options, :taker_fee, Decimal.new("0.1"))
+
     %__MODULE__{
       trading_pair: trading_pair,
       investment_amount: investment_amount,
@@ -75,7 +85,9 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
       ma_short_period: Keyword.get(options, :ma_short_period, 7),
       ma_long_period: Keyword.get(options, :ma_long_period, 25),
       timeframe: Keyword.get(options, :timeframe, "1h"),
-      activated_at: DateTime.utc_now()
+      activated_at: DateTime.utc_now(),
+      maker_fee: maker_fee,
+      taker_fee: taker_fee
     }
   end
 

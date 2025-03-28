@@ -180,7 +180,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
     case SmallInvestorStrategy.analyze_market_with_data(previous_klines, strategy) do
       {:ok, analysis} ->
         state
-        |> execute_simulation_trade(analysis, current_price, timestamp)
+        |> execute_simulation_trade(analysis, current_price, timestamp, strategy)
         |> Map.put(:previous_klines, previous_klines)
 
       {:error, _reason} ->
@@ -210,13 +210,13 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
      }}
   end
 
-  defp execute_simulation_trade(state, analysis, current_price, timestamp) do
+  defp execute_simulation_trade(state, analysis, current_price, timestamp, strategy) do
     case {analysis.signal, state.current_position} do
       {:buy, :none} ->
-        execute_buy_trade(state, current_price, timestamp)
+        execute_buy_trade(state, current_price, timestamp, strategy)
 
       {:sell, :long} ->
-        execute_sell_trade(state, current_price, timestamp)
+        execute_sell_trade(state, current_price, timestamp, strategy)
 
       {_signal, _position} ->
         # Hold or invalid state combination
@@ -224,14 +224,18 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
     end
   end
 
-  defp execute_buy_trade(state, current_price, timestamp) do
+  defp execute_buy_trade(state, current_price, timestamp, strategy) do
     # Calculate position size (using all available cash for simplicity in simulation)
     position_size = Decimal.div(state.cash, current_price)
     cost = Decimal.mult(position_size, current_price)
 
+    # Calculate fees (using taker fee for market orders)
+    fee = Decimal.mult(cost, Decimal.div(strategy.taker_fee, Decimal.new("100")))
+    total_cost = Decimal.add(cost, fee)
+
     %{
       state
-      | cash: Decimal.sub(state.cash, cost),
+      | cash: Decimal.sub(state.cash, total_cost),
         holdings: Decimal.add(state.holdings, position_size),
         current_position: :long,
         trades: [
@@ -239,20 +243,25 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
             date: timestamp,
             type: :buy,
             price: current_price,
-            amount: position_size
+            amount: position_size,
+            fee: fee
           }
           | state.trades
         ]
     }
   end
 
-  defp execute_sell_trade(state, current_price, timestamp) do
+  defp execute_sell_trade(state, current_price, timestamp, strategy) do
     # Sell all holdings
     proceeds = Decimal.mult(state.holdings, current_price)
 
+    # Calculate fees (using taker fee for market orders)
+    fee = Decimal.mult(proceeds, Decimal.div(strategy.taker_fee, Decimal.new("100")))
+    net_proceeds = Decimal.sub(proceeds, fee)
+
     %{
       state
-      | cash: Decimal.add(state.cash, proceeds),
+      | cash: Decimal.add(state.cash, net_proceeds),
         holdings: Decimal.new("0"),
         current_position: :none,
         trades: [
@@ -260,7 +269,8 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
             date: timestamp,
             type: :sell,
             price: current_price,
-            amount: state.holdings
+            amount: state.holdings,
+            fee: fee
           }
           | state.trades
         ]
