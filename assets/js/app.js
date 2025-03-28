@@ -50,7 +50,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
         
         // Process the data for the chart
         const candlesticks = data.map(d => ({
-          x: DateTime.fromMillis(new Date(d[0]).getTime()).toJSDate(),
+          x: new Date(d[0]).getTime(), // Convert to milliseconds timestamp
           o: parseFloat(d[1]), // open
           h: parseFloat(d[2]), // high
           l: parseFloat(d[3]), // low
