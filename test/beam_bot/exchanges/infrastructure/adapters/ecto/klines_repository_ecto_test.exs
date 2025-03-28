@@ -1,14 +1,11 @@
 defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
-  use ExUnit.Case
+  use BeamBot.DataCase
   doctest BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto
   alias BeamBot.Exchanges.Domain.Models.Kline
   alias BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto
   alias BeamBot.Repo
 
   setup do
-    # Start the Repo
-    start_supervised!(BeamBot.Repo)
-
     # Create test data
     now = DateTime.utc_now()
 
