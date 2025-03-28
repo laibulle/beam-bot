@@ -96,6 +96,17 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
   end
 
   @doc """
+  Analyzes market data using provided historical data instead of fetching it.
+  This is used primarily for backtesting and simulation.
+  """
+  def analyze_market_with_data(klines, strategy) do
+    case calculate_indicators(klines, strategy) do
+      {:ok, indicators} -> generate_signals(indicators, strategy)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
   Executes a dollar-cost averaging (DCA) strategy, optimized for the small investor.
   Gradually invests by splitting the capital into smaller parts and investing at optimal times.
   """
@@ -122,27 +133,35 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
     # Extract closing prices
     closing_prices =
       Enum.map(klines, fn [_, _, _, _, close | _] ->
-        {close_float, _} = Float.parse(close)
-        close_float
+        case Float.parse(close) do
+          {close_float, _} -> close_float
+          :error -> nil
+        end
       end)
+      |> Enum.reject(&is_nil/1)
 
-    # Calculate technical indicators using our Indicators module
-    ma_short = Indicators.sma(closing_prices, strategy.ma_short_period)
-    ma_long = Indicators.sma(closing_prices, strategy.ma_long_period)
-    rsi = Indicators.rsi(closing_prices, 14)
-    bollinger = Indicators.bollinger_bands(closing_prices)
-    macd = Indicators.macd(closing_prices)
+    # Only calculate indicators if we have enough data
+    if length(closing_prices) >= strategy.ma_long_period * 3 do
+      # Calculate technical indicators using our Indicators module
+      ma_short = Indicators.sma(closing_prices, strategy.ma_short_period)
+      ma_long = Indicators.sma(closing_prices, strategy.ma_long_period)
+      rsi = Indicators.rsi(closing_prices, 14)
+      bollinger = Indicators.bollinger_bands(closing_prices)
+      macd = Indicators.macd(closing_prices)
 
-    {:ok,
-     %{
-       closing_prices: closing_prices,
-       ma_short: ma_short,
-       ma_long: ma_long,
-       rsi: rsi,
-       bollinger: bollinger,
-       macd: macd,
-       latest_price: List.last(closing_prices)
-     }}
+      {:ok,
+       %{
+         closing_prices: closing_prices,
+         ma_short: ma_short,
+         ma_long: ma_long,
+         rsi: rsi,
+         bollinger: bollinger,
+         macd: macd,
+         latest_price: List.last(closing_prices)
+       }}
+    else
+      {:error, "Not enough data points for indicator calculation"}
+    end
   end
 
   defp generate_signals(indicators, strategy) do
@@ -182,35 +201,78 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
   end
 
   defp check_rsi_signals(rsi, strategy) do
-    %{
-      buy: rsi <= strategy.rsi_oversold_threshold,
-      sell: rsi >= strategy.rsi_overbought_threshold,
-      value: rsi
-    }
+    case rsi do
+      nil ->
+        %{
+          buy: false,
+          sell: false,
+          value: nil
+        }
+
+      value ->
+        %{
+          buy: value <= strategy.rsi_oversold_threshold,
+          sell: value >= strategy.rsi_overbought_threshold,
+          value: value
+        }
+    end
   end
 
   defp check_ma_signals(ma_short, ma_long) do
-    %{
-      buy: ma_short > ma_long,
-      sell: ma_short < ma_long
-    }
+    case {ma_short, ma_long} do
+      {nil, _} ->
+        %{buy: false, sell: false}
+
+      {_, nil} ->
+        %{buy: false, sell: false}
+
+      {short, long} ->
+        %{
+          buy: short > long,
+          sell: short < long
+        }
+    end
   end
 
   defp check_bollinger_signals(latest_price, bollinger) do
-    %{
-      buy: latest_price < bollinger.lower_band,
-      sell: latest_price > bollinger.upper_band
-    }
+    case bollinger do
+      nil ->
+        %{
+          buy: false,
+          sell: false
+        }
+
+      %{lower_band: lower_band, upper_band: upper_band} ->
+        %{
+          buy: latest_price < lower_band,
+          sell: latest_price > upper_band
+        }
+    end
   end
 
   defp check_macd_signals(macd) do
-    histogram_increasing = macd && macd.histogram > macd.histogram
-    histogram_decreasing = macd && macd.histogram < macd.histogram
+    case macd do
+      nil ->
+        %{
+          buy: false,
+          sell: false
+        }
 
-    %{
-      buy: macd && macd.histogram > 0 && histogram_increasing,
-      sell: macd && macd.histogram < 0 && histogram_decreasing
-    }
+      %{histogram: histogram} = macd when not is_nil(histogram) ->
+        histogram_increasing = histogram > macd.histogram
+        histogram_decreasing = histogram < macd.histogram
+
+        %{
+          buy: histogram > 0 and histogram_increasing,
+          sell: histogram < 0 and histogram_decreasing
+        }
+
+      _ ->
+        %{
+          buy: false,
+          sell: false
+        }
+    end
   end
 
   defp buy_signal?(signal_data) do

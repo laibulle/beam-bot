@@ -522,7 +522,9 @@ defmodule BeamBotWeb.TradingPairLive do
                           <%= for trade <- @simulation_results.trades do %>
                             <tr class="hover:bg-gray-50">
                               <td class="px-4 py-2">
-                                {Calendar.strftime(trade.date, "%Y-%m-%d %H:%M:%S")}
+                                {trade.date
+                                |> DateTime.from_unix!(:millisecond)
+                                |> Calendar.strftime("%Y-%m-%d %H:%M:%S")}
                               </td>
                               <td class={"px-4 py-2 capitalize #{if trade.type == :buy, do: "text-green-600", else: "text-red-600"}"}>
                                 {trade.type}

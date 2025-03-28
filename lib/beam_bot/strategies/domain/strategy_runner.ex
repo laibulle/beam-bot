@@ -4,6 +4,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   """
 
   require Logger
+  alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
 
   @type execution_result :: %{
@@ -65,21 +66,10 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   def run_simulation(strategy, start_date, end_date) do
     %SmallInvestorStrategy{} = strategy
 
-    # Simulation implementation would fetch historical data
-    # and run the strategy for each time period
-
-    # For now, we'll just return a placeholder result
-    simulation_results = %{
-      start_date: start_date,
-      end_date: end_date,
-      trading_pair: strategy.trading_pair,
-      initial_investment: strategy.investment_amount,
-      final_value: Decimal.new("0"),
-      roi_percentage: Decimal.new("0"),
-      trades: []
-    }
-
-    {:ok, simulation_results}
+    with {:ok, klines} <- fetch_historical_klines(strategy, start_date, end_date),
+         {:ok, final_state} <- run_simulation_with_klines(strategy, klines) do
+      build_simulation_results(strategy, final_state, klines)
+    end
   end
 
   @doc """
@@ -139,5 +129,155 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
       :sell -> "RSI overbought + unfavorable MA crossover"
       :hold -> "No clear buy/sell signal"
     end
+  end
+
+  # Private functions for simulation
+
+  defp fetch_historical_klines(strategy, start_date, end_date) do
+    # Convert dates to Unix timestamps in milliseconds for Binance API
+    start_time = DateTime.to_unix(start_date, :millisecond)
+    end_time = DateTime.to_unix(end_date, :millisecond)
+
+    # Fetch historical data for the simulation period
+    # Use a larger limit to ensure we have enough data for the simulation period
+    BinanceReqAdapter.get_klines(
+      strategy.trading_pair,
+      strategy.timeframe,
+      1000,
+      start_time,
+      end_time
+    )
+  end
+
+  defp run_simulation_with_klines(strategy, klines) do
+    # Initialize simulation state
+    initial_state = %{
+      cash: strategy.investment_amount,
+      holdings: Decimal.new("0"),
+      trades: [],
+      current_position: :none,
+      previous_klines: []
+    }
+
+    # Run simulation through each kline
+    final_state =
+      Enum.reduce(klines, initial_state, fn kline, state ->
+        process_kline(kline, state, strategy)
+      end)
+
+    {:ok, final_state}
+  end
+
+  defp process_kline(kline, state, strategy) do
+    [timestamp, _open, _high, _low, close | _] = kline
+    current_price = Decimal.new(close)
+
+    # Keep a sliding window of previous klines for indicator calculation
+    previous_klines =
+      Enum.take([kline | state.previous_klines], max(strategy.ma_long_period * 3, 100))
+
+    # Analyze market at this point
+    case SmallInvestorStrategy.analyze_market_with_data(previous_klines, strategy) do
+      {:ok, analysis} ->
+        state
+        |> execute_simulation_trade(analysis, current_price, timestamp)
+        |> Map.put(:previous_klines, previous_klines)
+
+      {:error, _reason} ->
+        %{state | previous_klines: previous_klines}
+    end
+  end
+
+  defp build_simulation_results(strategy, final_state, klines) do
+    # Calculate final portfolio value and ROI
+    final_value =
+      Decimal.add(
+        final_state.cash,
+        Decimal.mult(final_state.holdings, get_last_price(klines))
+      )
+
+    roi_percentage = calculate_roi_percentage(strategy.investment_amount, final_value)
+
+    {:ok,
+     %{
+       start_date: DateTime.from_unix!(List.first(klines) |> List.first(), :millisecond),
+       end_date: DateTime.from_unix!(List.last(klines) |> List.first(), :millisecond),
+       trading_pair: strategy.trading_pair,
+       initial_investment: strategy.investment_amount,
+       final_value: final_value,
+       roi_percentage: roi_percentage,
+       trades: Enum.reverse(final_state.trades)
+     }}
+  end
+
+  defp execute_simulation_trade(state, analysis, current_price, timestamp) do
+    case {analysis.signal, state.current_position} do
+      {:buy, :none} ->
+        execute_buy_trade(state, current_price, timestamp)
+
+      {:sell, :long} ->
+        execute_sell_trade(state, current_price, timestamp)
+
+      {_signal, _position} ->
+        # Hold or invalid state combination
+        state
+    end
+  end
+
+  defp execute_buy_trade(state, current_price, timestamp) do
+    # Calculate position size (using all available cash for simplicity in simulation)
+    position_size = Decimal.div(state.cash, current_price)
+    cost = Decimal.mult(position_size, current_price)
+
+    %{
+      state
+      | cash: Decimal.sub(state.cash, cost),
+        holdings: Decimal.add(state.holdings, position_size),
+        current_position: :long,
+        trades: [
+          %{
+            date: timestamp,
+            type: :buy,
+            price: current_price,
+            amount: position_size
+          }
+          | state.trades
+        ]
+    }
+  end
+
+  defp execute_sell_trade(state, current_price, timestamp) do
+    # Sell all holdings
+    proceeds = Decimal.mult(state.holdings, current_price)
+
+    %{
+      state
+      | cash: Decimal.add(state.cash, proceeds),
+        holdings: Decimal.new("0"),
+        current_position: :none,
+        trades: [
+          %{
+            date: timestamp,
+            type: :sell,
+            price: current_price,
+            amount: state.holdings
+          }
+          | state.trades
+        ]
+    }
+  end
+
+  defp get_last_price(klines) do
+    [_timestamp, _open, _high, _low, close | _] = List.last(klines)
+    Decimal.new(close)
+  end
+
+  defp calculate_roi_percentage(initial_investment, final_value) do
+    profit = Decimal.sub(final_value, initial_investment)
+
+    Decimal.mult(
+      Decimal.div(profit, initial_investment),
+      Decimal.new("100")
+    )
   end
 end
