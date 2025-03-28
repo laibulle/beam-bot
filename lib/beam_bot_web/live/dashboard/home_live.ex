@@ -55,7 +55,12 @@ defmodule BeamBotWeb.HomeLive do
             <div class="symbol-item animate-fade-in" data-symbol={symbol.symbol}>
               <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 h-full">
                 <div class="p-4">
-                  <h5 class="text-lg font-semibold mb-2">{symbol.symbol}</h5>
+                  <div class="flex justify-between items-center mb-2">
+                    <h5 class="text-lg font-semibold">{symbol.symbol}</h5>
+                    <span class={"px-2 py-1 rounded-full text-xs font-medium #{if symbol.is_active, do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800"}"}>
+                      {if symbol.is_active, do: "ACTIVE", else: "INACTIVE"}
+                    </span>
+                  </div>
                   <div class="text-sm text-gray-600 mb-4 space-y-2">
                     <p><span class="font-medium">Base Asset:</span> {symbol.base_asset}</p>
                     <p><span class="font-medium">Quote Asset:</span> {symbol.quote_asset}</p>
