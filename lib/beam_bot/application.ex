@@ -29,8 +29,6 @@ defmodule BeamBot.Application do
     prod_children = [
       # Start the trading pairs sync worker
       BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
-      # Start the Redis client
-      BeamBot.Infrastructure.RedisClient,
       # Start the small investor strategy worker
       BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker,
       # Start the historical data sync worker
