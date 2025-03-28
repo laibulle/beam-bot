@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.Infrastructure.Repositories.KlinesRepositoryEcto do
+defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
   @moduledoc """
   Repository for storing and retrieving klines data using TimescaleDB.
   """
