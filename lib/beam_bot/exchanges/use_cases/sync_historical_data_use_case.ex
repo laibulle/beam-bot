@@ -37,8 +37,9 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataUseCase do
     # Fetch historical data from Binance
     with {:ok, klines} <-
            @binance_req_adapter.get_klines(symbol, interval, 1000, start_timestamp, end_timestamp),
-         {:ok, :stored} <- @klines_adapter.store_klines(symbol, interval, klines) do
-      {:ok, length(klines)}
+         {:ok, filtered_klines} <- filter_existing_klines(symbol, interval, klines),
+         {:ok, :stored} <- @klines_adapter.store_klines(symbol, interval, filtered_klines) do
+      {:ok, length(filtered_klines)}
     else
       {:error, reason} ->
         Logger.error("Failed to sync historical data: #{inspect(reason)}")
@@ -98,5 +99,34 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataUseCase do
     Enum.any?(results, fn {_symbol, intervals} ->
       Enum.any?(intervals, fn {_interval, result} -> match?({:error, _}, result) end)
     end)
+  end
+
+  # Private functions
+
+  defp filter_existing_klines(symbol, interval, klines) do
+    # Get existing timestamps from Redis
+    case @klines_adapter.get_klines(symbol, interval, 1000) do
+      {:ok, existing_klines} ->
+        # Extract timestamps from existing klines
+        existing_timestamps =
+          existing_klines
+          |> Enum.map(fn [timestamp | _] -> timestamp end)
+          |> MapSet.new()
+
+        # Filter out klines that already exist
+        filtered_klines =
+          klines
+          |> Enum.reject(fn [timestamp | _] -> MapSet.member?(existing_timestamps, timestamp) end)
+
+        {:ok, filtered_klines}
+
+      {:error, reason} ->
+        # If we can't get existing klines, assume none exist and proceed with all new klines
+        Logger.warning(
+          "Failed to get existing klines: #{inspect(reason)}. Proceeding with all new klines."
+        )
+
+        {:ok, klines}
+    end
   end
 end
