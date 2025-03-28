@@ -1,7 +1,7 @@
 defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
   @moduledoc """
-  Redis TimeSeries adapter for storing and retrieving klines (candlestick) data.
-  Uses Redis TimeSeries to efficiently store and query historical price data.
+  Redis adapter for storing and retrieving klines (candlestick) data.
+  Uses regular Redis commands to store and query historical price data.
   """
 
   require Logger
@@ -9,8 +9,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
   @redis_client Application.compile_env(:beam_bot, :redis_client)
 
   @doc """
-  Stores klines data in Redis TimeSeries.
-  Each kline is stored as a separate time series with the following format:
+  Stores klines data in Redis.
+  Each kline is stored as a separate key with the following format:
   - Key: klines:{symbol}:{interval}:{timestamp}
   - Value: [open, high, low, close, volume, ...] as a JSON string
 
@@ -30,16 +30,10 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
     results =
       Enum.map(klines, fn [timestamp, open, high, low, close, volume | rest] ->
         key = "klines:#{symbol}:#{interval}:#{timestamp}"
+        value = Jason.encode!([open, high, low, close, volume | rest])
 
-        # Store each value as a separate time series
-        with {:ok, _} <- @redis_client.ts_add("#{key}:open", timestamp, open),
-             {:ok, _} <- @redis_client.ts_add("#{key}:high", timestamp, high),
-             {:ok, _} <- @redis_client.ts_add("#{key}:low", timestamp, low),
-             {:ok, _} <- @redis_client.ts_add("#{key}:close", timestamp, close),
-             {:ok, _} <- @redis_client.ts_add("#{key}:volume", timestamp, volume) do
-          {:ok, key}
-        else
-          {:error, error} -> {:error, error}
+        case @redis_client.set(key, value) do
+          {:ok, "OK"} -> {:ok, key}
           error -> {:error, error}
         end
       end)
@@ -59,15 +53,15 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
   end
 
   @doc """
-  Retrieves klines data from Redis TimeSeries.
+  Retrieves klines data from Redis.
   Returns data in the same format as Binance's get_klines endpoint.
 
   ## Parameters
     - symbol: The trading pair symbol (e.g., "BTCUSDT")
     - interval: The interval between candlesticks (e.g., "1h", "4h", "1d")
+    - limit: Maximum number of klines to return (default: 500)
     - start_time: Start time in milliseconds (optional)
     - end_time: End time in milliseconds (optional)
-    - limit: Maximum number of klines to return (default: 500)
 
   ## Returns
     - {:ok, klines} on success, where klines is a list of kline data
@@ -115,8 +109,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
     Logger.debug("Extracting timestamp from key: #{key}")
 
     case String.split(key, ":") do
-      ["klines", _symbol, _interval, timestamp, field]
-      when field in ["open", "high", "low", "close", "volume"] ->
+      ["klines", _symbol, _interval, timestamp] ->
         Logger.debug("Found timestamp: #{timestamp}")
         String.to_integer(timestamp)
 
@@ -133,15 +126,11 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
   end
 
   defp fetch_kline(timestamp, symbol, interval) do
-    key_prefix = "klines:#{symbol}:#{interval}:#{timestamp}"
+    key = "klines:#{symbol}:#{interval}:#{timestamp}"
 
-    with {:ok, {_, open}} <- @redis_client.ts_get("#{key_prefix}:open"),
-         {:ok, {_, high}} <- @redis_client.ts_get("#{key_prefix}:high"),
-         {:ok, {_, low}} <- @redis_client.ts_get("#{key_prefix}:low"),
-         {:ok, {_, close}} <- @redis_client.ts_get("#{key_prefix}:close"),
-         {:ok, {_, volume}} <- @redis_client.ts_get("#{key_prefix}:volume") do
-      [timestamp, open, high, low, close, volume]
-    else
+    case @redis_client.get(key) do
+      {:ok, nil} -> nil
+      {:ok, value} -> [timestamp | Jason.decode!(value)]
       _ -> nil
     end
   end
@@ -151,29 +140,18 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Redis.KlinesRedisAdapter do
     {:error, "Failed to retrieve klines: #{inspect(error)}"}
   end
 
-  defp decode_values({:ok, {timestamp, value}}) do
-    case Jason.decode!(value) do
-      [open, high, low, close, volume | rest] ->
-        [timestamp, open, high, low, close, volume | rest]
-    end
-  end
-
-  defp decode_values(_) do
-    nil
-  end
-
   defp filter_by_time_range(klines, nil, nil), do: klines
 
   defp filter_by_time_range(klines, start_time, nil) do
-    Enum.filter(klines, fn [timestamp | _] -> timestamp >= start_time end)
+    Enum.filter(klines, fn timestamp -> timestamp >= start_time end)
   end
 
   defp filter_by_time_range(klines, nil, end_time) do
-    Enum.filter(klines, fn [timestamp | _] -> timestamp <= end_time end)
+    Enum.filter(klines, fn timestamp -> timestamp <= end_time end)
   end
 
   defp filter_by_time_range(klines, start_time, end_time) do
-    Enum.filter(klines, fn [timestamp | _] ->
+    Enum.filter(klines, fn timestamp ->
       timestamp >= start_time and timestamp <= end_time
     end)
   end

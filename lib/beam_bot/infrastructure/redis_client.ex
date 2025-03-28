@@ -1,6 +1,6 @@
 defmodule BeamBot.Infrastructure.RedisClient do
   @moduledoc """
-  Redis client module for handling Redis connections and TimeSeries operations.
+  Redis client module for handling Redis connections and operations.
   """
 
   use GenServer
@@ -19,13 +19,13 @@ defmodule BeamBot.Infrastructure.RedisClient do
   end
 
   @impl true
-  def handle_call({:ts_add, key, timestamp, value}, _from, %{conn: conn} = state) do
-    result = Redix.command(conn, ["TS.ADD", key, timestamp, value])
+  def handle_call({:set, key, value}, _from, %{conn: conn} = state) do
+    result = Redix.command(conn, ["SET", key, value])
     {:reply, result, state}
   end
 
-  def handle_call({:ts_get, key}, _from, %{conn: conn} = state) do
-    result = Redix.command(conn, ["TS.GET", key])
+  def handle_call({:get, key}, _from, %{conn: conn} = state) do
+    result = Redix.command(conn, ["GET", key])
     {:reply, result, state}
   end
 
@@ -41,12 +41,12 @@ defmodule BeamBot.Infrastructure.RedisClient do
 
   # Public API
 
-  def ts_add(key, timestamp, value) do
-    GenServer.call(__MODULE__, {:ts_add, key, timestamp, value})
+  def set(key, value) do
+    GenServer.call(__MODULE__, {:set, key, value})
   end
 
-  def ts_get(key) do
-    GenServer.call(__MODULE__, {:ts_get, key})
+  def get(key) do
+    GenServer.call(__MODULE__, {:get, key})
   end
 
   def keys(pattern) do
