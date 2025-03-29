@@ -105,6 +105,22 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryEcto do
   @doc """
   Retrieves klines for a given symbol and interval.
   Optionally filters by time range and limits the number of results.
+
+  ## Parameters
+    - symbol: The symbol to retrieve klines for
+    - interval: The interval to retrieve klines for
+    - limit: The maximum number of klines to retrieve
+    - start_time: The start time to filter by
+    - end_time: The end time to filter by
+
+  ## Examples
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryEcto.get_klines("BTCUSDT", "1h")
+      {:ok, [
+        %BeamBot.Exchanges.Domain.Kline{
+          symbol: "BTCUSDT",
+          interval: "1h",
+          timestamp: ~U[2021-01-01 00:00:00Z],
+          open: Decimal.new("10000.0"),
   """
   def get_klines(symbol, interval, limit \\ 500, start_time \\ nil, end_time \\ nil) do
     result =
