@@ -17,17 +17,17 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
           symbol: "BTCUSDT",
           platform: "binance",
           interval: "1m",
-          timestamp: 1499040000000,
-          open: "10000.0",
-          high: "10000.0",
-          low: "9000.0",
-          close: "10000.0",
-          volume: "1000.0",
-          quote_volume: "10000.0",
+          timestamp: ~U[2021-01-01 00:00:00Z],
+          open: Decimal.new("10000.0"),
+          high: Decimal.new("10000.0"),
+          low: Decimal.new("9000.0"),
+          close: Decimal.new("10000.0"),
+          volume: Decimal.new("1000.0"),
+          quote_volume: Decimal.new("10000.0"),
           trades_count: 1000,
-          taker_buy_base_volume: "1000.0",
-          taker_buy_quote_volume: "10000.0",
-          ignore: "17928899.62484339"
+          taker_buy_base_volume: Decimal.new("1000.0"),
+          taker_buy_quote_volume: Decimal.new("10000.0"),
+          ignore: Decimal.new("17928899.62484339")
         }
       ]
 
@@ -38,14 +38,13 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
       {:error, "Failed to store klines: reason"}
   """
   def store_klines(klines) when is_list(klines) do
-    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
-
     klines_maps =
       Enum.map(klines, fn kline ->
         kline
         |> Map.from_struct()
         |> Map.take([
           :symbol,
+          :platform,
           :interval,
           :timestamp,
           :open,
@@ -60,15 +59,14 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
           :taker_buy_quote_volume,
           :ignore
         ])
-        |> Map.put(:inserted_at, now)
-        |> Map.put(:updated_at, now)
+        |> convert_string_to_decimal()
       end)
 
     {n, _} =
       Repo.insert_all(
         Kline,
         klines_maps,
-        on_conflict: {:replace, [:updated_at]},
+        on_conflict: :nothing,
         conflict_target: [:symbol, :interval, :timestamp]
       )
 
@@ -76,6 +74,31 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
   rescue
     error ->
       {:error, "Failed to store klines: #{inspect(error)}"}
+  end
+
+  # Private function to convert string values to Decimal types
+  defp convert_string_to_decimal(map) do
+    decimal_fields = [
+      :open,
+      :high,
+      :low,
+      :close,
+      :volume,
+      :quote_volume,
+      :taker_buy_base_volume,
+      :taker_buy_quote_volume,
+      :ignore
+    ]
+
+    Enum.reduce(decimal_fields, map, fn field, acc ->
+      case Map.get(acc, field) do
+        nil -> acc
+        value when is_binary(value) -> Map.put(acc, field, Decimal.new(value))
+        value when is_number(value) -> Map.put(acc, field, Decimal.new(to_string(value)))
+        # Keep Decimal values as is
+        value -> Map.put(acc, field, value)
+      end
+    end)
   end
 
   @doc """

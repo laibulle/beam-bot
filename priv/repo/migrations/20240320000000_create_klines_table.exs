@@ -22,8 +22,6 @@ defmodule BeamBot.Repo.Migrations.CreateKlinesTable do
       add :taker_buy_base_volume, :decimal
       add :taker_buy_quote_volume, :decimal
       add :ignore, :decimal
-
-      timestamps()
     end
 
     # Create a composite primary key
