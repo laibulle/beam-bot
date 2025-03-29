@@ -8,6 +8,8 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
   @trading_pairs_adapter Application.compile_env(:beam_bot, :trading_pairs_repository)
   @days 365
 
+  @intervals ["1h", "1d", "1w", "1m"]
+
   @doc """
   Syncs all historical data for a platform.
 
@@ -27,12 +29,14 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
 
     # Sync historical data for each symbol
     Enum.each(symbols, fn trading_pair ->
-      SyncHistoricalDataForSymbolUseCase.sync_historical_data(
-        trading_pair.symbol,
-        "1h",
-        DateTime.utc_now(),
-        DateTime.add(DateTime.utc_now(), -@days * 24 * 60 * 60, :second)
-      )
+      Enum.each(@intervals, fn interval ->
+        SyncHistoricalDataForSymbolUseCase.sync_historical_data(
+          trading_pair.symbol,
+          interval,
+          DateTime.utc_now(),
+          DateTime.add(DateTime.utc_now(), -@days * 24 * 60 * 60, :second)
+        )
+      end)
     end)
   end
 end
