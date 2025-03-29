@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataUseCase do
+defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataForSymbolUseCase do
   @moduledoc """
   This module is responsible for syncing historical market data from Binance to Redis.
   It handles fetching klines data for different timeframes and storing them efficiently.
@@ -22,7 +22,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataUseCase do
     - {:error, reason} on failure
 
   ## Examples
-      iex> BeamBot.Exchanges.UseCases.SyncHistoricalDataUseCase.sync_historical_data("BTCUSDT", "1h", DateTime.utc_now(), DateTime.add(DateTime.utc_now(), -30 * 24 * 60 * 60, :second))
+      iex> BeamBot.Exchanges.UseCases.SyncHistoricalDataForSymbolUseCase.sync_historical_data("BTCUSDT", "1h", DateTime.utc_now(), DateTime.add(DateTime.utc_now(), -30 * 24 * 60 * 60, :second))
       {:ok, 720}
   """
   def sync_historical_data(symbol, interval, to, from) do
