@@ -5,6 +5,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
   alias BeamBot.Repo
 
   setup do
+    # Clean up the klines table before each test
+    Repo.delete_all(Kline)
+
     # Create test data with all fields from the implementation
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
@@ -49,37 +52,59 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
   end
 
   describe "store_klines/1" do
-    test "successfully stores klines with all fields", %{klines: klines} do
-      # Clear existing data
-      Repo.delete_all(Kline)
+    test "successfully stores klines with all fields" do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      assert {:ok, 2} = KlinesRepositoryEcto.store_klines(klines)
+      test_klines = [
+        %Kline{
+          # Different symbol
+          symbol: "ETHUSDT",
+          platform: "binance",
+          # Different interval
+          interval: "4h",
+          timestamp: now,
+          open: Decimal.new("2000.0"),
+          high: Decimal.new("2100.0"),
+          low: Decimal.new("1900.0"),
+          close: Decimal.new("2050.0"),
+          volume: Decimal.new("500.0"),
+          quote_volume: Decimal.new("1000000.0"),
+          trades_count: 2000,
+          taker_buy_base_volume: Decimal.new("250.0"),
+          taker_buy_quote_volume: Decimal.new("500000.0"),
+          ignore: Decimal.new("0")
+        }
+      ]
 
-      stored_kline = Repo.one(from k in Kline, order_by: [desc: k.timestamp], limit: 1)
-      first_kline = List.first(klines)
+      assert {:ok, 1} = KlinesRepositoryEcto.store_klines(test_klines)
 
-      assert stored_kline.symbol == first_kline.symbol
-      assert stored_kline.platform == first_kline.platform
-      assert stored_kline.interval == first_kline.interval
-      assert DateTime.compare(stored_kline.timestamp, first_kline.timestamp) == :eq
-      assert Decimal.equal?(stored_kline.open, first_kline.open)
-      assert Decimal.equal?(stored_kline.high, first_kline.high)
-      assert Decimal.equal?(stored_kline.low, first_kline.low)
-      assert Decimal.equal?(stored_kline.close, first_kline.close)
-      assert Decimal.equal?(stored_kline.volume, first_kline.volume)
-      assert Decimal.equal?(stored_kline.quote_volume, first_kline.quote_volume)
-      assert stored_kline.trades_count == first_kline.trades_count
-      assert Decimal.equal?(stored_kline.taker_buy_base_volume, first_kline.taker_buy_base_volume)
+      stored_kline = Repo.one(from k in Kline, where: k.symbol == "ETHUSDT", limit: 1)
+      test_kline = List.first(test_klines)
+
+      assert stored_kline.symbol == test_kline.symbol
+      assert stored_kline.platform == test_kline.platform
+      assert stored_kline.interval == test_kline.interval
+      assert DateTime.compare(stored_kline.timestamp, test_kline.timestamp) == :eq
+      assert Decimal.equal?(stored_kline.open, test_kline.open)
+      assert Decimal.equal?(stored_kline.high, test_kline.high)
+      assert Decimal.equal?(stored_kline.low, test_kline.low)
+      assert Decimal.equal?(stored_kline.close, test_kline.close)
+      assert Decimal.equal?(stored_kline.volume, test_kline.volume)
+      assert Decimal.equal?(stored_kline.quote_volume, test_kline.quote_volume)
+      assert stored_kline.trades_count == test_kline.trades_count
+      assert Decimal.equal?(stored_kline.taker_buy_base_volume, test_kline.taker_buy_base_volume)
 
       assert Decimal.equal?(
                stored_kline.taker_buy_quote_volume,
-               first_kline.taker_buy_quote_volume
+               test_kline.taker_buy_quote_volume
              )
 
-      assert Decimal.equal?(stored_kline.ignore, first_kline.ignore)
+      assert Decimal.equal?(stored_kline.ignore, test_kline.ignore)
     end
 
     test "handles string decimal values" do
+      Repo.delete_all(Kline)
+
       now = DateTime.utc_now() |> DateTime.truncate(:second)
 
       kline = %Kline{
@@ -103,6 +128,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
     end
 
     test "handles numeric decimal values" do
+      Repo.delete_all(Kline)
+
       now = DateTime.utc_now() |> DateTime.truncate(:second)
 
       kline = %Kline{
