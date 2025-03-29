@@ -10,18 +10,18 @@ defmodule BeamBot.Repo.Migrations.CreateKlinesTable do
       add :symbol, :string, null: false
       add :platform, :string, null: false
       add :interval, :string, null: false
-      add :timestamp, :bigint, null: false
-      add :open, :float, null: false
-      add :high, :float, null: false
-      add :low, :float, null: false
-      add :close, :float, null: false
-      add :volume, :float, null: false
+      add :timestamp, :timestamptz, null: false
+      add :open, :decimal, null: false
+      add :high, :decimal, null: false
+      add :low, :decimal, null: false
+      add :close, :decimal, null: false
+      add :volume, :decimal, null: false
       add :close_time, :bigint
-      add :quote_volume, :float
+      add :quote_volume, :decimal
       add :trades_count, :integer
-      add :taker_buy_base_volume, :float
-      add :taker_buy_quote_volume, :float
-      add :ignore, :float
+      add :taker_buy_base_volume, :decimal
+      add :taker_buy_quote_volume, :decimal
+      add :ignore, :decimal
 
       timestamps()
     end

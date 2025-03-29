@@ -11,36 +11,36 @@ defmodule BeamBot.Exchanges.Domain.Kline do
           symbol: String.t(),
           platform: String.t(),
           interval: String.t(),
-          timestamp: integer(),
-          open: float(),
-          high: float(),
-          low: float(),
-          close: float(),
-          volume: float(),
+          timestamp: DateTime.t(),
+          open: Decimal.t(),
+          high: Decimal.t(),
+          low: Decimal.t(),
+          close: Decimal.t(),
+          volume: Decimal.t(),
           close_time: integer() | nil,
-          quote_volume: float() | nil,
+          quote_volume: Decimal.t() | nil,
           trades_count: integer() | nil,
-          taker_buy_base_volume: float() | nil,
-          taker_buy_quote_volume: float() | nil,
-          ignore: float() | nil
+          taker_buy_base_volume: Decimal.t() | nil,
+          taker_buy_quote_volume: Decimal.t() | nil,
+          ignore: Decimal.t() | nil
         }
 
   schema "klines" do
     field :symbol, :string
     field :platform, :string
     field :interval, :string
-    field :timestamp, :integer
-    field :open, :float
-    field :high, :float
-    field :low, :float
-    field :close, :float
-    field :volume, :float
+    field :timestamp, :utc_datetime
+    field :open, :decimal
+    field :high, :decimal
+    field :low, :decimal
+    field :close, :decimal
+    field :volume, :decimal
     field :close_time, :integer
-    field :quote_volume, :float
+    field :quote_volume, :decimal
     field :trades_count, :integer
-    field :taker_buy_base_volume, :float
-    field :taker_buy_quote_volume, :float
-    field :ignore, :float
+    field :taker_buy_base_volume, :decimal
+    field :taker_buy_quote_volume, :decimal
+    field :ignore, :decimal
   end
 
   @doc false
