@@ -36,5 +36,42 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataUseCase do
 
     {:ok, res} =
       @binance_req_adapter.get_klines(symbol, interval, 1000, start_timestamp, end_timestamp)
+
+    klines =
+      Enum.map(res, fn [
+                         timestamp,
+                         open,
+                         high,
+                         low,
+                         close,
+                         volume,
+                         _close_time,
+                         quote_volume,
+                         trades_count,
+                         taker_buy_base_volume,
+                         taker_buy_quote_volume,
+                         ignored
+                       ] ->
+        datetime = DateTime.from_unix!(div(timestamp, 1000), :second)
+
+        %BeamBot.Exchanges.Domain.Kline{
+          symbol: symbol,
+          platform: "binance",
+          interval: interval,
+          timestamp: datetime,
+          open: Decimal.new(open),
+          high: Decimal.new(high),
+          low: Decimal.new(low),
+          close: Decimal.new(close),
+          volume: Decimal.new(volume),
+          quote_volume: Decimal.new(quote_volume),
+          trades_count: trades_count,
+          taker_buy_base_volume: Decimal.new(taker_buy_base_volume),
+          taker_buy_quote_volume: Decimal.new(taker_buy_quote_volume),
+          ignore: Decimal.new(ignored)
+        }
+      end)
+
+    @klines_adapter.store_klines(klines)
   end
 end

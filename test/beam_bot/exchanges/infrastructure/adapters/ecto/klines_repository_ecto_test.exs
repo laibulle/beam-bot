@@ -1,7 +1,7 @@
-defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
+defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryEctoTest do
   use BeamBot.DataCase
   alias BeamBot.Exchanges.Domain.Kline
-  alias BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto
+  alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryEcto
   alias BeamBot.Repo
 
   setup do

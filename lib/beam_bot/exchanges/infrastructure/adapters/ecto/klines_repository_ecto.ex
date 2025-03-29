@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
+defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryEcto do
   @moduledoc """
   Repository for storing and retrieving klines data using TimescaleDB.
   """
@@ -33,7 +33,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
         }
       ]
 
-      iex> BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto.store_klines(klines)
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryEcto.store_klines(klines)
       {:ok, 10}
 
       iex> store_klines(klines)
