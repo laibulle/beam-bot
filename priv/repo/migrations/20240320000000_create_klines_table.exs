@@ -24,7 +24,7 @@ defmodule BeamBot.Repo.Migrations.CreateKlinesTable do
     end
 
     # Create a composite primary key
-    execute "ALTER TABLE klines ADD PRIMARY KEY (symbol, interval, timestamp)"
+    execute "ALTER TABLE klines ADD PRIMARY KEY (symbol, platform, interval, timestamp)"
 
     # Convert the table to a TimescaleDB hypertable
     execute "SELECT create_hypertable('klines', 'timestamp', chunk_time_interval => 86400000, if_not_exists => TRUE)"

@@ -66,7 +66,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
         Kline,
         klines_maps,
         on_conflict: :nothing,
-        conflict_target: [:symbol, :interval, :timestamp]
+        conflict_target: [:symbol, :platform, :interval, :timestamp]
       )
 
     {:ok, n}
