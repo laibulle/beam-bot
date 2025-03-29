@@ -23,7 +23,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
   """
   def sync_all_historical_data_for_platform(_platform) do
     # Get all symbols for the platform
-    symbols = @symbols_adapter.list_trading_pairs()
+    symbols = @trading_pairs_adapter.list_trading_pairs()
 
     # Sync historical data for each symbol
     Enum.each(symbols, fn trading_pair ->
