@@ -5,6 +5,7 @@ defmodule BeamBot.Exchanges.Domain.Kline do
   """
 
   use Ecto.Schema
+  @primary_key false
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
