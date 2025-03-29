@@ -6,7 +6,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
 
   setup do
     # Create test data with all fields from the implementation
-    now = DateTime.utc_now()
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
 
     klines = [
       %Kline{
@@ -19,7 +19,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
         low: Decimal.new("49000.0"),
         close: Decimal.new("50500.0"),
         volume: Decimal.new("100.0"),
-        close_time: DateTime.add(now, 3600),
+        close_time: DateTime.add(now, 3600) |> DateTime.to_unix(),
         quote_volume: Decimal.new("5000000.0"),
         trades_count: 1000,
         taker_buy_base_volume: Decimal.new("50.0"),
@@ -36,7 +36,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
         low: Decimal.new("49000.0"),
         close: Decimal.new("50000.0"),
         volume: Decimal.new("120.0"),
-        close_time: now,
+        close_time: now |> DateTime.to_unix(),
         quote_volume: Decimal.new("5940000.0"),
         trades_count: 1200,
         taker_buy_base_volume: Decimal.new("60.0"),
@@ -83,16 +83,19 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
     end
 
     test "handles string decimal values" do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
       kline = %Kline{
         symbol: "BTCUSDT",
         platform: "binance",
         interval: "1h",
-        timestamp: DateTime.utc_now(),
+        timestamp: now,
         open: "50000.0",
         high: "51000.0",
         low: "49000.0",
         close: "50500.0",
         volume: "100.0",
+        close_time: now |> DateTime.to_unix(),
         quote_volume: "5000000.0",
         trades_count: 1000,
         taker_buy_base_volume: "50.0",
@@ -104,16 +107,19 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
     end
 
     test "handles numeric decimal values" do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
       kline = %Kline{
         symbol: "BTCUSDT",
         platform: "binance",
         interval: "1h",
-        timestamp: DateTime.utc_now(),
+        timestamp: now,
         open: Decimal.new("50000.0"),
         high: Decimal.new("51000.0"),
         low: Decimal.new("49000.0"),
         close: Decimal.new("50500.0"),
         volume: Decimal.new("100.0"),
+        close_time: now |> DateTime.to_unix(),
         quote_volume: Decimal.new("5000000.0"),
         trades_count: 1000,
         taker_buy_base_volume: Decimal.new("50.0"),
