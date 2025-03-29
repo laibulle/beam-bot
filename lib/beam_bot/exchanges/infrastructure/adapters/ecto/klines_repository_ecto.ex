@@ -12,27 +12,30 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
 
   ## Examples
 
-      iex> kline = %BeamBot.Exchanges.Domain.Kline{
-      ...>   symbol: "BTCUSDT",
-      ...>   platform: "binance",
-      ...>   interval: "1m",
-      ...>   timestamp: ~U[2021-01-01 00:00:00Z],
-      ...>   open: Decimal.new("10000.0"),
-      ...>   high: Decimal.new("10000.0"),
-      ...>   low: Decimal.new("9000.0"),
-      ...>   close: Decimal.new("10000.0"),
-      ...>   volume: Decimal.new("1000.0"),
-      ...>   quote_volume: Decimal.new("10000.0"),
-      ...>   trades_count: 1000,
-      ...>   taker_buy_base_volume: Decimal.new("1000.0"),
-      ...>   taker_buy_quote_volume: Decimal.new("10000.0"),
-      ...>   ignore: Decimal.new("17928899.62484339")
-      ...> }
-      iex> BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto.store_klines([kline])
-      {:ok, 1}
+      iex> klines = [
+        %BeamBot.Exchanges.Domain.Kline{
+          symbol: "BTCUSDT",
+          platform: "binance",
+          interval: "1m",
+          timestamp: ~U[2021-01-01 00:00:00Z],
+          open: Decimal.new("10000.0"),
+          high: Decimal.new("10000.0"),
+          low: Decimal.new("9000.0"),
+          close: Decimal.new("10000.0"),
+          volume: Decimal.new("1000.0"),
+          quote_volume: Decimal.new("10000.0"),
+          trades_count: 1000,
+          taker_buy_base_volume: Decimal.new("1000.0"),
+          taker_buy_quote_volume: Decimal.new("10000.0"),
+          ignore: Decimal.new("17928899.62484339")
+        }
+      ]
 
-      iex> store_klines([])
-      {:ok, 0}
+      iex> BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto.store_klines(klines)
+      {:ok, 10}
+
+      iex> store_klines(klines)
+      {:error, "Failed to store klines: reason"}
   """
   def store_klines(klines) when is_list(klines) do
     klines_maps =
