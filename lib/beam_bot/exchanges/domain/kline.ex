@@ -9,6 +9,7 @@ defmodule BeamBot.Exchanges.Domain.Kline do
 
   @type t :: %__MODULE__{
           symbol: String.t(),
+          platform: String.t(),
           interval: String.t(),
           timestamp: integer(),
           open: float(),
@@ -21,13 +22,12 @@ defmodule BeamBot.Exchanges.Domain.Kline do
           trades_count: integer() | nil,
           taker_buy_base_volume: float() | nil,
           taker_buy_quote_volume: float() | nil,
-          ignore: float() | nil,
-          inserted_at: DateTime.t() | nil,
-          updated_at: DateTime.t() | nil
+          ignore: float() | nil
         }
 
   schema "klines" do
     field :symbol, :string
+    field :platform, :string
     field :interval, :string
     field :timestamp, :integer
     field :open, :float
@@ -41,8 +41,6 @@ defmodule BeamBot.Exchanges.Domain.Kline do
     field :taker_buy_base_volume, :float
     field :taker_buy_quote_volume, :float
     field :ignore, :float
-
-    timestamps()
   end
 
   @doc false
@@ -50,6 +48,7 @@ defmodule BeamBot.Exchanges.Domain.Kline do
     kline
     |> cast(attrs, [
       :symbol,
+      :platform,
       :interval,
       :timestamp,
       :open,
@@ -66,6 +65,7 @@ defmodule BeamBot.Exchanges.Domain.Kline do
     ])
     |> validate_required([
       :symbol,
+      :platform,
       :interval,
       :timestamp,
       :open,

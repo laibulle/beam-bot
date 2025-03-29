@@ -8,6 +8,7 @@ defmodule BeamBot.Repo.Migrations.CreateKlinesTable do
     # Create the klines table
     create table(:klines, primary_key: false) do
       add :symbol, :string, null: false
+      add :platform, :string, null: false
       add :interval, :string, null: false
       add :timestamp, :bigint, null: false
       add :open, :float, null: false

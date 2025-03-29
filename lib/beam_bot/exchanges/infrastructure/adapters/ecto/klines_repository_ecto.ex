@@ -9,6 +9,33 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
 
   @doc """
   Stores a list of klines in the database.
+
+  ## Examples
+
+      iex> klines = [
+        %BeamBot.Exchanges.Domain.Kline{
+          symbol: "BTCUSDT",
+          platform: "binance",
+          interval: "1m",
+          timestamp: 1499040000000,
+          open: 10000.0,
+          high: 10000.0,
+          low: 9000.0,
+          close: 10000.0,
+          volume: 1000.0,
+          quote_volume: 10000.0,
+          trades_count: 1000,
+          taker_buy_base_volume: 1000.0,
+          taker_buy_quote_volume: 10000.0,
+          ignore: 17928899.62484339
+        }
+      ]
+
+      iex> BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto.store_klines(klines)
+      {:ok, 10}
+
+      iex> store_klines(klines)
+      {:error, "Failed to store klines: reason"}
   """
   def store_klines(klines) when is_list(klines) do
     now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
