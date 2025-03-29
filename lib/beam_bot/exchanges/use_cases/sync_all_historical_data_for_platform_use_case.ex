@@ -5,7 +5,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
 
   alias BeamBot.Exchanges.UseCases.SyncHistoricalDataForSymbolUseCase
 
-  @symbols_adapter Application.compile_env(:beam_bot, :symbols_repository)
+  @trading_pairs_adapter Application.compile_env(:beam_bot, :trading_pairs_repository)
   @days 365
 
   @doc """
@@ -21,14 +21,14 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
       iex> BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase.sync_all_historical_data_for_platform("binance")
       :ok
   """
-  def sync_all_historical_data_for_platform(platform) do
+  def sync_all_historical_data_for_platform(_platform) do
     # Get all symbols for the platform
-    symbols = @symbols_adapter.get_all_symbols(platform)
+    symbols = @symbols_adapter.list_trading_pairs()
 
     # Sync historical data for each symbol
-    Enum.each(symbols, fn symbol ->
+    Enum.each(symbols, fn trading_pair ->
       SyncHistoricalDataForSymbolUseCase.sync_historical_data(
-        symbol,
+        trading_pair.symbol,
         "1h",
         DateTime.utc_now(),
         DateTime.add(DateTime.utc_now(), @days * 24 * 60 * 60, :second)
