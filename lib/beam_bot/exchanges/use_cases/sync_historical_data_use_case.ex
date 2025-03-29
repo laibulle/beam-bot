@@ -22,17 +22,13 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataUseCase do
     - {:error, reason} on failure
 
   ## Examples
-      iex> BeamBot.Exchanges.UseCases.SyncHistoricalDataUseCase.sync_historical_data("BTCUSDT", "1h", 30)
+      iex> BeamBot.Exchanges.UseCases.SyncHistoricalDataUseCase.sync_historical_data("BTCUSDT", "1h", DateTime.utc_now(), DateTime.add(DateTime.utc_now(), -30 * 24 * 60 * 60, :second))
       {:ok, 720}
   """
-  def sync_historical_data(symbol, interval, days \\ 30) do
-    # Calculate start and end times
-    end_time = DateTime.utc_now()
-    start_time = DateTime.add(end_time, -days * 24 * 60 * 60, :second)
-
+  def sync_historical_data(symbol, interval, to, from) do
     # Convert to Unix timestamps in milliseconds for Binance API
-    start_timestamp = DateTime.to_unix(start_time, :millisecond)
-    end_timestamp = DateTime.to_unix(end_time, :millisecond)
+    start_timestamp = DateTime.to_unix(from, :millisecond)
+    end_timestamp = DateTime.to_unix(to, :millisecond)
 
     {:ok, res} =
       @binance_req_adapter.get_klines(symbol, interval, 1000, start_timestamp, end_timestamp)
