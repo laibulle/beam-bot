@@ -18,7 +18,6 @@ defmodule BeamBot.Exchanges.Domain.Kline do
           low: Decimal.t(),
           close: Decimal.t(),
           volume: Decimal.t(),
-          close_time: integer() | nil,
           quote_volume: Decimal.t() | nil,
           trades_count: integer() | nil,
           taker_buy_base_volume: Decimal.t() | nil,
@@ -36,7 +35,6 @@ defmodule BeamBot.Exchanges.Domain.Kline do
     field :low, :decimal
     field :close, :decimal
     field :volume, :decimal
-    field :close_time, :integer
     field :quote_volume, :decimal
     field :trades_count, :integer
     field :taker_buy_base_volume, :decimal
@@ -57,7 +55,6 @@ defmodule BeamBot.Exchanges.Domain.Kline do
       :low,
       :close,
       :volume,
-      :close_time,
       :quote_volume,
       :trades_count,
       :taker_buy_base_volume,

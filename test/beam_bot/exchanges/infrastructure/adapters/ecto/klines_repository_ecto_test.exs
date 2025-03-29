@@ -19,7 +19,6 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
         low: Decimal.new("49000.0"),
         close: Decimal.new("50500.0"),
         volume: Decimal.new("100.0"),
-        close_time: DateTime.add(now, 3600) |> DateTime.to_unix(),
         quote_volume: Decimal.new("5000000.0"),
         trades_count: 1000,
         taker_buy_base_volume: Decimal.new("50.0"),
@@ -36,7 +35,6 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
         low: Decimal.new("49000.0"),
         close: Decimal.new("50000.0"),
         volume: Decimal.new("120.0"),
-        close_time: now |> DateTime.to_unix(),
         quote_volume: Decimal.new("5940000.0"),
         trades_count: 1200,
         taker_buy_base_volume: Decimal.new("60.0"),
@@ -69,7 +67,6 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
       assert Decimal.equal?(stored_kline.low, first_kline.low)
       assert Decimal.equal?(stored_kline.close, first_kline.close)
       assert Decimal.equal?(stored_kline.volume, first_kline.volume)
-      assert DateTime.compare(stored_kline.close_time, first_kline.close_time) == :eq
       assert Decimal.equal?(stored_kline.quote_volume, first_kline.quote_volume)
       assert stored_kline.trades_count == first_kline.trades_count
       assert Decimal.equal?(stored_kline.taker_buy_base_volume, first_kline.taker_buy_base_volume)
@@ -95,7 +92,6 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
         low: "49000.0",
         close: "50500.0",
         volume: "100.0",
-        close_time: now |> DateTime.to_unix(),
         quote_volume: "5000000.0",
         trades_count: 1000,
         taker_buy_base_volume: "50.0",
@@ -119,7 +115,6 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
         low: Decimal.new("49000.0"),
         close: Decimal.new("50500.0"),
         volume: Decimal.new("100.0"),
-        close_time: now |> DateTime.to_unix(),
         quote_volume: Decimal.new("5000000.0"),
         trades_count: 1000,
         taker_buy_base_volume: Decimal.new("50.0"),
@@ -159,7 +154,6 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEctoTest do
       assert Decimal.equal?(retrieved_kline.low, kline.low)
       assert Decimal.equal?(retrieved_kline.close, kline.close)
       assert Decimal.equal?(retrieved_kline.volume, kline.volume)
-      assert DateTime.compare(retrieved_kline.close_time, kline.close_time) == :eq
       assert Decimal.equal?(retrieved_kline.quote_volume, kline.quote_volume)
       assert retrieved_kline.trades_count == kline.trades_count
       assert Decimal.equal?(retrieved_kline.taker_buy_base_volume, kline.taker_buy_base_volume)

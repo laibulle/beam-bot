@@ -16,7 +16,6 @@ defmodule BeamBot.Repo.Migrations.CreateKlinesTable do
       add :low, :decimal, null: false
       add :close, :decimal, null: false
       add :volume, :decimal, null: false
-      add :close_time, :bigint
       add :quote_volume, :decimal
       add :trades_count, :integer
       add :taker_buy_base_volume, :decimal

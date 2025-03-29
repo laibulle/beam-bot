@@ -52,7 +52,6 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
           :low,
           :close,
           :volume,
-          :close_time,
           :quote_volume,
           :trades_count,
           :taker_buy_base_volume,
