@@ -31,7 +31,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
         trading_pair.symbol,
         "1h",
         DateTime.utc_now(),
-        DateTime.add(DateTime.utc_now(), @days * 24 * 60 * 60, :second)
+        DateTime.add(DateTime.utc_now(), -@days * 24 * 60 * 60, :second)
       )
     end)
   end
