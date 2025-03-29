@@ -3,6 +3,8 @@ defmodule BeamBotWeb.TradingPairLive do
 
   @binance_req_adapter Application.compile_env(:beam_bot, :binance_req_adapter)
   @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
+  @klines_repository Application.compile_env(:beam_bot, :klines_repository)
+
   # Define refresh interval in milliseconds
   @refresh_interval 10_000
 
@@ -18,6 +20,8 @@ defmodule BeamBotWeb.TradingPairLive do
 
     {:ok, trading_pair} = @trading_pairs_repository.get_trading_pair_by_symbol(symbol)
     {:ok, data} = @binance_req_adapter.get_klines(symbol, "1h")
+
+    {:ok, data} = @klines_repository.get_klines(symbol, "1h")
 
     # Get strategy status if it exists
     strategy_status = SmallInvestorStrategyWorker.get_status()
