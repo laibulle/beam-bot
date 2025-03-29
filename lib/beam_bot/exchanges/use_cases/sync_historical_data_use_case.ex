@@ -7,7 +7,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataUseCase do
   require Logger
 
   @binance_req_adapter Application.compile_env(:beam_bot, :binance_req_adapter)
-  @klines_adapter Application.compile_env(:beam_bot, :klines_adapter)
+  @klines_adapter Application.compile_env(:beam_bot, :klines_repository)
 
   @doc """
   Syncs historical klines data for a trading pair from Binance to Redis.
