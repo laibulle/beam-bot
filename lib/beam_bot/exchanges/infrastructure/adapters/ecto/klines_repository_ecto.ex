@@ -3,6 +3,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Ecto.KlinesRepositoryEcto do
   Repository for storing and retrieving klines data using TimescaleDB.
   """
 
+  @behaviour BeamBot.Exchanges.Domain.Ports.KlinesRepository
+
   import Ecto.Query
   alias BeamBot.Exchanges.Domain.Kline
   alias BeamBot.Repo

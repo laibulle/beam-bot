@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.UseCases.Ports.ExchangesRepository do
+defmodule BeamBot.Exchanges.Domain.Ports.ExchangesRepository do
   @moduledoc """
   This module is responsible for managing the exchanges.
   """

@@ -1,4 +1,4 @@
-defmodule BeamBot.Exchanges.UseCases.Ports.TradingPairsRepository do
+defmodule BeamBot.Exchanges.Domain.Ports.TradingPairsRepository do
   @moduledoc """
   This module is responsible for managing the trading pairs.
   """

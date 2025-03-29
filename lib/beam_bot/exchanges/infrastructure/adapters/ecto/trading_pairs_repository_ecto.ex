@@ -2,7 +2,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.TradingPairsRepositoryE
   @moduledoc """
   This module is responsible for managing the trading pairs.
   """
-  @behaviour BeamBot.Exchanges.UseCases.Ports.TradingPairsRepository
+  @behaviour BeamBot.Exchanges.Domain.Ports.TradingPairsRepository
   alias BeamBot.Repo
 
   @impl true
