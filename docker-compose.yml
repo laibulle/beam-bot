@@ -10,7 +10,7 @@ services:
       - "5465:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./docker/postgres/postgresql.custom.conf:/etc/postgresql/postgresql.conf
+      #- ./docker/postgres/postgresql.custom.conf:/etc/postgresql/postgresql.conf
     command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
