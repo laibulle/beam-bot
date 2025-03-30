@@ -8,6 +8,9 @@ defmodule BeamBot.Socials.Infrastructure.Adapters.Socials.SocialAdapterTelegram 
 
   @doc """
   Fetches messages from a Telegram channel or group.
+
+  ## Example
+    iex > {:ok, messages} = BeamBot.Socials.Infrastructure.Adapters.Socials.SocialAdapterTelegram.fetch_messages(-1001929292929292929, 100)
   """
   def fetch_messages(channel_id, limit \\ 100) do
     token = Application.get_env(:beam_bot, :telegram_bot_token)
