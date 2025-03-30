@@ -26,6 +26,10 @@ config :git_hooks,
   ],
   project_path: project_path
 
+config :beam_bot,
+  binance_api_key: "HbAPCWKfr0Krm0awgNDr1YJ5VZizDtERNhzdpVbUjn3KEXHOtK7HyYLty99dK3aQ",
+  binance_api_secret_key: "vMYhQY7X7ysuZKqslyUzzLJmut5DuS1qIp1i7p1bhfgt40SxbrCRVQOXmZ5vLs19"
+
 # Configure your database
 config :beam_bot, BeamBot.Repo,
   username: "postgres",
@@ -111,5 +115,3 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
-
-import_config "dev.secret.exs"
