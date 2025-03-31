@@ -24,7 +24,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
       iex> BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase.sync_all_historical_data_for_platform("binance", self())
       :ok
   """
-  def sync_all_historical_data_for_platform(platform, progress_pid) do
+  def sync_all_historical_data_for_platform(_platform, progress_pid) do
     # Get all symbols for the platform
     symbols = @trading_pairs_adapter.list_trading_pairs()
     total_pairs = length(symbols)
