@@ -7,7 +7,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   use WebSockex
   require Logger
 
-  alias BeamBot.Exchanges.Domain.{Kline, MarkPriceUpdate, Trade}
+  alias BeamBot.Exchanges.Domain.{Kline, MarkPriceUpdate, Trade.AggregateTrade}
 
   @klines_repository Application.compile_env(:beam_bot, :klines_repository)
 
