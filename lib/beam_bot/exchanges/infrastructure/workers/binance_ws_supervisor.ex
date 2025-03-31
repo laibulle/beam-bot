@@ -28,12 +28,24 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
       "Starting Binance WebSocket supervisor with #{length(trading_pairs)} active trading pairs"
     )
 
-    # Define children specs for each trading pair with unique IDs
-    children =
+    # Start children asynchronously
+    tasks_with_pairs =
       Enum.map(trading_pairs, fn trading_pair ->
+        {Task.async(fn ->
+           BinanceWsAdapter.start_link(trading_pair.symbol, @default_streams)
+         end), trading_pair}
+      end)
+
+    # Wait for all tasks to complete and get their results
+    children =
+      Enum.map(tasks_with_pairs, fn {task, trading_pair} ->
+        {:ok, pid} = Task.await(task)
+
         %{
           id: {:binance_ws, trading_pair.symbol},
-          start: {BinanceWsAdapter, :start_link, [trading_pair.symbol, @default_streams]}
+          start: {BinanceWsAdapter, :start_link, [trading_pair.symbol, @default_streams]},
+          restart: :permanent,
+          type: :worker
         }
       end)
 
