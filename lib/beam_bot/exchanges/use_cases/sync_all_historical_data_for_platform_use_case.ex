@@ -8,7 +8,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
 
   @trading_pairs_adapter Application.compile_env(:beam_bot, :trading_pairs_repository)
 
-  @intervals %{"1h" => 30, "1d" => 365, "1w" => 365, "1m" => 3650}
+  @intervals %{"1m" => 1, "1h" => 30, "1d" => 365, "1w" => 365, "1M" => 3650}
 
   @doc """
   Syncs all historical data for a platform.
