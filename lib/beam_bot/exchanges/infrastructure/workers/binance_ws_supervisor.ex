@@ -28,19 +28,21 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
       "Starting Binance WebSocket supervisor with #{length(trading_pairs)} active trading pairs"
     )
 
-    # Start children asynchronously
-    tasks_with_pairs =
-      Enum.map(trading_pairs, fn trading_pair ->
-        {Task.async(fn ->
-           BinanceWsAdapter.start_link(trading_pair.symbol, @default_streams)
-         end), trading_pair}
-      end)
+    # Clean up any existing processes for these trading pairs
+    Enum.each(trading_pairs, fn trading_pair ->
+      case Registry.lookup(BeamBot.Registry, {BinanceWsAdapter, trading_pair.symbol}) do
+        [{pid, _}] ->
+          Logger.info("Found existing process for #{trading_pair.symbol}, terminating it")
+          Process.exit(pid, :normal)
 
-    # Wait for all tasks to complete and get their results
+        [] ->
+          :ok
+      end
+    end)
+
+    # Start children synchronously to avoid race conditions
     children =
-      Enum.map(tasks_with_pairs, fn {task, trading_pair} ->
-        {:ok, pid} = Task.await(task)
-
+      Enum.map(trading_pairs, fn trading_pair ->
         %{
           id: {:binance_ws, trading_pair.symbol},
           start: {BinanceWsAdapter, :start_link, [trading_pair.symbol, @default_streams]},
@@ -49,8 +51,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
         }
       end)
 
-    # Use one_for_all strategy to enable parallel startup of WebSocket connections
-    opts = [strategy: :one_for_all]
+    # Use one_for_one strategy to handle failures independently
+    opts = [strategy: :one_for_one]
     Supervisor.init(children, opts)
   end
 
