@@ -11,11 +11,13 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   alias BeamBot.Exchanges.Domain.Trade.AggregateTrade
 
   @base_url "wss://fstream.binance.com"
-  # 5 seconds
+  # 5 seconds for reconnection, but faster for initial connection
   @reconnect_delay 5_000
+  @initial_connect_delay 1_000
 
   def start_link(symbol, streams, state \\ %{}) when is_binary(symbol) and is_list(streams) do
-    Logger.info(
+    # Only log at debug level for initial connection to reduce startup noise
+    Logger.debug(
       "Starting Binance WebSocket adapter for symbol #{symbol} with streams: #{inspect(streams)}"
     )
 
@@ -27,7 +29,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
         streams: streams,
         connected: false,
         reconnect_count: 0,
-        last_message_time: nil
+        last_message_time: nil,
+        is_initial_connection: true
       })
 
     name = via_tuple(symbol)
@@ -97,15 +100,15 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   """
   def handle_disconnect(%{reason: reason}, state) do
     reconnect_count = (state[:reconnect_count] || 0) + 1
+    delay = if state[:is_initial_connection], do: @initial_connect_delay, else: @reconnect_delay
 
     Logger.warning(
-      "Disconnected from Binance WebSocket server for #{state.symbol}: #{inspect(reason)}. Reconnect attempt #{reconnect_count}"
+      "Disconnected from Binance WebSocket server for #{state.symbol}. Reason: #{inspect(reason)}. Reconnecting in #{delay / 1000} seconds..."
     )
 
-    # Reconnect with a delay
-    Process.sleep(@reconnect_delay)
-
-    {:reconnect, %{state | connected: false, reconnect_count: reconnect_count}}
+    {:reconnect,
+     %{state | connected: false, reconnect_count: reconnect_count, is_initial_connection: false},
+     delay}
   end
 
   @doc """

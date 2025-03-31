@@ -37,8 +37,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
         }
       end)
 
-    # Use one_for_one strategy to ensure each WebSocket connection is managed independently
-    opts = [strategy: :one_for_one]
+    # Use one_for_all strategy to enable parallel startup of WebSocket connections
+    opts = [strategy: :one_for_all]
     Supervisor.init(children, opts)
   end
 
