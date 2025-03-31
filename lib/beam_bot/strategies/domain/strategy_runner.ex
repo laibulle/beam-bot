@@ -208,6 +208,19 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
     end
   end
 
+  defp build_simulation_results(strategy, final_state, []) do
+    {:ok,
+     %{
+       start_date: DateTime.utc_now(),
+       end_date: DateTime.utc_now(),
+       trading_pair: strategy.trading_pair,
+       initial_investment: strategy.investment_amount,
+       final_value: final_state.cash,
+       roi_percentage: Decimal.new("0"),
+       trades: []
+     }}
+  end
+
   defp build_simulation_results(strategy, final_state, klines) do
     # Calculate final portfolio value and ROI
     final_value =
@@ -300,6 +313,8 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
         ]
     }
   end
+
+  defp get_last_price([]), do: Decimal.new("0")
 
   defp get_last_price(klines) do
     kline = List.last(klines)
