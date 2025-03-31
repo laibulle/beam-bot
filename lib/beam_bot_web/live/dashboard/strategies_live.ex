@@ -1,21 +1,34 @@
 defmodule BeamBotWeb.Dashboard.StrategiesLive do
   use BeamBotWeb, :live_view
 
+  require Logger
+
   alias BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase
+
+  @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
 
   @impl true
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(BeamBot.PubSub, "strategies:progress")
+    end
+
     {:ok,
      socket
      |> assign(:loading, false)
-     |> assign(:results, nil)
-     |> assign(:error, nil)}
+     |> assign(:results, [])
+     |> assign(:error, nil)
+     |> assign(:progress, 0)
+     |> assign(:total_pairs, 0)
+     |> assign(:task_ref, nil)}
   end
 
   @impl true
   def handle_event("find_best_pairs", params, socket) do
+    Logger.info("Starting find_best_pairs with params: #{inspect(params)}")
+
     # Set loading state
-    socket = assign(socket, loading: true, results: nil, error: nil)
+    socket = assign(socket, loading: true, results: [], error: nil, progress: 0)
 
     # Convert string params to atom keys
     converted_params = %{
@@ -26,34 +39,92 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
       days: params["days"]
     }
 
-    # Start async task
-    Task.async(fn ->
-      case FindBestTradingPairSmallInvestorUseCase.find_best_trading_pairs_small_investor(
-             converted_params
-           ) do
-        {:ok, results} -> {:ok, results}
-        {:error, reason} -> {:error, reason}
-      end
-    end)
+    # Get total number of active trading pairs
+    active_symbols =
+      @trading_pairs_repository.list_trading_pairs()
+      |> Enum.filter(& &1.is_active)
 
-    {:noreply, socket}
+    total_pairs = length(active_symbols)
+    Logger.info("Found #{total_pairs} active trading pairs")
+
+    # Start async task with streaming
+    task =
+      Task.async(fn ->
+        Logger.info("Starting task with params: #{inspect(converted_params)}")
+
+        result =
+          FindBestTradingPairSmallInvestorUseCase.find_best_trading_pairs_small_investor_stream(
+            converted_params,
+            fn result ->
+              Logger.info("Received result: #{inspect(result)}")
+              # Send progress update to LiveView
+              Phoenix.PubSub.broadcast(
+                BeamBot.PubSub,
+                "strategies:progress",
+                {:progress_update, result}
+              )
+            end
+          )
+
+        Logger.info("Task completed with result: #{inspect(result)}")
+        # Send final result to LiveView
+        Phoenix.PubSub.broadcast(BeamBot.PubSub, "strategies:progress", {:task_complete, result})
+        result
+      end)
+
+    # Monitor the task process
+    Process.monitor(task.pid)
+
+    {:noreply, assign(socket, total_pairs: total_pairs, task_ref: task.ref)}
   end
 
   @impl true
-  def handle_info({ref, {:ok, results}}, socket) when is_reference(ref) do
-    Process.demonitor(ref, [:flush])
-    {:noreply, assign(socket, loading: false, results: results)}
+  def handle_info({:progress_update, result}, socket) do
+    Logger.info("Received progress update: #{inspect(result)}")
+
+    # Update results list with new result and sort by ROI
+    new_results =
+      [result | socket.assigns.results]
+      |> Enum.reject(&Map.has_key?(&1, :error))
+      |> Enum.sort_by(
+        fn %{simulation_results: results} ->
+          Decimal.to_float(results.roi_percentage)
+        end,
+        :desc
+      )
+
+    # Calculate progress
+    progress = min(100, round(length(new_results) / socket.assigns.total_pairs * 100))
+    Logger.info("Updated progress: #{progress}% with #{length(new_results)} results")
+
+    {:noreply,
+     assign(socket,
+       results: new_results,
+       progress: progress,
+       total_pairs: socket.assigns.total_pairs
+     )}
   end
 
   @impl true
-  def handle_info({ref, {:error, reason}}, socket) when is_reference(ref) do
-    Process.demonitor(ref, [:flush])
+  def handle_info({:task_complete, {:ok, final_results}}, socket) do
+    Logger.info("Task completed with results: #{inspect(final_results)}")
+    Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
+    {:noreply, assign(socket, loading: false, progress: 100)}
+  end
+
+  @impl true
+  def handle_info({:task_complete, {:error, reason}}, socket) do
+    Logger.error("Task failed with reason: #{inspect(reason)}")
+    Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
     {:noreply, assign(socket, loading: false, error: reason)}
   end
 
   @impl true
-  def handle_info({:DOWN, _ref, :process, _pid, _reason}, socket) do
-    {:noreply, socket}
+  def handle_info({:DOWN, ref, :process, _pid, reason}, socket)
+      when is_reference(ref) and ref == socket.assigns.task_ref do
+    Logger.info("Task process down with reason: #{inspect(reason)}")
+    Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
+    {:noreply, assign(socket, task_ref: nil)}
   end
 
   @impl true
@@ -174,7 +245,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
                       >
                       </path>
                     </svg>
-                    Analyzing...
+                    Analyzing... {@progress}%
                   </span>
                 <% else %>
                   Find Best Pairs
@@ -205,7 +276,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
           </div>
         <% end %>
 
-        <%= if @results do %>
+        <%= if @results != [] do %>
           <div class="bg-white rounded-lg shadow overflow-hidden">
             <div class="px-4 py-5 sm:px-6">
               <h3 class="text-lg leading-6 font-medium text-gray-900">
