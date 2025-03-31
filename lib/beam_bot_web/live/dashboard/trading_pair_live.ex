@@ -291,7 +291,11 @@ defmodule BeamBotWeb.TradingPairLive do
       <div class="mt-8">
         <h6 class="text-lg font-semibold mb-4">Price Chart</h6>
         <div class="bg-white rounded-lg shadow p-6">
-          <canvas id="priceChart" phx-hook="PriceChart" data-chart-data={Jason.encode!(@data)}>
+          <canvas
+            id="priceChart"
+            phx-hook="PriceChart"
+            data-chart-data={Jason.encode!(transform_klines_for_chart(@data))}
+          >
           </canvas>
         </div>
       </div>
@@ -649,5 +653,17 @@ defmodule BeamBotWeb.TradingPairLive do
       <% end %>
     </.live_component>
     """
+  end
+
+  defp transform_klines_for_chart(klines) do
+    Enum.map(klines, fn kline ->
+      %{
+        x: kline.timestamp,
+        o: kline.open,
+        h: kline.high,
+        l: kline.low,
+        c: kline.close
+      }
+    end)
   end
 end

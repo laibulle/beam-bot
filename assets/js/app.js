@@ -58,14 +58,16 @@ let liveSocket = new LiveSocket("/live", Socket, {
         try {
           const ctx = this.el.getContext('2d');
           const data = JSON.parse(this.el.dataset.chartData);
+
+          console.log(data)
           
           // Process the data for the chart
           const candlesticks = data.map(d => ({
-            x: new Date(d[0]).getTime(), // Convert to milliseconds timestamp
-            o: parseFloat(d[1]), // open
-            h: parseFloat(d[2]), // high
-            l: parseFloat(d[3]), // low
-            c: parseFloat(d[4])  // close
+            x: new Date(d.x).getTime(), // Convert to milliseconds timestamp
+            o: parseFloat(d.o), // open
+            h: parseFloat(d.h), // high
+            l: parseFloat(d.l), // low
+            c: parseFloat(d.c)  // close
           }));
           
           if (this.chart) {
