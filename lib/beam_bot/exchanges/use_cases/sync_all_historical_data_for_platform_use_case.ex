@@ -33,26 +33,88 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
       "Starting to sync historical data for #{total_pairs} trading pairs with #{total_intervals} intervals each"
     )
 
-    # Sync historical data for each symbol
-    Enum.with_index(symbols, 1)
-    |> Enum.each(fn {trading_pair, index} ->
-      Logger.info("Processing trading pair #{index}/#{total_pairs}: #{trading_pair.symbol}")
+    # Create a list of all tasks to run
+    tasks =
+      for trading_pair <- symbols,
+          {interval, days} <- @intervals do
+        Task.async(fn ->
+          Logger.info("Starting sync for #{trading_pair.symbol} with interval #{interval}")
+          start_time = DateTime.utc_now()
 
-      Enum.with_index(@intervals, 1)
-      |> Enum.each(fn {{interval, days}, interval_index} ->
-        Logger.info(
-          "Syncing interval #{interval_index}/#{total_intervals}: #{interval} for #{trading_pair.symbol}"
-        )
+          try do
+            Logger.debug(
+              "Calling sync_historical_data for #{trading_pair.symbol} with interval #{interval}"
+            )
 
-        SyncHistoricalDataForSymbolUseCase.sync_historical_data(
-          trading_pair.symbol,
-          interval,
-          DateTime.utc_now(),
-          DateTime.add(DateTime.utc_now(), -days * 24 * 60 * 60, :second)
-        )
+            result =
+              SyncHistoricalDataForSymbolUseCase.sync_historical_data(
+                trading_pair.symbol,
+                interval,
+                DateTime.utc_now(),
+                DateTime.add(DateTime.utc_now(), -days * 24 * 60 * 60, :second)
+              )
+
+            end_time = DateTime.utc_now()
+            duration = DateTime.diff(end_time, start_time, :second)
+
+            Logger.info(
+              "Successfully synced #{trading_pair.symbol} with interval #{interval} in #{duration} seconds"
+            )
+
+            {:ok, {trading_pair.symbol, interval}}
+          rescue
+            e ->
+              Logger.error(
+                "Failed to sync #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(__STACKTRACE__)}"
+              )
+
+              {:error, {trading_pair.symbol, interval, e}}
+          catch
+            kind, e ->
+              Logger.error(
+                "Caught #{kind} while syncing #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(__STACKTRACE__)}"
+              )
+
+              {:error, {trading_pair.symbol, interval, {kind, e}}}
+          end
+        end)
+      end
+
+    Logger.info("Created #{length(tasks)} tasks, starting execution...")
+
+    # Process tasks in batches of 10 to maintain concurrency limit
+    results =
+      tasks
+      |> Enum.chunk_every(10)
+      |> Enum.flat_map(fn batch ->
+        batch
+        |> Enum.map(&Task.await(&1, :infinity))
       end)
-    end)
 
-    Logger.info("Completed syncing historical data for all trading pairs")
+    # Process results
+    successes =
+      Enum.count(results, fn
+        {:ok, _} -> true
+        _ -> false
+      end)
+
+    failures =
+      Enum.count(results, fn
+        {:error, _} -> true
+        _ -> false
+      end)
+
+    Logger.info("""
+    Completed syncing historical data:
+    - Total tasks: #{length(results)}
+    - Successful: #{successes}
+    - Failed: #{failures}
+    """)
+
+    if failures > 0 do
+      Logger.warning("Some tasks failed. Check the logs above for details.")
+    end
+
+    :ok
   end
 end
