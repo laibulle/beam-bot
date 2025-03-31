@@ -15,38 +15,51 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
 
   ## Parameters
     - platform: The platform to sync historical data for
+    - progress_pid: The PID to send progress updates to
 
   ## Returns
     - :ok
 
   ## Example
-      iex> BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase.sync_all_historical_data_for_platform("binance")
+      iex> BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase.sync_all_historical_data_for_platform("binance", self())
       :ok
   """
-  def sync_all_historical_data_for_platform(_platform) do
+  def sync_all_historical_data_for_platform(platform, progress_pid) do
     # Get all symbols for the platform
     symbols = @trading_pairs_adapter.list_trading_pairs()
     total_pairs = length(symbols)
     total_intervals = map_size(@intervals)
     total_tasks = total_pairs * total_intervals
 
-    Logger.info("""
-    Starting to sync historical data:
-    - Total pairs: #{total_pairs}
-    - Total intervals: #{total_intervals}
-    - Total tasks: #{total_tasks}
-    """)
-
-    # Create a process to track progress
-    progress_pid = spawn(fn -> progress_tracker(total_tasks) end)
+    send(
+      progress_pid,
+      {:sync_progress,
+       %{
+         status: :started,
+         total_pairs: total_pairs,
+         total_intervals: total_intervals,
+         total_tasks: total_tasks,
+         completed_tasks: 0,
+         successful_tasks: 0,
+         failed_tasks: 0,
+         percentage: 0
+       }}
+    )
 
     # Process trading pairs in chunks of 4 (4 pairs * 5 intervals = 20 parallel tasks)
     symbols
     |> Enum.chunk_every(4)
     |> Enum.with_index(1)
     |> Enum.each(fn {pairs_chunk, chunk_index} ->
-      Logger.info(
-        "Processing chunk #{chunk_index}/#{ceil(total_pairs / 20)} (#{length(pairs_chunk)} pairs)"
+      send(
+        progress_pid,
+        {:sync_progress,
+         %{
+           status: :processing_chunk,
+           chunk_index: chunk_index,
+           total_chunks: ceil(total_pairs / 4),
+           current_pairs: length(pairs_chunk)
+         }}
       )
 
       # Create tasks for this chunk
@@ -77,8 +90,6 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
                 "Successfully synced #{trading_pair.symbol} with interval #{interval} in #{duration} seconds"
               )
 
-              # Send progress update
-              send(progress_pid, {:task_completed, {:ok, {trading_pair.symbol, interval}}})
               {:ok, {trading_pair.symbol, interval}}
             rescue
               e ->
@@ -86,23 +97,11 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
                   "Failed to sync #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(__STACKTRACE__)}"
                 )
 
-                # Send progress update
-                send(
-                  progress_pid,
-                  {:task_completed, {:error, {trading_pair.symbol, interval, e}}}
-                )
-
                 {:error, {trading_pair.symbol, interval, e}}
             catch
               kind, e ->
                 Logger.error(
                   "Caught #{kind} while syncing #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(__STACKTRACE__)}"
-                )
-
-                # Send progress update
-                send(
-                  progress_pid,
-                  {:task_completed, {:error, {trading_pair.symbol, interval, {kind, e}}}}
                 )
 
                 {:error, {trading_pair.symbol, interval, {kind, e}}}
@@ -128,12 +127,22 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
           _ -> false
         end)
 
-      Logger.info("""
-      Completed chunk #{chunk_index}/#{ceil(total_pairs / 20)}:
-      - Total tasks: #{length(results)}
-      - Successful: #{successes}
-      - Failed: #{failures}
-      """)
+      completed = successes + failures
+      percentage = completed / total_tasks * 100
+
+      send(
+        progress_pid,
+        {:sync_progress,
+         %{
+           status: :chunk_completed,
+           chunk_index: chunk_index,
+           total_chunks: ceil(total_pairs / 4),
+           completed_tasks: completed,
+           successful_tasks: successes,
+           failed_tasks: failures,
+           percentage: percentage
+         }}
+      )
 
       if failures > 0 do
         Logger.warning(
@@ -142,51 +151,19 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
       end
     end)
 
-    # Wait for progress tracker to finish
-    send(progress_pid, :done)
-    Process.wait(progress_pid)
+    send(
+      progress_pid,
+      {:sync_progress,
+       %{
+         status: :completed,
+         total_tasks: total_tasks,
+         successful_tasks: total_tasks,
+         failed_tasks: 0,
+         percentage: 100
+       }}
+    )
 
     Logger.info("Completed syncing historical data for all trading pairs")
     :ok
-  end
-
-  defp progress_tracker(total_tasks) do
-    progress_tracker(total_tasks, 0, 0, 0)
-  end
-
-  defp progress_tracker(total_tasks, completed, successes, failures) do
-    receive do
-      {:task_completed, {:ok, _}} ->
-        new_completed = completed + 1
-        new_successes = successes + 1
-        percentage = new_completed / total_tasks * 100
-        print_progress(percentage, new_completed, total_tasks, new_successes, failures)
-        progress_tracker(total_tasks, new_completed, new_successes, failures)
-
-      {:task_completed, {:error, _}} ->
-        new_completed = completed + 1
-        new_failures = failures + 1
-        percentage = new_completed / total_tasks * 100
-        print_progress(percentage, new_completed, total_tasks, successes, new_failures)
-        progress_tracker(total_tasks, new_completed, successes, new_failures)
-
-      :done ->
-        Logger.info("""
-        Final Progress:
-        - Total tasks: #{total_tasks}
-        - Completed: #{completed}
-        - Successful: #{successes}
-        - Failed: #{failures}
-        - Progress: 100%
-        """)
-    end
-  end
-
-  defp print_progress(percentage, completed, total, successes, failures) do
-    Logger.info("""
-    Progress: #{Float.round(percentage, 2)}% (#{completed}/#{total} tasks)
-    - Successful: #{successes}
-    - Failed: #{failures}
-    """)
   end
 end

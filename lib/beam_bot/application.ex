@@ -28,9 +28,9 @@ defmodule BeamBot.Application do
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker,
       # Start the Registry for WebSocket connections
-      {Registry, keys: :unique, name: BeamBot.Registry},
+      {Registry, keys: :unique, name: BeamBot.Registry}
       # Start the Binance WebSocket supervisor
-      BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor
+      # BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor
     ]
 
     children =

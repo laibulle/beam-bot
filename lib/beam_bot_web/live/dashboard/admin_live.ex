@@ -8,7 +8,12 @@ defmodule BeamBotWeb.AdminLive do
   alias BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, sync_in_progress: false)}
+    {:ok,
+     assign(socket,
+       sync_in_progress: false,
+       sync_progress: nil,
+       sync_stats: nil
+     )}
   end
 
   def handle_event("sync_historical_data", _params, socket) do
@@ -17,11 +22,62 @@ defmodule BeamBotWeb.AdminLive do
     else
       # Start the sync process in a separate task
       Task.start(fn ->
-        SyncAllHistoricalDataForPlatformUseCase.sync_all_historical_data_for_platform("binance")
+        SyncAllHistoricalDataForPlatformUseCase.sync_all_historical_data_for_platform(
+          "binance",
+          self()
+        )
       end)
 
-      {:noreply, assign(socket, sync_in_progress: true)}
+      {:noreply,
+       assign(socket,
+         sync_in_progress: true,
+         sync_progress: %{status: :initializing},
+         sync_stats: nil
+       )}
     end
+  end
+
+  def handle_info({:sync_progress, progress}, socket) do
+    stats =
+      case progress.status do
+        :started ->
+          %{
+            total_pairs: progress.total_pairs,
+            total_intervals: progress.total_intervals,
+            total_tasks: progress.total_tasks,
+            percentage: 0
+          }
+
+        :processing_chunk ->
+          %{
+            chunk_index: progress.chunk_index,
+            total_chunks: progress.total_chunks,
+            current_pairs: progress.current_pairs,
+            percentage: 0
+          }
+
+        :chunk_completed ->
+          %{
+            completed_tasks: progress.completed_tasks,
+            successful_tasks: progress.successful_tasks,
+            failed_tasks: progress.failed_tasks,
+            percentage: progress.percentage
+          }
+
+        :completed ->
+          %{
+            total_tasks: progress.total_tasks,
+            successful_tasks: progress.successful_tasks,
+            failed_tasks: progress.failed_tasks,
+            percentage: 100
+          }
+      end
+
+    {:noreply,
+     assign(socket,
+       sync_progress: progress,
+       sync_stats: stats
+     )}
   end
 
   def render(assigns) do
@@ -32,19 +88,54 @@ defmodule BeamBotWeb.AdminLive do
       <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-xl font-semibold mb-4">Data Management</h2>
 
-        <button
-          phx-click="sync_historical_data"
-          disabled={@sync_in_progress}
-          class={[
-            "px-4 py-2 rounded-md text-white font-medium",
-            if(@sync_in_progress,
-              do: "bg-gray-400 cursor-not-allowed",
-              else: "bg-blue-600 hover:bg-blue-700"
-            )
-          ]}
-        >
-          {if @sync_in_progress, do: "Syncing...", else: "Sync Historical Data"}
-        </button>
+        <div class="space-y-4">
+          <button
+            phx-click="sync_historical_data"
+            disabled={@sync_in_progress}
+            class={[
+              "px-4 py-2 rounded-md text-white font-medium",
+              if(@sync_in_progress,
+                do: "bg-gray-400 cursor-not-allowed",
+                else: "bg-blue-600 hover:bg-blue-700"
+              )
+            ]}
+          >
+            {if @sync_in_progress, do: "Syncing...", else: "Sync Historical Data"}
+          </button>
+
+          <%= if not is_nil(@sync_in_progress) do %>
+            <div class="mt-4">
+              <%= if not is_nil(@sync_progress) and not is_nil(@sync_stats) do %>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                    style={"width: #{@sync_stats.percentage}%"}
+                  >
+                  </div>
+                </div>
+
+                <div class="mt-2 text-sm text-gray-600">
+                  <%= case @sync_progress.status do %>
+                    <% :started -> %>
+                      Initializing sync for {@sync_stats.total_pairs} pairs across {@sync_stats.total_intervals} intervals
+                    <% :processing_chunk -> %>
+                      Processing chunk {@sync_stats.chunk_index} of {@sync_stats.total_chunks} ({@sync_stats.current_pairs} pairs)
+                    <% :chunk_completed -> %>
+                      Progress: {Float.round(@sync_stats.percentage, 1)}%
+                      ({@sync_stats.completed_tasks} tasks completed) <br />
+                      Successful: {@sync_stats.successful_tasks} | Failed: {@sync_stats.failed_tasks}
+                    <% :completed -> %>
+                      Sync completed! {@sync_stats.successful_tasks} tasks successful, {@sync_stats.failed_tasks} failed
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="text-sm text-gray-600">
+                  Initializing sync process...
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
       </div>
     </div>
     """
