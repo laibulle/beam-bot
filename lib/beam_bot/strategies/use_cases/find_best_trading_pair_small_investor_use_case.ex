@@ -68,16 +68,32 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
               }
 
             {:error, reason} ->
+              Logger.error("Error simulating #{trading_pair.symbol}: #{inspect(reason)}")
+
               %{
                 trading_pair: trading_pair.symbol,
                 error: reason
               }
           end
         end,
-        max_concurrency: 100,
+        # Reduced concurrency to prevent overwhelming the system
+        max_concurrency: 50,
+        # 30 second timeout per task
+        timeout: 30_000,
         ordered: false
       )
-      |> Enum.map(fn {:ok, result} -> result end)
+      |> Enum.map(fn
+        {:ok, result} ->
+          result
+
+        {:exit, reason} ->
+          Logger.error("Task exited with reason: #{inspect(reason)}")
+          %{error: "Task execution failed", reason: reason}
+
+        {:error, reason} ->
+          Logger.error("Task error: #{inspect(reason)}")
+          %{error: "Task execution failed", reason: reason}
+      end)
 
     # Filter out errors and sort by ROI
     profitable_pairs =
