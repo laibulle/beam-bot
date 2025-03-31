@@ -11,7 +11,19 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
   @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
 
   # Default streams to subscribe to for each symbol
-  @default_streams ["markPrice", "aggTrade"]
+  @default_streams [
+    "markPrice",
+    "kline_1m",
+    "kline_5m",
+    "kline_15m",
+    "kline_30m",
+    "kline_1h",
+    "kline_4h",
+    "kline_6h",
+    "kline_8h",
+    "kline_12h",
+    "kline_1d"
+  ]
 
   def start_link(_opts) do
     Supervisor.start_link(__MODULE__, %{}, name: __MODULE__)

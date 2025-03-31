@@ -7,8 +7,13 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   use WebSockex
   require Logger
 
+  alias BeamBot.Exchanges.Domain.Kline
   alias BeamBot.Exchanges.Domain.MarkPriceUpdate
   alias BeamBot.Exchanges.Domain.Trade.AggregateTrade
+
+  @klines_repository Application.compile_env(:beam_bot, :klines_repository)
+
+  @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
 
   @base_url "wss://fstream.binance.com"
   # 5 seconds for reconnection, but faster for initial connection
@@ -231,17 +236,18 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
     {:ok, state}
   end
 
-  defp handle_message(message, state) do
-    # Handle other message types (like subscription responses)
-    Logger.info("Received message for #{state.symbol}: #{inspect(message)}")
-    {:ok, state}
-  end
-
   defp process_message(stream, data) do
     cond do
       String.contains?(stream, "@aggTrade") ->
         trade = AggregateTrade.from_binance(data)
-        Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:aggTrade:#{trade.symbol}", trade)
+
+        case @klines_repository.store_klines([trade]) do
+          {:ok, _} ->
+            Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:aggTrade:#{trade.symbol}", trade)
+
+          {:error, error} ->
+            Logger.error("Failed to store klines for #{trade.symbol}: #{inspect(error)}")
+        end
 
       String.contains?(stream, "@markPrice") ->
         mark_price = MarkPriceUpdate.from_binance(data)
@@ -252,8 +258,40 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
           mark_price
         )
 
+      String.contains?(stream, "@kline_") ->
+        kline = create_kline_from_binance(data)
+
+        case @klines_repository.store_klines([kline]) do
+          {:ok, _} ->
+            Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:kline:#{kline.symbol}", kline)
+            :ok
+
+          {:error, error} ->
+            Logger.error("Failed to store kline for #{kline.symbol}: #{inspect(error)}")
+            :error
+        end
+
       true ->
         Logger.warning("Unhandled stream type: #{stream}")
     end
+  end
+
+  defp create_kline_from_binance(%{"k" => kline_data, "s" => symbol}) do
+    %Kline{
+      symbol: symbol,
+      platform: "binance",
+      interval: kline_data["i"],
+      timestamp: DateTime.from_unix!(div(kline_data["t"], 1000), :second),
+      open: Decimal.new(kline_data["o"]),
+      high: Decimal.new(kline_data["h"]),
+      low: Decimal.new(kline_data["l"]),
+      close: Decimal.new(kline_data["c"]),
+      volume: Decimal.new(kline_data["v"]),
+      quote_volume: Decimal.new(kline_data["q"]),
+      trades_count: kline_data["n"],
+      taker_buy_base_volume: Decimal.new(kline_data["V"]),
+      taker_buy_quote_volume: Decimal.new(kline_data["Q"]),
+      ignore: Decimal.new(kline_data["B"])
+    }
   end
 end
