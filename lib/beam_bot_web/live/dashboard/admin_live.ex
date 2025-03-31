@@ -51,14 +51,18 @@ defmodule BeamBotWeb.AdminLive do
           }
 
         :processing_chunk ->
+          # Calculate percentage based on completed chunks
+          chunk_percentage = (progress.chunk_index - 1) / progress.total_chunks * 100
+
           %{
             chunk_index: progress.chunk_index,
             total_chunks: progress.total_chunks,
             current_pairs: progress.current_pairs,
-            percentage: 0
+            percentage: chunk_percentage
           }
 
         :chunk_completed ->
+          # Calculate percentage based on completed tasks
           %{
             completed_tasks: progress.completed_tasks,
             successful_tasks: progress.successful_tasks,
@@ -78,7 +82,8 @@ defmodule BeamBotWeb.AdminLive do
     {:noreply,
      assign(socket,
        sync_progress: progress,
-       sync_stats: stats
+       sync_stats: stats,
+       sync_in_progress: progress.status != :completed
      )}
   end
 
@@ -105,7 +110,7 @@ defmodule BeamBotWeb.AdminLive do
             {if @sync_in_progress, do: "Syncing...", else: "Sync Historical Data"}
           </button>
 
-          <%= if not is_nil(@sync_in_progress) and not is_nil(@sync_stats) do %>
+          <%= if not is_nil(@sync_stats) do %>
             <div class="mt-4">
               <div class="w-full bg-gray-200 rounded-full h-2.5">
                 <div
