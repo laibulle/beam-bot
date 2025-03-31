@@ -235,7 +235,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
                                 clip-rule="evenodd"
                               />
                             </svg>
-                            ROI: {Float.round(result.simulation_results.roi_percentage, 2)}%
+                            ROI: {Decimal.round(result.simulation_results.roi_percentage, 2)}%
                           </div>
                         </div>
                       </div>
@@ -244,7 +244,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
                           Initial: {result.simulation_results.initial_investment} USDT
                         </div>
                         <div class="text-sm text-gray-500">
-                          Final: {result.simulation_results.final_value} USDT
+                          Final: {Decimal.round(result.simulation_results.final_value, 2)} USDT
                         </div>
                       </div>
                     </div>
