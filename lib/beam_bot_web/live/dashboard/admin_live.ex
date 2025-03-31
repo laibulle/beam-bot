@@ -21,11 +21,12 @@ defmodule BeamBotWeb.AdminLive do
     if socket.assigns.sync_in_progress do
       {:noreply, socket}
     else
+      live_view_pid = self()
       # Start the sync process in a separate task
       Task.start(fn ->
         SyncAllHistoricalDataForPlatformUseCase.sync_all_historical_data_for_platform(
           "binance",
-          self()
+          live_view_pid
         )
       end)
 
