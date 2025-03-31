@@ -59,8 +59,6 @@ let liveSocket = new LiveSocket("/live", Socket, {
           const ctx = this.el.getContext('2d');
           const data = JSON.parse(this.el.dataset.chartData);
 
-          console.log(data)
-          
           // Process the data for the chart
           const candlesticks = data.map(d => ({
             x: new Date(d.x).getTime(), // Convert to milliseconds timestamp
