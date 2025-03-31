@@ -4,8 +4,6 @@ defmodule BeamBot.Exchanges.Domain.Trade do
   Contains structures and functions for working with trade data.
   """
 
-  alias __MODULE__
-
   @type t :: %__MODULE__.AggregateTrade{}
 
   @doc """
