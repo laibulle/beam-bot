@@ -31,9 +31,14 @@ defmodule BeamBot.Application do
       BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor
     ]
 
+    test_children = [
+      # Start the Registry for WebSocket connections in test mode
+      {Registry, keys: :unique, name: BeamBot.Registry}
+    ]
+
     children =
       case Application.get_env(:beam_bot, :env) do
-        :test -> base_children
+        :test -> base_children ++ test_children
         _ -> base_children ++ prod_children
       end
 
