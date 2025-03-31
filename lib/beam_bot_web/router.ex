@@ -27,6 +27,7 @@ defmodule BeamBotWeb.Router do
 
     live "/", HomeLive
     live "/dashboard", HomeLive
+    live "/dashboard/admin", AdminLive
     live "/dashboard/trading-pair/:symbol", TradingPairLive
     live "/dashboard/strategies", Dashboard.StrategiesLive
   end
