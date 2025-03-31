@@ -25,6 +25,23 @@ defmodule BeamBot.Exchanges.Domain.Kline do
           ignore: Decimal.t() | nil
         }
 
+  @derive {Jason.Encoder,
+           only: [
+             :symbol,
+             :platform,
+             :interval,
+             :timestamp,
+             :open,
+             :high,
+             :low,
+             :close,
+             :volume,
+             :quote_volume,
+             :trades_count,
+             :taker_buy_base_volume,
+             :taker_buy_quote_volume,
+             :ignore
+           ]}
   schema "klines" do
     field :symbol, :string
     field :platform, :string

@@ -19,7 +19,7 @@ defmodule BeamBotWeb.TradingPairLive do
     end
 
     {:ok, trading_pair} = @trading_pairs_repository.get_trading_pair_by_symbol(symbol)
-    {:ok, data} = @binance_req_adapter.get_klines(symbol, "1h")
+    # {:ok, data} = @binance_req_adapter.get_klines(symbol, "1h")
 
     {:ok, data} = @klines_repository.get_klines(symbol, "1h")
 
