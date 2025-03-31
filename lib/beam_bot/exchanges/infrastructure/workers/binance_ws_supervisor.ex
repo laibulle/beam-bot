@@ -40,16 +40,25 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
       end
     end)
 
-    # Start children synchronously to avoid race conditions
+    # Start children concurrently using Task.async_stream
     children =
-      Enum.map(trading_pairs, fn trading_pair ->
-        %{
-          id: {:binance_ws, trading_pair.symbol},
-          start: {BinanceWsAdapter, :start_link, [trading_pair.symbol, @default_streams]},
-          restart: :permanent,
-          type: :worker
-        }
-      end)
+      trading_pairs
+      |> Task.async_stream(
+        fn trading_pair ->
+          # Start the child process directly
+          {:ok, pid} = BinanceWsAdapter.start_link(trading_pair.symbol, @default_streams)
+          # Return the child spec with the already started pid
+          %{
+            id: {:binance_ws, trading_pair.symbol},
+            start: {Process, :dummy_start, [pid]},
+            restart: :permanent,
+            type: :worker
+          }
+        end,
+        max_concurrency: 100,
+        ordered: false
+      )
+      |> Enum.map(fn {:ok, child} -> child end)
 
     # Use one_for_one strategy to handle failures independently
     opts = [strategy: :one_for_one]
