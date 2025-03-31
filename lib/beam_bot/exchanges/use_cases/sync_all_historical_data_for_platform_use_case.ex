@@ -62,7 +62,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
                 "Calling sync_historical_data for #{trading_pair.symbol} with interval #{interval}"
               )
 
-              result =
+              {:ok, _} =
                 SyncHistoricalDataForSymbolUseCase.sync_historical_data(
                   trading_pair.symbol,
                   interval,
