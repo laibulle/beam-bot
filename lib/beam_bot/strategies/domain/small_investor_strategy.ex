@@ -142,12 +142,12 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
   end
 
   defp calculate_indicators(klines, strategy) do
-    # Extract closing prices
+    # Extract closing prices from Kline structs
     closing_prices =
-      Enum.map(klines, fn [_, _, _, _, close | _] ->
-        case Float.parse(close) do
-          {close_float, _} -> close_float
-          :error -> nil
+      Enum.map(klines, fn kline ->
+        case kline.close do
+          %Decimal{} = decimal -> Decimal.to_float(decimal)
+          _ -> nil
         end
       end)
       |> Enum.reject(&is_nil/1)

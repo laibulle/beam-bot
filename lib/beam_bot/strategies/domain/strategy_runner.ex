@@ -155,14 +155,18 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
     start_time = DateTime.to_unix(start_date, :millisecond)
     end_time = DateTime.to_unix(end_date, :millisecond)
 
+    # Convert Unix timestamps to DateTime for database query
+    start_datetime = DateTime.from_unix!(start_time, :millisecond)
+    end_datetime = DateTime.from_unix!(end_time, :millisecond)
+
     # Fetch historical data for the simulation period
     # Use a larger limit to ensure we have enough data for the simulation period
     @klines_repository.get_klines(
       strategy.trading_pair,
       strategy.timeframe,
       1000,
-      start_time,
-      end_time
+      start_datetime,
+      end_datetime
     )
   end
 
@@ -186,8 +190,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   end
 
   defp process_kline(kline, state, strategy) do
-    [timestamp, _open, _high, _low, close | _] = kline
-    current_price = Decimal.new(close)
+    current_price = kline.close
 
     # Keep a sliding window of previous klines for indicator calculation
     previous_klines =
@@ -197,7 +200,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
     case SmallInvestorStrategy.analyze_market_with_data(previous_klines, strategy) do
       {:ok, analysis} ->
         state
-        |> execute_simulation_trade(analysis, current_price, timestamp, strategy)
+        |> execute_simulation_trade(analysis, current_price, kline.timestamp, strategy)
         |> Map.put(:previous_klines, previous_klines)
 
       {:error, _reason} ->
@@ -215,10 +218,14 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
 
     roi_percentage = calculate_roi_percentage(strategy.investment_amount, final_value)
 
+    # Get first and last klines for date range
+    first_kline = List.first(klines)
+    last_kline = List.last(klines)
+
     {:ok,
      %{
-       start_date: DateTime.from_unix!(List.first(klines) |> List.first(), :millisecond),
-       end_date: DateTime.from_unix!(List.last(klines) |> List.first(), :millisecond),
+       start_date: first_kline.timestamp,
+       end_date: last_kline.timestamp,
        trading_pair: strategy.trading_pair,
        initial_investment: strategy.investment_amount,
        final_value: final_value,
@@ -295,8 +302,8 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   end
 
   defp get_last_price(klines) do
-    [_timestamp, _open, _high, _low, close | _] = List.last(klines)
-    Decimal.new(close)
+    kline = List.last(klines)
+    kline.close
   end
 
   defp calculate_roi_percentage(initial_investment, final_value) do
