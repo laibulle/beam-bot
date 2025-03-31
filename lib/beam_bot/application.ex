@@ -7,14 +7,6 @@ defmodule BeamBot.Application do
 
   @impl true
   def start(_type, _args) do
-    initial_streams = [
-      # "btcusdt@aggTrade",
-      # "ethusdt@aggTrade",
-      # "solusdt@aggTrade",
-      # "bnbusdt@aggTrade",
-      "btcusdt@markPrice"
-    ]
-
     base_children = [
       BeamBotWeb.Telemetry,
       BeamBot.Repo,
@@ -35,7 +27,8 @@ defmodule BeamBot.Application do
       # BeamBot.Exchanges.Infrastructure.Workers.HistoricalDataSyncWorker,
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker,
-      {BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter, initial_streams}
+      # Start the Binance WebSocket supervisor
+      BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor
     ]
 
     children =

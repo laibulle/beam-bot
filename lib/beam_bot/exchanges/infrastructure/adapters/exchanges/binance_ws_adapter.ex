@@ -2,6 +2,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   @moduledoc """
   WebSocket client for Binance USDⓈ-M Futures streams.
   Handles connection and message processing for market data streams.
+  Each instance manages a single symbol's streams.
   """
   use WebSockex
   require Logger
@@ -13,19 +14,28 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   # 5 seconds
   @reconnect_delay 5_000
 
-  def start_link(streams, state \\ %{}) when is_list(streams) do
-    Logger.info("Starting Binance WebSocket adapter with streams: #{inspect(streams)}")
-    url = build_url(streams)
+  def start_link(symbol, streams, state \\ %{}) when is_binary(symbol) and is_list(streams) do
+    Logger.info(
+      "Starting Binance WebSocket adapter for symbol #{symbol} with streams: #{inspect(streams)}"
+    )
+
+    url = build_url(symbol, streams)
 
     initial_state =
       Map.merge(state, %{
+        symbol: symbol,
         streams: streams,
         connected: false,
         reconnect_count: 0,
         last_message_time: nil
       })
 
-    WebSockex.start_link(url, __MODULE__, initial_state, name: __MODULE__)
+    name = via_tuple(symbol)
+    WebSockex.start_link(url, __MODULE__, initial_state, name: name)
+  end
+
+  def via_tuple(symbol) do
+    {:via, Registry, {BeamBot.Registry, {__MODULE__, symbol}}}
   end
 
   @doc """
@@ -34,7 +44,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   def handle_frame({:text, msg}, state) do
     case Jason.decode(msg) do
       {:ok, decoded_msg} ->
-        Logger.debug("Received message: #{inspect(decoded_msg)}")
+        Logger.debug("Received message for #{state.symbol}: #{inspect(decoded_msg)}")
 
         updated_state = %{
           state
@@ -45,18 +55,18 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
         handle_message(decoded_msg, updated_state)
 
       {:error, error} ->
-        Logger.error("Failed to decode message: #{inspect(error)}")
+        Logger.error("Failed to decode message for #{state.symbol}: #{inspect(error)}")
         {:ok, state}
     end
   end
 
   def handle_frame({:ping, _}, state) do
-    Logger.debug("Received ping from Binance WebSocket server")
+    Logger.debug("Received ping from Binance WebSocket server for #{state.symbol}")
     {:reply, :pong, state}
   end
 
   def handle_frame({:pong, _}, state) do
-    Logger.debug("Received pong response from Binance WebSocket server")
+    Logger.debug("Received pong response from Binance WebSocket server for #{state.symbol}")
     {:ok, state}
   end
 
@@ -64,15 +74,18 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   Handle WebSocket connection established
   """
   def handle_connect(_conn, state) do
-    Logger.info("Connected to Binance WebSocket server")
+    Logger.info("Connected to Binance WebSocket server for #{state.symbol}")
 
     # For reconnections, resubscribe to streams
     if state[:reconnect_count] > 0 do
       streams = state[:streams] || []
 
       if streams != [] do
-        Logger.info("Resubscribing to streams after reconnection: #{inspect(streams)}")
-        subscribe(streams)
+        Logger.info(
+          "Resubscribing to streams after reconnection for #{state.symbol}: #{inspect(streams)}"
+        )
+
+        subscribe(state.symbol, streams)
       end
     end
 
@@ -86,7 +99,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
     reconnect_count = (state[:reconnect_count] || 0) + 1
 
     Logger.warning(
-      "Disconnected from Binance WebSocket server: #{inspect(reason)}. Reconnect attempt #{reconnect_count}"
+      "Disconnected from Binance WebSocket server for #{state.symbol}: #{inspect(reason)}. Reconnect attempt #{reconnect_count}"
     )
 
     # Reconnect with a delay
@@ -99,41 +112,41 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   Handle WebSocket errors
   """
   def handle_info({:EXIT, _, reason}, state) do
-    Logger.error("WebSockex process exited: #{inspect(reason)}")
+    Logger.error("WebSockex process exited for #{state.symbol}: #{inspect(reason)}")
     {:ok, state}
   end
 
   @doc """
   Subscribe to additional streams after connection is established
   """
-  def subscribe(streams) when is_list(streams) do
+  def subscribe(symbol, streams) when is_binary(symbol) and is_list(streams) do
     subscription_msg = %{
       method: "SUBSCRIBE",
-      params: streams,
+      params: Enum.map(streams, &"#{symbol.downcase}@#{&1}"),
       id: :os.system_time(:millisecond)
     }
 
-    WebSockex.send_frame(__MODULE__, {:text, Jason.encode!(subscription_msg)})
+    WebSockex.send_frame(via_tuple(symbol), {:text, Jason.encode!(subscription_msg)})
   end
 
   @doc """
   Unsubscribe from streams
   """
-  def unsubscribe(streams) when is_list(streams) do
+  def unsubscribe(symbol, streams) when is_binary(symbol) and is_list(streams) do
     unsubscription_msg = %{
       method: "UNSUBSCRIBE",
-      params: streams,
+      params: Enum.map(streams, &"#{symbol.downcase}@#{&1}"),
       id: :os.system_time(:millisecond)
     }
 
-    WebSockex.send_frame(__MODULE__, {:text, Jason.encode!(unsubscription_msg)})
+    WebSockex.send_frame(via_tuple(symbol), {:text, Jason.encode!(unsubscription_msg)})
   end
 
   @doc """
   Ping the WebSocket server to check connectivity
   """
-  def ping do
-    case WebSockex.send_frame(__MODULE__, :ping) do
+  def ping(symbol) when is_binary(symbol) do
+    case WebSockex.send_frame(via_tuple(symbol), :ping) do
       :ok ->
         {:ok, "Connection is alive"}
 
@@ -145,24 +158,25 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   @doc """
   Check if the WebSocket process is alive
   """
-  def alive? do
-    case Process.whereis(__MODULE__) do
-      nil -> false
-      pid -> Process.alive?(pid)
+  def alive?(symbol) when is_binary(symbol) do
+    case Registry.lookup(BeamBot.Registry, {__MODULE__, symbol}) do
+      [{pid, _}] -> Process.alive?(pid)
+      [] -> false
     end
   end
 
   @doc """
   Get current connection status and details
   """
-  def connection_status do
-    case alive?() do
+  def connection_status(symbol) when is_binary(symbol) do
+    case alive?(symbol) do
       true ->
-        pid = Process.whereis(__MODULE__)
+        [{pid, _}] = Registry.lookup(BeamBot.Registry, {__MODULE__, symbol})
         state = :sys.get_state(pid)
 
         %{
           status: if(state.connected, do: :connected, else: :connecting),
+          symbol: state.symbol,
           pid: pid,
           connected: state.connected,
           reconnect_count: state.reconnect_count,
@@ -173,17 +187,17 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
         }
 
       false ->
-        %{status: :disconnected}
+        %{status: :disconnected, symbol: symbol}
     end
   end
 
   @doc """
   Get the list of streams the WebSocket is currently subscribed to
   """
-  def get_streams do
-    case alive?() do
+  def get_streams(symbol) when is_binary(symbol) do
+    case alive?(symbol) do
       true ->
-        pid = Process.whereis(__MODULE__)
+        [{pid, _}] = Registry.lookup(BeamBot.Registry, {__MODULE__, symbol})
         state = :sys.get_state(pid)
         {:ok, state.streams || []}
 
@@ -194,18 +208,14 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
 
   # Private functions
 
-  defp build_url([]) do
-    "#{@base_url}/ws"
-  end
-
-  defp build_url(streams) when is_list(streams) do
-    streams_string = Enum.join(streams, "/")
+  defp build_url(symbol, streams) when is_binary(symbol) and is_list(streams) do
+    streams_string = Enum.map_join(streams, "/", &"#{symbol.downcase}@#{&1}")
     "#{@base_url}/stream?streams=#{streams_string}"
   end
 
   defp handle_message(%{"stream" => stream, "data" => data}, state) do
     # Broadcast the message to subscribers
-    Logger.info("Received data from stream #{stream}: #{inspect(data)}")
+    Logger.info("Received data from stream #{stream} for #{state.symbol}: #{inspect(data)}")
 
     process_message(stream, data)
 
@@ -214,13 +224,13 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
 
   defp handle_message(%{"result" => nil, "id" => id}, state) do
     # Handle subscription/unsubscription confirmations
-    Logger.info("Received confirmation for request ID #{id}")
+    Logger.info("Received confirmation for request ID #{id} for #{state.symbol}")
     {:ok, state}
   end
 
   defp handle_message(message, state) do
     # Handle other message types (like subscription responses)
-    Logger.info("Received message: #{inspect(message)}")
+    Logger.info("Received message for #{state.symbol}: #{inspect(message)}")
     {:ok, state}
   end
 
