@@ -13,6 +13,9 @@ assets:
 .PHONY: init stop asdf assets
 
 build-docker-image:
-	docker build -t beam-bot .
+	docker build -t laibulle/beam-bot:latest .
 
-.PHONY: init stop asdf assets build-docker-image
+push-docker-image:
+	docker push laibulle/beam-bot:latest
+
+.PHONY: init stop asdf assets build-docker-image push-docker-image
