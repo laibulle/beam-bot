@@ -18,6 +18,12 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
   require Logger
 
   @trading_pairs_adapter Application.compile_env(:beam_bot, :trading_pairs_repository)
+
+  @max_concurrency Application.compile_env(
+                     :beam_bot,
+                     :max_best_trading_pairs_small_investor_concurrency
+                   )
+
   alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
 
   def find_best_trading_pairs_small_investor(
@@ -172,7 +178,7 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
               error_result
           end
         end,
-        max_concurrency: 10,
+        max_concurrency: @max_concurrency,
         timeout: 30_000,
         ordered: false
       )

@@ -14,6 +14,8 @@ config :beam_bot,
 
 config :beam_bot, :basic_auth, username: "admin", password: "admin123"
 
+config :beam_bot, :max_best_trading_pairs_small_investor_concurrency, 50
+
 # Configures the endpoint
 config :beam_bot, BeamBotWeb.Endpoint,
   url: [host: "localhost"],
