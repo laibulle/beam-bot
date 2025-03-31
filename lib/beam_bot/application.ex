@@ -23,8 +23,6 @@ defmodule BeamBot.Application do
       # BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
       # Start the small investor strategy worker
       BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker,
-      # Start the historical data sync worker
-      BeamBot.Exchanges.Infrastructure.Workers.HistoricalDataSyncWorker,
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker,
       # Start the Registry for WebSocket connections
