@@ -47,31 +47,37 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
       rsi_overbought_threshold: overbought
     ]
 
-    # Run simulations for each trading pair
+    # Run simulations concurrently for each trading pair
     results =
-      Enum.map(active_symbols, fn trading_pair ->
-        # Create strategy for this trading pair
-        strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
+      active_symbols
+      |> Task.async_stream(
+        fn trading_pair ->
+          # Create strategy for this trading pair
+          strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
 
-        # Run simulation
-        case StrategyRunner.run_simulation(strategy, start_date, end_date) do
-          {:ok, simulation_results} ->
-            Logger.info(
-              "Simulation results for #{trading_pair.symbol}: #{inspect(simulation_results)}"
-            )
+          # Run simulation
+          case StrategyRunner.run_simulation(strategy, start_date, end_date) do
+            {:ok, simulation_results} ->
+              Logger.info(
+                "Simulation results for #{trading_pair.symbol}: #{inspect(simulation_results)}"
+              )
 
-            %{
-              trading_pair: trading_pair.symbol,
-              simulation_results: simulation_results
-            }
+              %{
+                trading_pair: trading_pair.symbol,
+                simulation_results: simulation_results
+              }
 
-          {:error, reason} ->
-            %{
-              trading_pair: trading_pair.symbol,
-              error: reason
-            }
-        end
-      end)
+            {:error, reason} ->
+              %{
+                trading_pair: trading_pair.symbol,
+                error: reason
+              }
+          end
+        end,
+        max_concurrency: 100,
+        ordered: false
+      )
+      |> Enum.map(fn {:ok, result} -> result end)
 
     # Filter out errors and sort by ROI
     profitable_pairs =
