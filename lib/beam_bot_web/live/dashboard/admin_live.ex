@@ -105,36 +105,30 @@ defmodule BeamBotWeb.AdminLive do
             {if @sync_in_progress, do: "Syncing...", else: "Sync Historical Data"}
           </button>
 
-          <%= if not is_nil(@sync_in_progress) do %>
+          <%= if not is_nil(@sync_in_progress) and not is_nil(@sync_stats) do %>
             <div class="mt-4">
-              <%= if not is_nil(@sync_progress) and not is_nil(@sync_stats) do %>
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                  <div
-                    class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                    style={"width: #{@sync_stats.percentage}%"}
-                  >
-                  </div>
+              <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                  style={"width: #{@sync_stats.percentage}%"}
+                >
                 </div>
+              </div>
 
-                <div class="mt-2 text-sm text-gray-600">
-                  <%= case @sync_progress.status do %>
-                    <% :started -> %>
-                      Initializing sync for {@sync_stats.total_pairs} pairs across {@sync_stats.total_intervals} intervals
-                    <% :processing_chunk -> %>
-                      Processing chunk {@sync_stats.chunk_index} of {@sync_stats.total_chunks} ({@sync_stats.current_pairs} pairs)
-                    <% :chunk_completed -> %>
-                      Progress: {Float.round(@sync_stats.percentage, 1)}%
-                      ({@sync_stats.completed_tasks} tasks completed) <br />
-                      Successful: {@sync_stats.successful_tasks} | Failed: {@sync_stats.failed_tasks}
-                    <% :completed -> %>
-                      Sync completed! {@sync_stats.successful_tasks} tasks successful, {@sync_stats.failed_tasks} failed
-                  <% end %>
-                </div>
-              <% else %>
-                <div class="text-sm text-gray-600">
-                  Initializing sync process...
-                </div>
-              <% end %>
+              <div class="mt-2 text-sm text-gray-600">
+                <%= case @sync_progress.status do %>
+                  <% :started -> %>
+                    Initializing sync for {@sync_stats.total_pairs} pairs across {@sync_stats.total_intervals} intervals
+                  <% :processing_chunk -> %>
+                    Processing chunk {@sync_stats.chunk_index} of {@sync_stats.total_chunks} ({@sync_stats.current_pairs} pairs)
+                  <% :chunk_completed -> %>
+                    Progress: {Float.round(@sync_stats.percentage, 1)}%
+                    ({@sync_stats.completed_tasks} tasks completed) <br />
+                    Successful: {@sync_stats.successful_tasks} | Failed: {@sync_stats.failed_tasks}
+                  <% :completed -> %>
+                    Sync completed! {@sync_stats.successful_tasks} tasks successful, {@sync_stats.failed_tasks} failed
+                <% end %>
+              </div>
             </div>
           <% end %>
         </div>
