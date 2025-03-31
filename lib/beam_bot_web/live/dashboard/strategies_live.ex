@@ -322,10 +322,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
                         navigate={~p"/dashboard/trading-pair/#{result.trading_pair}"}
                         class="flex-1 min-w-0"
                       >
-                        <p
-                          navigate={~p"/dashboard/trading-pair/#{result.trading_pair}"}
-                          class="text-sm font-medium text-blue-600 truncate"
-                        >
+                        <p class="text-sm font-medium text-blue-600 truncate">
                           {result.trading_pair}
                         </p>
                         <div class="mt-2 flex">
