@@ -26,6 +26,20 @@ defmodule BeamBot.Exchanges.Domain.TradingPair do
           updated_at: DateTime.t() | nil
         }
 
+  @derive {Jason.Encoder,
+   only: [
+     :symbol,
+     :base_asset,
+     :quote_asset,
+     # :min_price,
+     # :max_price,
+     # :tick_size,
+     # :min_qty,
+     # :max_qty,
+     # :step_size,
+     # :min_notional,
+     :is_active
+   ]}
   schema "trading_pairs" do
     belongs_to :exchange, Exchange
     field :symbol, :string
