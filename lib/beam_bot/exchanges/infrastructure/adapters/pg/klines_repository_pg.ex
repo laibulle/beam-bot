@@ -284,7 +284,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Pg.KlinesRepositoryPg do
   end
 
   defp build_time_conditions(nil, nil), do: ""
-  defp build_time_conditions(start_time, nil), do: "AND timestamp >= $4"
-  defp build_time_conditions(nil, end_time), do: "AND timestamp <= $4"
-  defp build_time_conditions(start_time, end_time), do: "AND timestamp >= $4 AND timestamp <= $5"
+  defp build_time_conditions(_start_time, nil), do: "AND timestamp >= $4"
+  defp build_time_conditions(nil, _end_time), do: "AND timestamp <= $4"
+
+  defp build_time_conditions(_start_time, _end_time),
+    do: "AND timestamp >= $4 AND timestamp <= $5"
 end
