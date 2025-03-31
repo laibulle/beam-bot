@@ -4,6 +4,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
   """
 
   alias BeamBot.Exchanges.UseCases.SyncHistoricalDataForSymbolUseCase
+  require Logger
 
   @trading_pairs_adapter Application.compile_env(:beam_bot, :trading_pairs_repository)
 
@@ -25,10 +26,24 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
   def sync_all_historical_data_for_platform(_platform) do
     # Get all symbols for the platform
     symbols = @trading_pairs_adapter.list_trading_pairs()
+    total_pairs = length(symbols)
+    total_intervals = length(@intervals)
+
+    Logger.info(
+      "Starting to sync historical data for #{total_pairs} trading pairs with #{total_intervals} intervals each"
+    )
 
     # Sync historical data for each symbol
-    Enum.each(symbols, fn trading_pair ->
-      Enum.each(@intervals, fn {interval, days} ->
+    Enum.with_index(symbols, 1)
+    |> Enum.each(fn {trading_pair, index} ->
+      Logger.info("Processing trading pair #{index}/#{total_pairs}: #{trading_pair.symbol}")
+
+      Enum.with_index(@intervals, 1)
+      |> Enum.each(fn {{interval, days}, interval_index} ->
+        Logger.info(
+          "  Syncing interval #{interval_index}/#{total_intervals}: #{interval} for #{trading_pair.symbol}"
+        )
+
         SyncHistoricalDataForSymbolUseCase.sync_historical_data(
           trading_pair.symbol,
           interval,
@@ -37,5 +52,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
         )
       end)
     end)
+
+    Logger.info("Completed syncing historical data for all trading pairs")
   end
 end
