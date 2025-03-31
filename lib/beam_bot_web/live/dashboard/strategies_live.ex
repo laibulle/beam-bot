@@ -109,7 +109,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
   def handle_info({:task_complete, {:ok, final_results}}, socket) do
     Logger.info("Task completed with results: #{inspect(final_results)}")
     Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
-    {:noreply, assign(socket, loading: false, progress: 100)}
+    {:noreply, assign(socket, loading: false, progress: 100, results: socket.assigns.results)}
   end
 
   @impl true
