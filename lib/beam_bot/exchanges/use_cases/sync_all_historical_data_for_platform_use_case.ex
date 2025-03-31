@@ -7,7 +7,10 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
   require Logger
 
   @trading_pairs_adapter Application.compile_env(:beam_bot, :trading_pairs_repository)
-
+  @max_concurrency Application.compile_env(
+                     :beam_bot,
+                     :sync_all_historical_data_for_platform_concurrent_pairs
+                   )
   @intervals %{"1m" => 1, "1h" => 30, "1d" => 365, "1w" => 365, "1M" => 3650}
 
   @doc """
@@ -48,7 +51,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
 
     # Process trading pairs in chunks of 4 (4 pairs * 5 intervals = 20 parallel tasks)
     symbols
-    |> Enum.chunk_every(4)
+    |> Enum.chunk_every(@max_concurrency)
     |> Enum.with_index(1)
     |> Enum.each(fn {pairs_chunk, chunk_index} ->
       send(
