@@ -19,3 +19,6 @@ push-docker-image:
 	docker push laibulle/beam-bot:latest
 
 .PHONY: init stop asdf assets build-docker-image push-docker-image
+
+deploy: build-docker-image push-docker-image
+	cd ../infra && make install-beambot 
