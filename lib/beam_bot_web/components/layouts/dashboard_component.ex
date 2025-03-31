@@ -20,9 +20,9 @@ defmodule BeamBotWeb.Layouts.DashboardComponent do
   def render(assigns) do
     assigns =
       assign(assigns, :nav_links, [
-        # %{path: ~p"/dashboard/customized-tales", label: gettext("My Customized Tales")},
-        # %{path: ~p"/dashboard/characters", label: gettext("Characters")}
-        # %{path: ~p"/dashboard/player", label: gettext("Player")}
+        %{path: ~p"/dashboard", label: gettext("Symbols")},
+        %{path: ~p"/dashboard/strategies", label: gettext("Strategies")},
+        %{path: ~p"/dashboard/admin", label: gettext("Admin")}
       ])
 
     ~H"""

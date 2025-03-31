@@ -89,56 +89,62 @@ defmodule BeamBotWeb.AdminLive do
 
   def render(assigns) do
     ~H"""
-    <div class="container mx-auto px-4 py-8">
-      <h1 class="text-2xl font-bold mb-6">Admin Dashboard</h1>
+    <.live_component
+      module={BeamBotWeb.Layouts.DashboardComponent}
+      id="dashboard"
+      current_user={%{email: "fake"}}
+    >
+      <div class="container mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold mb-6">Admin Dashboard</h1>
 
-      <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold mb-4">Data Management</h2>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-xl font-semibold mb-4">Data Management</h2>
 
-        <div class="space-y-4">
-          <button
-            phx-click="sync_historical_data"
-            disabled={@sync_in_progress}
-            class={[
-              "px-4 py-2 rounded-md text-white font-medium",
-              if(@sync_in_progress,
-                do: "bg-gray-400 cursor-not-allowed",
-                else: "bg-blue-600 hover:bg-blue-700"
-              )
-            ]}
-          >
-            {if @sync_in_progress, do: "Syncing...", else: "Sync Historical Data"}
-          </button>
+          <div class="space-y-4">
+            <button
+              phx-click="sync_historical_data"
+              disabled={@sync_in_progress}
+              class={[
+                "px-4 py-2 rounded-md text-white font-medium",
+                if(@sync_in_progress,
+                  do: "bg-gray-400 cursor-not-allowed",
+                  else: "bg-blue-600 hover:bg-blue-700"
+                )
+              ]}
+            >
+              {if @sync_in_progress, do: "Syncing...", else: "Sync Historical Data"}
+            </button>
 
-          <%= if not is_nil(@sync_stats) do %>
-            <div class="mt-4">
-              <div class="w-full bg-gray-200 rounded-full h-2.5">
-                <div
-                  class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                  style={"width: #{@sync_stats.percentage}%"}
-                >
+            <%= if not is_nil(@sync_stats) do %>
+              <div class="mt-4">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                    style={"width: #{@sync_stats.percentage}%"}
+                  >
+                  </div>
+                </div>
+
+                <div class="mt-2 text-sm text-gray-600">
+                  <%= case @sync_progress.status do %>
+                    <% :started -> %>
+                      Initializing sync for {@sync_stats.total_pairs} pairs across {@sync_stats.total_intervals} intervals
+                    <% :processing_chunk -> %>
+                      Processing chunk {@sync_stats.chunk_index} of {@sync_stats.total_chunks} ({@sync_stats.current_pairs} pairs)
+                    <% :chunk_completed -> %>
+                      Progress: {Float.round(@sync_stats.percentage, 1)}%
+                      ({@sync_stats.completed_tasks} tasks completed) <br />
+                      Successful: {@sync_stats.successful_tasks} | Failed: {@sync_stats.failed_tasks}
+                    <% :completed -> %>
+                      Sync completed! {@sync_stats.successful_tasks} tasks successful, {@sync_stats.failed_tasks} failed
+                  <% end %>
                 </div>
               </div>
-
-              <div class="mt-2 text-sm text-gray-600">
-                <%= case @sync_progress.status do %>
-                  <% :started -> %>
-                    Initializing sync for {@sync_stats.total_pairs} pairs across {@sync_stats.total_intervals} intervals
-                  <% :processing_chunk -> %>
-                    Processing chunk {@sync_stats.chunk_index} of {@sync_stats.total_chunks} ({@sync_stats.current_pairs} pairs)
-                  <% :chunk_completed -> %>
-                    Progress: {Float.round(@sync_stats.percentage, 1)}%
-                    ({@sync_stats.completed_tasks} tasks completed) <br />
-                    Successful: {@sync_stats.successful_tasks} | Failed: {@sync_stats.failed_tasks}
-                  <% :completed -> %>
-                    Sync completed! {@sync_stats.successful_tasks} tasks successful, {@sync_stats.failed_tasks} failed
-                <% end %>
-              </div>
-            </div>
-          <% end %>
+            <% end %>
+          </div>
         </div>
       </div>
-    </div>
+    </.live_component>
     """
   end
 end
