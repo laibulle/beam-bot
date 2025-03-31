@@ -90,11 +90,6 @@ ENV LC_ALL en_US.UTF-8
 WORKDIR "/app"
 RUN chown nobody /app
 
-# Add ImageMagick to the project's dependencies
-RUN apt-get update && apt-get install -y \
-  imagemagick wkhtmltopdf\
-  && rm -rf /var/lib/apt/lists/*
-
 # set runner ENV
 ENV MIX_ENV="prod"
 
