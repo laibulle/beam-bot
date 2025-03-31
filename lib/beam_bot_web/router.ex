@@ -23,6 +23,7 @@ defmodule BeamBotWeb.Router do
     live "/", HomeLive
     live "/dashboard", HomeLive
     live "/dashboard/trading-pair/:symbol", TradingPairLive
+    live "/dashboard/strategies", Dashboard.StrategiesLive
   end
 
   # Other scopes may use custom stacks.
