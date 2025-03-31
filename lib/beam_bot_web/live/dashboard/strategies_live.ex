@@ -318,13 +318,16 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
                 <%= for result <- @results do %>
                   <li class="px-4 py-4 sm:px-6">
                     <div class="flex items-center justify-between">
-                      <div class="flex-1 min-w-0">
-                        <.link
+                      <.link
+                        navigate={~p"/dashboard/trading-pair/#{result.trading_pair}"}
+                        class="flex-1 min-w-0"
+                      >
+                        <p
                           navigate={~p"/dashboard/trading-pair/#{result.trading_pair}"}
                           class="text-sm font-medium text-blue-600 truncate"
                         >
                           {result.trading_pair}
-                        </.link>
+                        </p>
                         <div class="mt-2 flex">
                           <div class="flex items-center text-sm text-gray-500">
                             <svg
@@ -342,7 +345,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
                             ROI: {Decimal.round(result.simulation_results.roi_percentage, 2)}%
                           </div>
                         </div>
-                      </div>
+                      </.link>
                       <div class="ml-4 flex-shrink-0">
                         <div class="text-sm text-gray-900">
                           Initial: {result.simulation_results.initial_investment} USDT
