@@ -17,6 +17,12 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
     Supervisor.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
+  @doc """
+  Custom start function that returns the already started pid.
+  This is used to supervise pre-started processes.
+  """
+  def start_child(pid) when is_pid(pid), do: {:ok, pid}
+
   @impl true
   def init(_state) do
     # Get all active trading pairs
@@ -50,7 +56,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
           # Return the child spec with the already started pid
           %{
             id: {:binance_ws, trading_pair.symbol},
-            start: {Process, :dummy_start, [pid]},
+            start: {__MODULE__, :start_child, [pid]},
             restart: :permanent,
             type: :worker
           }
