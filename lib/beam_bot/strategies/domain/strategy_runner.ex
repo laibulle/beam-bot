@@ -4,7 +4,6 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   """
 
   require Logger
-  alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
 
   # @klines_repository Application.compile_env!(:beam_bot, :klines_repository)
@@ -142,7 +141,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
 
     # Fetch historical data for the simulation period
     # Use a larger limit to ensure we have enough data for the simulation period
-    BinanceReqAdapter.get_klines(
+    @klines_repository.get_klines(
       strategy.trading_pair,
       strategy.timeframe,
       1000,
