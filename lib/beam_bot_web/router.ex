@@ -2,6 +2,7 @@ defmodule BeamBotWeb.Router do
   use BeamBotWeb, :router
 
   import BeamBotWeb.UserAuth
+  import Plug.BasicAuth
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -17,10 +18,8 @@ defmodule BeamBotWeb.Router do
     plug :accepts, ["json"]
   end
 
-  pipeline :basic_auth do
-    plug Plug.BasicAuth,
-      username: Application.compile_env(:beam_bot, :basic_auth_username),
-      password: Application.compile_env(:beam_bot, :basic_auth_password)
+  pipeline :dev_auth do
+    plug :basic_auth, Application.compile_env(:beam_bot, :basic_auth)
   end
 
   scope "/", BeamBotWeb do
@@ -41,7 +40,7 @@ defmodule BeamBotWeb.Router do
   import Phoenix.LiveDashboard.Router
 
   scope "/dev" do
-    pipe_through [:browser, :basic_auth]
+    pipe_through [:browser, :dev_auth]
 
     live_dashboard "/dashboard", metrics: BeamBotWeb.Telemetry
     forward "/mailbox", Plug.Swoosh.MailboxPreview

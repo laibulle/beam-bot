@@ -10,9 +10,9 @@ import Config
 config :beam_bot,
   ecto_repos: [BeamBot.Repo],
   generators: [timestamp_type: :utc_datetime],
-  telegram_bot_token: "7366626666:AAGgnLf1jlbNRxRXfK-48Yn9BXGBdwRoJYk",
-  basic_auth_username: "admin",
-  basic_auth_password: "admin123"
+  telegram_bot_token: "7366626666:AAGgnLf1jlbNRxRXfK-48Yn9BXGBdwRoJYk"
+
+config :beam_bot, :basic_auth, username: "admin", password: "admin123"
 
 # Configures the endpoint
 config :beam_bot, BeamBotWeb.Endpoint,
