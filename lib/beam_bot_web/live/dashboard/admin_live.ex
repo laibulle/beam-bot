@@ -9,7 +9,8 @@ defmodule BeamBotWeb.AdminLive do
 
   def mount(_params, _session, socket) do
     {:ok,
-     assign(socket,
+     socket
+     |> assign(
        sync_in_progress: false,
        sync_progress: nil,
        sync_stats: nil
