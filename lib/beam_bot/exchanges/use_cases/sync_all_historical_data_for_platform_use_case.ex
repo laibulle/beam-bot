@@ -27,7 +27,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
     # Get all symbols for the platform
     symbols = @trading_pairs_adapter.list_trading_pairs()
     total_pairs = length(symbols)
-    total_intervals = length(@intervals)
+    total_intervals = map_size(@intervals)
 
     Logger.info(
       "Starting to sync historical data for #{total_pairs} trading pairs with #{total_intervals} intervals each"
