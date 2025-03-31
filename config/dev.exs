@@ -31,7 +31,7 @@ config :beam_bot,
   binance_api_secret_key: "vMYhQY7X7ysuZKqslyUzzLJmut5DuS1qIp1i7p1bhfgt40SxbrCRVQOXmZ5vLs19"
 
 config :beam_bot,
-  max_best_trading_pairs_small_investor_concurrency: 50,
+  max_best_trading_pairs_small_investor_concurrency: 10,
   sync_all_historical_data_for_platform_concurrent_pairs: 10
 
 # Configure your database
