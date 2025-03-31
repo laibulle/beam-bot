@@ -7,6 +7,8 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
 
+  # @klines_repository Application.compile_env!(:beam_bot, :klines_repository)
+
   @type execution_result :: %{
           timestamp: DateTime.t(),
           strategy_name: String.t(),
