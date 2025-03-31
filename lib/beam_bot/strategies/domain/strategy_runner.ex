@@ -6,7 +6,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   require Logger
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
 
-  # @klines_repository Application.compile_env!(:beam_bot, :klines_repository)
+  @klines_repository Application.compile_env!(:beam_bot, :klines_repository)
 
   @type execution_result :: %{
           timestamp: DateTime.t(),
@@ -27,6 +27,14 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   ## Returns
     - {:ok, execution_result} on success
     - {:error, reason} on failure
+
+  ## Examples
+      iex> BeamBot.Strategies.Domain.StrategyRunner.run_once(%BeamBot.Strategies.Domain.SmallInvestorStrategy{
+        trading_pair: "BTCUSDT",
+        timeframe: "1h",
+        ma_long_period: 20,
+        ma_short_period: 5
+      })
   """
   def run_once(strategy) do
     %SmallInvestorStrategy{} = strategy
@@ -63,6 +71,14 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   ## Returns
     - {:ok, simulation_results} on success
     - {:error, reason} on failure
+
+  ## Examples
+      iex> BeamBot.Strategies.Domain.StrategyRunner.run_simulation(%BeamBot.Strategies.Domain.SmallInvestorStrategy{
+        trading_pair: "BTCUSDT",
+        timeframe: "1h",
+        ma_long_period: 20,
+        ma_short_period: 5
+      }, DateTime.utc_now() |> DateTime.add(-30 * 24 * 60 * 60, :second), DateTime.utc_now())
   """
   def run_simulation(strategy, start_date, end_date) do
     %SmallInvestorStrategy{} = strategy

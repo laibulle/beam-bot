@@ -16,7 +16,7 @@ cat << 'EOF' >> /var/lib/postgresql/data/postgresql.conf
 
 # Memory Configuration
 shared_buffers = '2GB'
-max_locks_per_transaction = 256
+max_locks_per_transaction = 2048
 maintenance_work_mem = '1GB'
 effective_cache_size = '6GB'
 
