@@ -3,6 +3,7 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
   Find the best trading pair for a small investor using simulation over all active trading pairs
   return a list of trading pairs with the best performance
 
+
   ## Examples
       iex> params = %{
         investment_amount: "500",
@@ -11,8 +12,10 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
         rsi_overbought: "70",
         days: "30"
       }
-      iex> {:ok, profitable_pairs} = BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase.find_best_trading_pairs_small_investor(params)
+      iex> BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase.find_best_trading_pairs_small_investor(params)
   """
+
+  require Logger
 
   @trading_pairs_adapter Application.compile_env(:beam_bot, :trading_pairs_repository)
   alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
@@ -53,6 +56,10 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
         # Run simulation
         case StrategyRunner.run_simulation(strategy, start_date, end_date) do
           {:ok, simulation_results} ->
+            Logger.info(
+              "Simulation results for #{trading_pair.symbol}: #{inspect(simulation_results)}"
+            )
+
             %{
               trading_pair: trading_pair.symbol,
               simulation_results: simulation_results
