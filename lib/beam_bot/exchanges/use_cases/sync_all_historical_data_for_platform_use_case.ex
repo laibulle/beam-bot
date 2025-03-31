@@ -40,9 +40,9 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
     # Create a process to track progress
     progress_pid = spawn(fn -> progress_tracker(total_tasks) end)
 
-    # Process trading pairs in chunks of 20 (20 pairs * 5 intervals = 100 parallel tasks)
+    # Process trading pairs in chunks of 4 (4 pairs * 5 intervals = 20 parallel tasks)
     symbols
-    |> Enum.chunk_every(10)
+    |> Enum.chunk_every(4)
     |> Enum.with_index(1)
     |> Enum.each(fn {pairs_chunk, chunk_index} ->
       Logger.info(
