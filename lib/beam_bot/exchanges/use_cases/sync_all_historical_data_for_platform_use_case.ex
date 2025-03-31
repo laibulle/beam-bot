@@ -41,7 +41,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
       Enum.with_index(@intervals, 1)
       |> Enum.each(fn {{interval, days}, interval_index} ->
         Logger.info(
-          "  Syncing interval #{interval_index}/#{total_intervals}: #{interval} for #{trading_pair.symbol}"
+          "Syncing interval #{interval_index}/#{total_intervals}: #{interval} for #{trading_pair.symbol}"
         )
 
         SyncHistoricalDataForSymbolUseCase.sync_historical_data(
