@@ -109,7 +109,38 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
   def handle_info({:task_complete, {:ok, final_results}}, socket) do
     Logger.info("Task completed with results: #{inspect(final_results)}")
     Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
-    {:noreply, assign(socket, loading: false, progress: 100, results: socket.assigns.results)}
+
+    # Update results with final results and sort by ROI
+    final_results_list =
+      final_results
+      |> Enum.reject(&Map.has_key?(&1, :error))
+      |> Enum.sort_by(
+        fn %{simulation_results: results} ->
+          Decimal.to_float(results.roi_percentage)
+        end,
+        :desc
+      )
+
+    {:noreply, assign(socket, loading: false, progress: 100, results: final_results_list)}
+  end
+
+  @impl true
+  def handle_info({ref, {:ok, final_results}}, socket) when is_reference(ref) do
+    Logger.info("Task completed with results: #{inspect(final_results)}")
+    Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
+
+    # Update results with final results and sort by ROI
+    final_results_list =
+      final_results
+      |> Enum.reject(&Map.has_key?(&1, :error))
+      |> Enum.sort_by(
+        fn %{simulation_results: results} ->
+          Decimal.to_float(results.roi_percentage)
+        end,
+        :desc
+      )
+
+    {:noreply, assign(socket, loading: false, progress: 100, results: final_results_list)}
   end
 
   @impl true
@@ -120,8 +151,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
   end
 
   @impl true
-  def handle_info({:DOWN, ref, :process, _pid, reason}, socket)
-      when is_reference(ref) and ref == socket.assigns.task_ref do
+  def handle_info({:DOWN, ref, :process, _pid, reason}, socket) when is_reference(ref) do
     Logger.info("Task process down with reason: #{inspect(reason)}")
     Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
     {:noreply, assign(socket, task_ref: nil)}

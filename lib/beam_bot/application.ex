@@ -24,13 +24,13 @@ defmodule BeamBot.Application do
       # Start the small investor strategy worker
       BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker,
       # Start the historical data sync worker
-      # BeamBot.Exchanges.Infrastructure.Workers.HistoricalDataSyncWorker,
+      BeamBot.Exchanges.Infrastructure.Workers.HistoricalDataSyncWorker,
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker,
       # Start the Registry for WebSocket connections
-      {Registry, keys: :unique, name: BeamBot.Registry}
+      {Registry, keys: :unique, name: BeamBot.Registry},
       # Start the Binance WebSocket supervisor
-      # BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor
+      BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor
     ]
 
     children =
