@@ -50,7 +50,7 @@ defmodule BeamBot.MixProject do
   def application do
     [
       mod: {BeamBot.Application, []},
-      extra_applications: [:logger, :runtime_tool, :os_mon]
+      extra_applications: [:logger, :runtime_tools, :os_mon]
     ]
   end
 
