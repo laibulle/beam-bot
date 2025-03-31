@@ -209,7 +209,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   # Private functions
 
   defp build_url(symbol, streams) when is_binary(symbol) and is_list(streams) do
-    streams_string = Enum.map_join(streams, "/", &"#{symbol.downcase}@#{&1}")
+    streams_string = Enum.map_join(streams, "/", &"#{String.downcase(symbol)}@#{&1}")
     "#{@base_url}/stream?streams=#{streams_string}"
   end
 

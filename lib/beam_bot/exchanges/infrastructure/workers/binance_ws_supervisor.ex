@@ -6,7 +6,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
   use Supervisor
   require Logger
 
-  alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceWsAdapter
+  alias BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter
 
   @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
 
@@ -28,10 +28,13 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
       "Starting Binance WebSocket supervisor with #{length(trading_pairs)} active trading pairs"
     )
 
-    # Define children specs for each trading pair
+    # Define children specs for each trading pair with unique IDs
     children =
       Enum.map(trading_pairs, fn trading_pair ->
-        {BinanceWsAdapter, {trading_pair.symbol, @default_streams}}
+        %{
+          id: {:binance_ws, trading_pair.symbol},
+          start: {BinanceWsAdapter, :start_link, [trading_pair.symbol, @default_streams]}
+        }
       end)
 
     # Use one_for_one strategy to ensure each WebSocket connection is managed independently
