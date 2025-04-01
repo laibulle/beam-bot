@@ -8,8 +8,9 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
   """
 
   require Logger
-  alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter
   alias BeamBot.Strategies.Domain.Indicators
+
+  @klines_repository Application.compile_env(:beam_bot, :klines_repository)
 
   @type t :: %__MODULE__{
           trading_pair: String.t(),
@@ -70,6 +71,8 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
         value when is_float(value) -> Decimal.from_float(value)
         value when is_integer(value) -> Decimal.new(value)
         value when is_struct(value, Decimal) -> value
+        # Default to 2% if invalid value provided
+        _ -> Decimal.new("2")
       end
 
     # Parse fee percentages
@@ -138,7 +141,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
   defp fetch_market_data(strategy) do
     # Fetch historical candlestick data
     limit = max(strategy.ma_long_period * 3, 100)
-    BinanceReqAdapter.get_klines(strategy.trading_pair, strategy.timeframe, limit)
+    @klines_repository.get_klines(strategy.trading_pair, strategy.timeframe, limit)
   end
 
   defp calculate_indicators(klines, strategy) do
@@ -197,19 +200,23 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
       end
 
     # Calculate position size based on risk management
-    max_risk_amount = calculate_max_risk(strategy)
+    case calculate_max_risk(strategy) do
+      {:error, reason} ->
+        {:error, reason}
 
-    # Build signal reasons
-    reasons = build_signal_reasons(signal_data, indicators)
+      max_risk_amount ->
+        # Build signal reasons
+        reasons = build_signal_reasons(signal_data, indicators)
 
-    {:ok,
-     %{
-       signal: signal,
-       price: indicators.latest_price,
-       max_risk_amount: max_risk_amount,
-       indicators: indicators,
-       reasons: reasons
-     }}
+        {:ok,
+         %{
+           signal: signal,
+           price: indicators.latest_price,
+           max_risk_amount: max_risk_amount,
+           indicators: indicators,
+           reasons: reasons
+         }}
+    end
   end
 
   defp check_rsi_signals(rsi, strategy) do
@@ -299,11 +306,19 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
       (signal_data.macd.sell and signal_data.rsi.sell)
   end
 
-  defp calculate_max_risk(strategy) do
+  defp calculate_max_risk(
+         %__MODULE__{investment_amount: amount, max_risk_percentage: risk} = _strategy
+       )
+       when is_struct(amount, Decimal) and is_struct(risk, Decimal) do
     Decimal.mult(
-      strategy.investment_amount,
-      Decimal.div(strategy.max_risk_percentage, Decimal.new("100"))
+      amount,
+      Decimal.div(risk, Decimal.new("100"))
     )
+  end
+
+  defp calculate_max_risk(_strategy) do
+    {:error,
+     "Invalid strategy configuration: investment_amount and max_risk_percentage must be Decimal values"}
   end
 
   defp build_signal_reasons(signal_data, indicators) do

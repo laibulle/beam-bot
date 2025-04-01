@@ -23,6 +23,24 @@ defmodule BeamBot.Exchanges.Domain.Ports.KlinesRepository do
     * symbol - The trading pair symbol (e.g., "BTCUSDT")
     * interval - The kline interval (e.g., "1m", "5m", "1h")
     * limit - Maximum number of klines to return (optional, defaults to 500)
+
+  ## Returns
+    * `{:ok, list_of_klines}` - On successful retrieval
+    * `{:error, reason}` - On failure
+  """
+  @callback get_klines(
+              symbol :: String.t(),
+              interval :: String.t(),
+              limit :: non_neg_integer()
+            ) :: {:ok, list()} | {:error, String.t()}
+
+  @doc """
+  Retrieves klines for a given symbol and interval.
+
+  ## Parameters
+    * symbol - The trading pair symbol (e.g., "BTCUSDT")
+    * interval - The kline interval (e.g., "1m", "5m", "1h")
+    * limit - Maximum number of klines to return (optional, defaults to 500)
     * start_time - Start time filter (optional)
     * end_time - End time filter (optional)
 
