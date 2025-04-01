@@ -182,74 +182,74 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
 
   # Helper functions
 
-  defp generate_test_klines_for_sell_signal(count, base_price) do
-    # Generate a sequence of prices that will definitely trigger sell signals:
-    # 1. Start with a low price
-    # 2. Rise sharply to create overbought RSI
-    # 3. Drop sharply to create MA crossover
-    # First 30 points: Steeper uptrend from base_price to base_price*2.5
-    # Next 30 points: Steeper downtrend from base_price*2.5 to base_price*1.2
-    # Remaining points: Slight downtrend to maintain signals
-    prices =
-      Enum.map(1..30, fn i -> base_price + i * (base_price * 1.5 / 30) end) ++
-        Enum.map(1..30, fn i -> base_price * 2.5 - i * (base_price * 1.3 / 30) end) ++
-        Enum.map(1..(count - 60), fn i ->
-          base_price * 1.2 - i * (base_price * 0.1 / (count - 60))
-        end)
+  # defp generate_test_klines_for_sell_signal(count, base_price) do
+  #   # Generate a sequence of prices that will definitely trigger sell signals:
+  #   # 1. Start with a low price
+  #   # 2. Rise sharply to create overbought RSI
+  #   # 3. Drop sharply to create MA crossover
+  #   # First 30 points: Steeper uptrend from base_price to base_price*2.5
+  #   # Next 30 points: Steeper downtrend from base_price*2.5 to base_price*1.2
+  #   # Remaining points: Slight downtrend to maintain signals
+  #   prices =
+  #     Enum.map(1..30, fn i -> base_price + i * (base_price * 1.5 / 30) end) ++
+  #       Enum.map(1..30, fn i -> base_price * 2.5 - i * (base_price * 1.3 / 30) end) ++
+  #       Enum.map(1..(count - 60), fn i ->
+  #         base_price * 1.2 - i * (base_price * 0.1 / (count - 60))
+  #       end)
 
-    # Generate klines with timestamps
-    now = DateTime.utc_now()
+  #   # Generate klines with timestamps
+  #   now = DateTime.utc_now()
 
-    # Generate klines in reverse chronological order (newest to oldest)
-    # This ensures indicators look at the most recent prices first
-    Enum.with_index(prices, fn price, index ->
-      %{
-        open: Decimal.new("#{price}"),
-        high: Decimal.new("#{price * 1.001}"),
-        low: Decimal.new("#{price * 0.999}"),
-        close: Decimal.new("#{price}"),
-        volume: Decimal.new("100"),
-        close_time: DateTime.add(now, -index * 3600, :second)
-      }
-    end)
-    |> Enum.reverse()
-  end
+  #   # Generate klines in reverse chronological order (newest to oldest)
+  #   # This ensures indicators look at the most recent prices first
+  #   Enum.with_index(prices, fn price, index ->
+  #     %{
+  #       open: Decimal.new("#{price}"),
+  #       high: Decimal.new("#{price * 1.001}"),
+  #       low: Decimal.new("#{price * 0.999}"),
+  #       close: Decimal.new("#{price}"),
+  #       volume: Decimal.new("100"),
+  #       close_time: DateTime.add(now, -index * 3600, :second)
+  #     }
+  #   end)
+  #   |> Enum.reverse()
+  # end
 
-  defp generate_test_klines_for_buy_signal(count, base_price) do
-    # Generate a sequence of prices that will definitely trigger buy signals:
-    # 1. Start with a high price
-    # 2. Drop sharply to create oversold RSI
-    # 3. Rise moderately to create MA crossover
-    # First 20 points: Sharp downtrend from base_price to base_price/3
-    # Next 20 points: Moderate uptrend from base_price/3 to base_price/2
-    # Remaining points: Slight uptrend to maintain signals
-    prices =
-      Enum.map(1..20, fn i -> base_price - i * (base_price * 0.67 / 20) end) ++
-        Enum.map(1..20, fn i -> base_price * 0.33 + i * (base_price * 0.17 / 20) end) ++
-        Enum.map(1..(count - 40), fn i ->
-          base_price * 0.5 + i * (base_price * 0.05 / (count - 40))
-        end)
+  # defp generate_test_klines_for_buy_signal(count, base_price) do
+  #   # Generate a sequence of prices that will definitely trigger buy signals:
+  #   # 1. Start with a high price
+  #   # 2. Drop sharply to create oversold RSI
+  #   # 3. Rise moderately to create MA crossover
+  #   # First 20 points: Sharp downtrend from base_price to base_price/3
+  #   # Next 20 points: Moderate uptrend from base_price/3 to base_price/2
+  #   # Remaining points: Slight uptrend to maintain signals
+  #   prices =
+  #     Enum.map(1..20, fn i -> base_price - i * (base_price * 0.67 / 20) end) ++
+  #       Enum.map(1..20, fn i -> base_price * 0.33 + i * (base_price * 0.17 / 20) end) ++
+  #       Enum.map(1..(count - 40), fn i ->
+  #         base_price * 0.5 + i * (base_price * 0.05 / (count - 40))
+  #       end)
 
-    # Debug: Print the generated prices
-    IO.puts("Generated Prices: #{inspect(prices)}")
+  #   # Debug: Print the generated prices
+  #   IO.puts("Generated Prices: #{inspect(prices)}")
 
-    # Generate klines with timestamps
-    now = DateTime.utc_now()
+  #   # Generate klines with timestamps
+  #   now = DateTime.utc_now()
 
-    # Generate klines in reverse chronological order (newest to oldest)
-    # This ensures indicators look at the most recent prices first
-    Enum.with_index(prices, fn price, index ->
-      %{
-        open: Decimal.new("#{price}"),
-        high: Decimal.new("#{price * 1.001}"),
-        low: Decimal.new("#{price * 0.999}"),
-        close: Decimal.new("#{price}"),
-        volume: Decimal.new("100"),
-        close_time: DateTime.add(now, -index * 3600, :second)
-      }
-    end)
-    |> Enum.reverse()
-  end
+  #   # Generate klines in reverse chronological order (newest to oldest)
+  #   # This ensures indicators look at the most recent prices first
+  #   Enum.with_index(prices, fn price, index ->
+  #     %{
+  #       open: Decimal.new("#{price}"),
+  #       high: Decimal.new("#{price * 1.001}"),
+  #       low: Decimal.new("#{price * 0.999}"),
+  #       close: Decimal.new("#{price}"),
+  #       volume: Decimal.new("100"),
+  #       close_time: DateTime.add(now, -index * 3600, :second)
+  #     }
+  #   end)
+  #   |> Enum.reverse()
+  # end
 end
 
 # Mock module for testing

@@ -11,8 +11,6 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
 
   @klines_repository Application.compile_env(:beam_bot, :klines_repository)
 
-  @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
-
   @base_url "wss://fstream.binance.com"
   # 5 seconds for reconnection, but faster for initial connection
   @reconnect_delay 5_000

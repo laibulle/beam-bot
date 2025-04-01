@@ -7,7 +7,6 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryMock
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
   alias BeamBot.Strategies.Domain.StrategyRunner
-  alias BeamBot.Strategies.Domain.StrategyRunner.{DCAPlan, ExecutionResult, SimulationResult}
   alias Ecto.Adapters.SQL.Sandbox
 
   setup do
@@ -74,7 +73,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
 
   describe "run_once/1" do
     test "successfully runs strategy and returns execution result", %{
-      strategy: strategy,
+      strategy: _strategy,
       pid: pid
     } do
       assert {:ok, result} = StrategyRunner.run_once(pid)
@@ -172,7 +171,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
   end
 
   describe "setup_dca_plan/2" do
-    test "successfully creates DCA plan with default parameters", %{strategy: strategy, pid: pid} do
+    test "successfully creates DCA plan with default parameters", %{strategy: _strategy, pid: pid} do
       assert {:ok, plan} = StrategyRunner.setup_dca_plan(pid)
 
       assert plan.trading_pair == "BTCUSDT"
@@ -184,7 +183,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
       assert plan.end_date
     end
 
-    test "successfully creates DCA plan with custom parameters", %{strategy: strategy, pid: pid} do
+    test "successfully creates DCA plan with custom parameters", %{strategy: _strategy, pid: pid} do
       assert {:ok, plan} = StrategyRunner.setup_dca_plan(pid, 14, 180)
 
       assert plan.trading_pair == "BTCUSDT"
