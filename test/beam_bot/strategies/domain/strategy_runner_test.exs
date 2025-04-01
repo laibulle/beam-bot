@@ -1,12 +1,19 @@
 defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
   use ExUnit.Case
+  use BeamBot.DataCase
 
   import Mox
 
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryMock
-  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
+  alias BeamBot.Strategies.Domain.SmallInvestorStrategy
+  alias BeamBot.Strategies.Domain.StrategyRunner
+  alias BeamBot.Strategies.Domain.StrategyRunner.{DCAPlan, ExecutionResult, SimulationResult}
+  alias Ecto.Adapters.SQL.Sandbox
 
   setup do
+    # Start the Ecto sandbox
+    :ok = Sandbox.checkout(BeamBot.Repo)
+
     # Generate enough klines data for indicator calculation (ma_long_period * 3 = 60)
     klines_data =
       Enum.map(1..60, fn i ->
@@ -29,11 +36,6 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
         }
       end)
 
-    # Set up mock expectations for KlinesRepositoryMock
-    expect(KlinesRepositoryMock, :get_klines, fn _trading_pair, _timeframe, _limit ->
-      {:ok, klines_data}
-    end)
-
     # Create a test strategy
     strategy = %SmallInvestorStrategy{
       trading_pair: "BTCUSDT",
@@ -45,12 +47,37 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
       max_risk_percentage: Decimal.new("2")
     }
 
-    {:ok, strategy: strategy}
+    # Start the StrategyRunner process and allow it to use the sandbox
+    {:ok, pid} = StrategyRunner.start_link(strategy)
+    Sandbox.allow(BeamBot.Repo, self(), pid)
+
+    # Allow the GenServer process to use the mock
+    allow(KlinesRepositoryMock, self(), pid)
+
+    # Set up mock expectations for KlinesRepositoryMock
+    # First set up the 5-argument version for simulation
+    expect(KlinesRepositoryMock, :get_klines, fn _trading_pair,
+                                                 _timeframe,
+                                                 _limit,
+                                                 _start_date,
+                                                 _end_date ->
+      {:ok, klines_data}
+    end)
+
+    # Then set up the 3-argument version for regular strategy execution
+    expect(KlinesRepositoryMock, :get_klines, fn _trading_pair, _timeframe, _limit ->
+      {:ok, klines_data}
+    end)
+
+    {:ok, strategy: strategy, pid: pid}
   end
 
   describe "run_once/1" do
-    test "successfully runs strategy and returns execution result", %{strategy: strategy} do
-      assert {:ok, result} = StrategyRunner.run_once(strategy)
+    test "successfully runs strategy and returns execution result", %{
+      strategy: strategy,
+      pid: pid
+    } do
+      assert {:ok, result} = StrategyRunner.run_once(pid)
 
       assert result.timestamp
       assert result.strategy_name == "SmallInvestorStrategy"
@@ -64,8 +91,11 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
     test "handles strategy execution failure", %{strategy: strategy} do
       # Modify the strategy to cause a failure by setting max_risk_percentage to nil
       invalid_strategy = %{strategy | max_risk_percentage: nil}
+      {:ok, invalid_pid} = StrategyRunner.start_link(invalid_strategy)
+      Sandbox.allow(BeamBot.Repo, self(), invalid_pid)
+      allow(KlinesRepositoryMock, self(), invalid_pid)
 
-      assert {:error, _reason} = StrategyRunner.run_once(invalid_strategy)
+      assert {:error, _reason} = StrategyRunner.run_once(invalid_pid)
     end
   end
 
@@ -142,8 +172,8 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
   end
 
   describe "setup_dca_plan/2" do
-    test "successfully creates DCA plan with default parameters", %{strategy: strategy} do
-      assert {:ok, plan} = StrategyRunner.setup_dca_plan(strategy)
+    test "successfully creates DCA plan with default parameters", %{strategy: strategy, pid: pid} do
+      assert {:ok, plan} = StrategyRunner.setup_dca_plan(pid)
 
       assert plan.trading_pair == "BTCUSDT"
       assert plan.total_investment == Decimal.new("1000")
@@ -154,8 +184,8 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
       assert plan.end_date
     end
 
-    test "successfully creates DCA plan with custom parameters", %{strategy: strategy} do
-      assert {:ok, plan} = StrategyRunner.setup_dca_plan(strategy, 14, 180)
+    test "successfully creates DCA plan with custom parameters", %{strategy: strategy, pid: pid} do
+      assert {:ok, plan} = StrategyRunner.setup_dca_plan(pid, 14, 180)
 
       assert plan.trading_pair == "BTCUSDT"
       assert plan.total_investment == Decimal.new("1000")

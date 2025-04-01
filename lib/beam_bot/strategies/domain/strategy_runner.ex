@@ -69,7 +69,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
 
   @impl true
   def handle_call({:setup_dca_plan, frequency, duration}, _from, state) do
-    result = setup_dca_plan(state.strategy, frequency, duration)
+    result = setup_dca_plan_internal(state.strategy, frequency, duration)
     {:reply, result, state}
   end
 
@@ -154,6 +154,22 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
       :sell -> "RSI overbought + unfavorable MA crossover"
       :hold -> "No clear buy/sell signal"
     end
+  end
+
+  defp setup_dca_plan_internal(strategy, frequency, duration) do
+    start_date = DateTime.utc_now()
+    end_date = DateTime.add(start_date, duration * 24 * 60 * 60, :second)
+
+    {:ok,
+     %{
+       trading_pair: strategy.trading_pair,
+       total_investment: strategy.investment_amount,
+       frequency_days: frequency,
+       duration_days: duration,
+       status: :active,
+       start_date: start_date,
+       end_date: end_date
+     }}
   end
 
   # Private functions for simulation
