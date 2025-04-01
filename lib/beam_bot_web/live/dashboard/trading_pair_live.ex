@@ -48,6 +48,31 @@ defmodule BeamBotWeb.TradingPairLive do
   end
 
   @impl true
+  def handle_info({ref, {:simulation_complete, results}}, socket) when is_reference(ref) do
+    # Demonitor the task to avoid memory leaks
+    Process.demonitor(ref, [:flush])
+
+    # Update socket with simulation results
+    {:noreply, socket |> assign(simulation_results: results, simulating: false)}
+  end
+
+  @impl true
+  def handle_info({ref, {:simulation_error, reason}}, socket) when is_reference(ref) do
+    # Demonitor the task to avoid memory leaks
+    Process.demonitor(ref, [:flush])
+
+    # Update socket with error
+    error_results = %{error: reason}
+    {:noreply, socket |> assign(simulation_results: error_results, simulating: false)}
+  end
+
+  # Handle DOWN messages from the spawned task
+  @impl true
+  def handle_info({:DOWN, _ref, :process, _pid, _reason}, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event(
         "start_strategy",
         %{"investment_amount" => investment_amount, "max_risk_percentage" => max_risk_percentage} =
@@ -164,31 +189,6 @@ defmodule BeamBotWeb.TradingPairLive do
       end
     end)
 
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_info({ref, {:simulation_complete, results}}, socket) when is_reference(ref) do
-    # Demonitor the task to avoid memory leaks
-    Process.demonitor(ref, [:flush])
-
-    # Update socket with simulation results
-    {:noreply, socket |> assign(simulation_results: results, simulating: false)}
-  end
-
-  @impl true
-  def handle_info({ref, {:simulation_error, reason}}, socket) when is_reference(ref) do
-    # Demonitor the task to avoid memory leaks
-    Process.demonitor(ref, [:flush])
-
-    # Update socket with error
-    error_results = %{error: reason}
-    {:noreply, socket |> assign(simulation_results: error_results, simulating: false)}
-  end
-
-  # Handle DOWN messages from the spawned task
-  @impl true
-  def handle_info({:DOWN, _ref, :process, _pid, _reason}, socket) do
     {:noreply, socket}
   end
 
