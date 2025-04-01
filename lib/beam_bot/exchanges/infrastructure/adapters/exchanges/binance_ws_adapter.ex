@@ -107,9 +107,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
       "Disconnected from Binance WebSocket server for #{state.symbol}. Reason: #{inspect(reason)}. Reconnecting in #{delay / 1000} seconds..."
     )
 
-    {:reconnect,
-     %{state | connected: false, reconnect_count: reconnect_count, is_initial_connection: false},
-     delay}
+    {:reconnect, %WebSockex.Conn{},
+     %{state | connected: false, reconnect_count: reconnect_count, is_initial_connection: false}}
   end
 
   @doc """
