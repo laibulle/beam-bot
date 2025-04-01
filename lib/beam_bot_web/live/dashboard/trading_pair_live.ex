@@ -1,7 +1,7 @@
 defmodule BeamBotWeb.TradingPairLive do
   use BeamBotWeb, :live_view
 
-  @binance_req_adapter Application.compile_env(:beam_bot, :binance_req_adapter)
+  (@Application).compile_env(:beam_bot, :binance_req_adapter)
   @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
   @klines_repository Application.compile_env(:beam_bot, :klines_repository)
 
@@ -19,7 +19,6 @@ defmodule BeamBotWeb.TradingPairLive do
     end
 
     {:ok, trading_pair} = @trading_pairs_repository.get_trading_pair_by_symbol(symbol)
-    # {:ok, data} = @binance_req_adapter.get_klines(symbol, "1h")
 
     {:ok, data} = @klines_repository.get_klines(symbol, "1h")
 
