@@ -1,4 +1,4 @@
-defmodule BeamBotWeb.TradingPairsLive do
+defmodule BeamBotWeb.HomeLive do
   import Phoenix.Component
   use BeamBotWeb, :live_view
 
