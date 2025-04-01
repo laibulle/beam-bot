@@ -9,6 +9,11 @@ import Config
 
 config :beam_bot,
   ecto_repos: [BeamBot.Repo],
+  klines_repository: BeamBot.Exchanges.Infrastructure.Adapters.Pg.KlinesRepositoryPg,
+  trading_pairs_repository:
+    BeamBot.Exchanges.Infrastructure.Adapters.Ecto.TradingPairsRepositoryEcto,
+  strategy_repository: BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto,
+  binance_req_adapter: BeamBot.Exchanges.Infrastructure.Adapters.Binance.BinanceReqAdapter,
   generators: [timestamp_type: :utc_datetime],
   telegram_bot_token: "7366626666:AAGgnLf1jlbNRxRXfK-48Yn9BXGBdwRoJYk"
 

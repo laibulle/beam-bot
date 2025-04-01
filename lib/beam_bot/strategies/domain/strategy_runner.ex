@@ -7,6 +7,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
 
   @klines_repository Application.compile_env!(:beam_bot, :klines_repository)
+  @strategy_repository Application.compile_env!(:beam_bot, :strategy_repository)
 
   @type execution_result :: %{
           timestamp: DateTime.t(),
@@ -39,24 +40,23 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   def run_once(strategy) do
     %SmallInvestorStrategy{} = strategy
 
-    case SmallInvestorStrategy.analyze_market(strategy) do
-      {:ok, result} ->
-        execution_result = %{
-          timestamp: DateTime.utc_now(),
-          strategy_name: "SmallInvestorStrategy",
-          signal: result.signal,
-          trading_pair: strategy.trading_pair,
-          price: result.price,
-          position_size: calculate_position_size(result, strategy),
-          reason: get_signal_reason(result)
-        }
+    with {:ok, saved_strategy} <- save_strategy(strategy),
+         {:ok, result} <- SmallInvestorStrategy.analyze_market(strategy) do
+      execution_result = %{
+        timestamp: DateTime.utc_now(),
+        strategy_name: "SmallInvestorStrategy",
+        signal: result.signal,
+        trading_pair: strategy.trading_pair,
+        price: result.price,
+        position_size: calculate_position_size(result, strategy),
+        reason: get_signal_reason(result)
+      }
 
-        Logger.info("Strategy execution result: #{inspect(execution_result)}")
-        {:ok, execution_result}
+      # Update last execution time
+      @strategy_repository.update_last_execution(saved_strategy.id, execution_result.timestamp)
 
-      {:error, reason} ->
-        Logger.error("Strategy execution failed: #{inspect(reason)}")
-        {:error, reason}
+      Logger.info("Strategy execution result: #{inspect(execution_result)}")
+      {:ok, execution_result}
     end
   end
 
@@ -104,24 +104,44 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   def setup_dca_plan(strategy, frequency \\ 7, duration \\ 90) do
     %SmallInvestorStrategy{} = strategy
 
-    {:ok, dca_result} = SmallInvestorStrategy.execute_dca(strategy)
+    with {:ok, saved_strategy} <- save_strategy(strategy),
+         {:ok, dca_result} <- SmallInvestorStrategy.execute_dca(strategy) do
+      dca_plan = %{
+        trading_pair: strategy.trading_pair,
+        total_investment: strategy.investment_amount,
+        part_amount: dca_result.dca_part_amount,
+        frequency_days: frequency,
+        duration_days: duration,
+        start_date: DateTime.utc_now(),
+        end_date: DateTime.utc_now() |> DateTime.add(duration * 24 * 60 * 60, :second),
+        status: "active"
+      }
 
-    dca_plan = %{
-      trading_pair: strategy.trading_pair,
-      total_investment: strategy.investment_amount,
-      part_amount: dca_result.dca_part_amount,
-      frequency_days: frequency,
-      duration_days: duration,
-      start_date: DateTime.utc_now(),
-      end_date: DateTime.utc_now() |> DateTime.add(duration * 24 * 60 * 60, :second),
-      status: :active
-    }
-
-    Logger.info("DCA plan created: #{inspect(dca_plan)}")
-    {:ok, dca_plan}
+      Logger.info("DCA plan created: #{inspect(dca_plan)}")
+      {:ok, dca_plan}
+    end
   end
 
   # Private functions
+
+  defp save_strategy(strategy) do
+    strategy_attrs = %{
+      trading_pair: strategy.trading_pair,
+      timeframe: strategy.timeframe,
+      investment_amount: strategy.investment_amount,
+      max_risk_percentage: strategy.max_risk_percentage,
+      rsi_oversold_threshold: strategy.rsi_oversold_threshold,
+      rsi_overbought_threshold: strategy.rsi_overbought_threshold,
+      ma_short_period: strategy.ma_short_period,
+      ma_long_period: strategy.ma_long_period,
+      status: "active",
+      activated_at: DateTime.utc_now(),
+      maker_fee: strategy.maker_fee,
+      taker_fee: strategy.taker_fee
+    }
+
+    @strategy_repository.save_strategy(strategy_attrs)
+  end
 
   defp calculate_position_size(result, strategy) do
     case result.signal do
