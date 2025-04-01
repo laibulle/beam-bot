@@ -92,7 +92,7 @@ defmodule BeamBotWeb.AdminLive do
     <.live_component
       module={BeamBotWeb.Layouts.DashboardComponent}
       id="dashboard"
-      current_user={%{email: "fake"}}
+      current_user={@current_user}
     >
       <div class="container mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold mb-6">Admin Dashboard</h1>

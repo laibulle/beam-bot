@@ -24,12 +24,6 @@ defmodule BeamBotWeb.Router do
 
   scope "/", BeamBotWeb do
     pipe_through :browser
-
-    live "/", HomeLive
-    live "/dashboard", HomeLive
-    live "/dashboard/admin", AdminLive
-    live "/dashboard/trading-pair/:symbol", TradingPairLive
-    live "/dashboard/strategies", Dashboard.StrategiesLive
   end
 
   # Other scopes may use custom stacks.
@@ -67,7 +61,15 @@ defmodule BeamBotWeb.Router do
     pipe_through [:browser, :require_authenticated_user]
 
     live_session :require_authenticated_user,
-      on_mount: [{BeamBotWeb.UserAuth, :ensure_authenticated}] do
+      on_mount: [
+        {BeamBotWeb.UserAuth, :ensure_authenticated},
+        {BeamBotWeb.UserAuth, :mount_current_user}
+      ] do
+      live "/", HomeLive
+      live "/dashboard", HomeLive
+      live "/dashboard/admin", AdminLive
+      live "/dashboard/trading-pair/:symbol", TradingPairLive
+      live "/dashboard/strategies", Dashboard.StrategiesLive
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
     end

@@ -163,7 +163,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
     <.live_component
       module={BeamBotWeb.Layouts.DashboardComponent}
       id="dashboard"
-      current_user={%{email: "fake"}}
+      current_user={@current_user}
     >
       <div class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-bold mb-8">Find Best Trading Pairs</h1>
