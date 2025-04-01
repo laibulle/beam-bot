@@ -31,8 +31,9 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
     GenServer.call(pid, :run_once)
   end
 
-  def run_simulation(pid, start_date, end_date) do
-    GenServer.call(pid, {:run_simulation, start_date, end_date})
+  def run_simulation(strategy, start_date, end_date) do
+    %SmallInvestorStrategy{} = strategy
+    run_simulation_internal(strategy, start_date, end_date)
   end
 
   def setup_dca_plan(pid, frequency \\ 7, duration \\ 90) do

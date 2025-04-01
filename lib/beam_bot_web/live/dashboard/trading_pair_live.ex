@@ -73,20 +73,13 @@ defmodule BeamBotWeb.TradingPairLive do
     ]
 
     # Start the strategy worker
-    result =
-      SmallInvestorStrategyWorker.start_strategy(trading_pair.symbol, decimal_amount, options)
+    :ok = SmallInvestorStrategyWorker.start_strategy(trading_pair.symbol, decimal_amount, options)
 
     # Get updated status
     strategy_status = SmallInvestorStrategyWorker.get_status()
 
     message =
-      case result do
-        :ok ->
-          "Started strategy for #{trading_pair.symbol} with investment amount #{investment_amount} USDT"
-
-        {:error, reason} ->
-          "Failed to start strategy: #{inspect(reason)}"
-      end
+      "Started strategy for #{trading_pair.symbol} with investment amount #{investment_amount} USDT"
 
     {:noreply,
      socket
@@ -162,7 +155,10 @@ defmodule BeamBotWeb.TradingPairLive do
 
     # Execute simulation in Task to avoid blocking the LiveView process
     Task.async(fn ->
-      case StrategyRunner.run_simulation(strategy, start_date, end_date) do
+      # Start the StrategyRunner GenServer
+      {:ok, pid} = StrategyRunner.start_link(strategy)
+
+      case StrategyRunner.run_simulation(pid, start_date, end_date) do
         {:ok, results} -> {:simulation_complete, results}
         {:error, reason} -> {:simulation_error, reason}
       end

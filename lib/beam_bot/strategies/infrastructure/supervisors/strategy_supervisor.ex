@@ -34,7 +34,8 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
     case @strategy_repository.get_active_strategies() do
       {:ok, strategies} ->
         Logger.info("Loading #{length(strategies)} active strategies from database")
-        start_strategies(strategies)
+        # Start strategies in a separate process to avoid blocking supervisor initialization
+        Task.start(fn -> start_strategies(strategies) end)
         supervisor_state
 
       {:error, reason} ->
@@ -44,15 +45,37 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
   end
 
   defp start_strategies(strategies) do
-    Enum.each(strategies, fn strategy ->
-      case create_strategy_from_db(strategy) do
-        {:ok, child_spec} ->
-          start_child(child_spec)
+    Enum.each(strategies, &start_single_strategy/1)
+  end
 
-        {:error, reason} ->
-          Logger.error("Failed to create strategy from DB: #{inspect(reason)}")
-      end
-    end)
+  defp start_single_strategy(strategy) do
+    case create_strategy_from_db(strategy) do
+      {:ok, child_spec} ->
+        start_and_register_strategy(strategy, child_spec)
+
+      {:error, reason} ->
+        log_strategy_error(strategy, "Failed to create strategy from DB", reason)
+    end
+  end
+
+  defp start_and_register_strategy(strategy, child_spec) do
+    case StrategyRunner.start_link(child_spec.start) do
+      {:ok, pid} -> register_strategy_with_supervisor(strategy, child_spec, pid)
+      {:error, reason} -> log_strategy_error(strategy, "Failed to start strategy", reason)
+    end
+  end
+
+  defp register_strategy_with_supervisor(strategy, child_spec, pid) do
+    Logger.info("Started strategy #{strategy.id} with pid #{inspect(pid)}")
+
+    DynamicSupervisor.start_child(__MODULE__, %{
+      child_spec
+      | start: {__MODULE__, :start_child, [pid]}
+    })
+  end
+
+  defp log_strategy_error(strategy, message, reason) do
+    Logger.error("#{message} #{strategy.id}: #{inspect(reason)}")
   end
 
   defp create_strategy_from_db(strategy) do

@@ -33,7 +33,7 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
           rsi_oversold: rsi_oversold,
           rsi_overbought: rsi_overbought,
           days: days
-        } = params
+        } = _params
       ) do
     # Get all active trading pairs
     active_symbols = @trading_pairs_adapter.list_trading_pairs() |> Enum.filter(& &1.is_active)
@@ -63,7 +63,7 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
           # Create strategy for this trading pair
           strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
 
-          # Run simulation
+          # Run simulation directly without starting a GenServer
           case StrategyRunner.run_simulation(strategy, start_date, end_date) do
             {:ok, simulation_results} ->
               Logger.info(
@@ -149,7 +149,7 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
           # Create strategy for this trading pair
           strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
 
-          # Run simulation
+          # Run simulation directly without starting a GenServer
           case StrategyRunner.run_simulation(strategy, start_date, end_date) do
             {:ok, simulation_results} ->
               Logger.info(
