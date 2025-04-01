@@ -181,10 +181,13 @@ defmodule BeamBotWeb.TradingPairLive do
       # Start the StrategyRunner GenServer
       {:ok, pid} = StrategyRunner.start_link(strategy)
 
-      case StrategyRunner.run_simulation(pid, start_date, end_date) do
-        {:ok, results} -> {:simulation_complete, results}
-        {:error, reason} -> {:simulation_error, reason}
-      end
+      result =
+        case StrategyRunner.run_simulation(pid, start_date, end_date) do
+          {:ok, results} -> {:simulation_complete, results}
+          {:error, reason} -> {:simulation_error, reason}
+        end
+
+      result
     end)
 
     {:noreply, socket}
