@@ -128,6 +128,8 @@ defmodule BeamBot.Strategies.Domain.Indicators do
       %{macd_line: 1.5, signal_line: 1.2, histogram: 0.3}
   """
   def macd(prices, fast_period \\ 12, slow_period \\ 26, signal_period \\ 9)
+
+  def macd(prices, fast_period, slow_period, signal_period)
       when length(prices) >= max(fast_period, slow_period) + signal_period do
     # Calculate the fast and slow EMAs
     fast_ema = ema(prices, fast_period)
