@@ -97,11 +97,11 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
         end)
 
       # Override the mock for simulation with 5 arguments
-      expect(KlinesRepositoryMock, :get_klines, fn trading_pair,
-                                                   timeframe,
-                                                   limit,
-                                                   start_date,
-                                                   end_date ->
+      expect(KlinesRepositoryMock, :get_klines, fn _trading_pair,
+                                                   _timeframe,
+                                                   _limit,
+                                                   _start_date,
+                                                   _end_date ->
         {:ok, simulation_klines}
       end)
 
