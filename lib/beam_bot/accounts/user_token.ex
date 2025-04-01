@@ -110,7 +110,7 @@ defmodule BeamBot.Accounts.UserToken do
   for resetting the password. For verifying requests to change the email,
   see `verify_change_email_token_query/2`.
   """
-  def verify_email_token_query(token, context) do
+  def verify_email_token_query(token, context) when is_binary(token) do
     case Base.url_decode64(token, padding: false) do
       {:ok, decoded_token} ->
         hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
@@ -146,7 +146,7 @@ defmodule BeamBot.Accounts.UserToken do
   database and if it has not expired (after @change_email_validity_in_days).
   The context must always start with "change:".
   """
-  def verify_change_email_token_query(token, "change:" <> _ = context) do
+  def verify_change_email_token_query(token, "change:" <> _ = context) when is_binary(token) do
     case Base.url_decode64(token, padding: false) do
       {:ok, decoded_token} ->
         hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
