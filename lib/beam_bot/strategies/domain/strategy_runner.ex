@@ -126,18 +126,21 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
 
   defp save_strategy(strategy) do
     strategy_attrs = %{
-      trading_pair: strategy.trading_pair,
-      timeframe: strategy.timeframe,
-      investment_amount: strategy.investment_amount,
-      max_risk_percentage: strategy.max_risk_percentage,
-      rsi_oversold_threshold: strategy.rsi_oversold_threshold,
-      rsi_overbought_threshold: strategy.rsi_overbought_threshold,
-      ma_short_period: strategy.ma_short_period,
-      ma_long_period: strategy.ma_long_period,
+      name: "SmallInvestorStrategy",
       status: "active",
       activated_at: DateTime.utc_now(),
-      maker_fee: strategy.maker_fee,
-      taker_fee: strategy.taker_fee
+      params: %{
+        trading_pair: strategy.trading_pair,
+        timeframe: strategy.timeframe,
+        investment_amount: strategy.investment_amount,
+        max_risk_percentage: strategy.max_risk_percentage,
+        rsi_oversold_threshold: strategy.rsi_oversold_threshold,
+        rsi_overbought_threshold: strategy.rsi_overbought_threshold,
+        ma_short_period: strategy.ma_short_period,
+        ma_long_period: strategy.ma_long_period,
+        maker_fee: strategy.maker_fee,
+        taker_fee: strategy.taker_fee
+      }
     }
 
     @strategy_repository.save_strategy(strategy_attrs)
