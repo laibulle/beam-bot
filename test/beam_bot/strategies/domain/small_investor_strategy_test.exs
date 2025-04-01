@@ -90,12 +90,12 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
       klines = generate_test_klines_for_buy_signal(100, 50_000.0)
 
       assert {:ok, result} = SmallInvestorStrategy.analyze_market_with_data(klines, strategy)
-      assert result.signal == :hold
+      assert result.signal == :buy
       assert is_number(result.price)
       assert is_struct(result.max_risk_amount, Decimal)
       assert is_list(result.reasons)
-      # assert "RSI" in result.reasons
-      # assert "MA crossover" in result.reasons
+      assert Enum.any?(result.reasons, &String.contains?(&1, "RSI"))
+      assert Enum.any?(result.reasons, &String.contains?(&1, "MA crossover"))
     end
 
     test "generates sell signal when conditions are met" do
@@ -105,12 +105,12 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
       klines = generate_test_klines_for_sell_signal(100, 50_000.0)
 
       assert {:ok, result} = SmallInvestorStrategy.analyze_market_with_data(klines, strategy)
-      assert result.signal == :hold
+      assert result.signal == :sell
       assert is_number(result.price)
       assert is_struct(result.max_risk_amount, Decimal)
       assert is_list(result.reasons)
-      # assert "RSI" in result.reasons
-      # assert "MA crossover" in result.reasons
+      assert Enum.any?(result.reasons, &String.contains?(&1, "RSI"))
+      assert Enum.any?(result.reasons, &String.contains?(&1, "MA crossover"))
     end
   end
 
@@ -132,28 +132,26 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
     # 2. MA crossover (short MA above long MA)
     # 3. MACD histogram increasing and positive
 
-    # First create a strong downtrend for RSI oversold
-    # We need at least 15 points for RSI (14 period + 1)
-    downtrend = Enum.map(1..15, fn i -> -i * 100 end)
-
-    # Then create a strong uptrend for MA crossover and MACD
-    # We need at least 26 points for MACD (26 slow period)
-    uptrend = Enum.map(1..26, fn i -> i * 50 end)
-
-    # Combine the trends with more weight on the uptrend
-    price_changes = Enum.zip_with([downtrend, uptrend], fn [d, u] -> d + u * 2 end)
+    # Create a sequence of prices that will:
+    # 1. First drop sharply to create oversold RSI
+    # 2. Then rise sharply to create MA crossover and positive MACD
+    # First 15 points: sharp downtrend for oversold RSI
+    # Next 26 points: sharp uptrend for MA crossover and MACD
+    # Remaining points: slight uptrend to maintain signals
+    prices =
+      Enum.map(1..15, fn i -> base_price - i * 1000 end) ++
+        Enum.map(1..26, fn i -> base_price - 15 * 1000 + i * 500 end) ++
+        Enum.map(1..(count - 41), fn i -> base_price - 15 * 1000 + 26 * 500 + i * 100 end)
 
     # Generate the full price series
-    Enum.map(1..count, fn i ->
-      price = base_price + Enum.sum(Enum.take(price_changes, i))
-
+    Enum.map(prices, fn price ->
       %{
         open: Decimal.new("#{price}"),
         high: Decimal.new("#{price * 1.001}"),
         low: Decimal.new("#{price * 0.999}"),
         close: Decimal.new("#{price}"),
         volume: Decimal.new("100"),
-        close_time: DateTime.utc_now() |> DateTime.add(i * 3600)
+        close_time: DateTime.utc_now() |> DateTime.add(3600)
       }
     end)
   end
@@ -164,28 +162,26 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
     # 2. MA crossover (short MA below long MA)
     # 3. MACD histogram decreasing and negative
 
-    # First create a strong uptrend for RSI overbought
-    # We need at least 15 points for RSI (14 period + 1)
-    uptrend = Enum.map(1..15, fn i -> i * 100 end)
-
-    # Then create a strong downtrend for MA crossover and MACD
-    # We need at least 26 points for MACD (26 slow period)
-    downtrend = Enum.map(1..26, fn i -> -i * 50 end)
-
-    # Combine the trends with more weight on the downtrend
-    price_changes = Enum.zip_with([uptrend, downtrend], fn [u, d] -> u + d * 2 end)
+    # Create a sequence of prices that will:
+    # 1. First rise sharply to create overbought RSI
+    # 2. Then drop sharply to create MA crossover and negative MACD
+    # First 15 points: sharp uptrend for overbought RSI
+    # Next 26 points: sharp downtrend for MA crossover and MACD
+    # Remaining points: slight downtrend to maintain signals
+    prices =
+      Enum.map(1..15, fn i -> base_price + i * 1000 end) ++
+        Enum.map(1..26, fn i -> base_price + 15 * 1000 - i * 500 end) ++
+        Enum.map(1..(count - 41), fn i -> base_price + 15 * 1000 - 26 * 500 - i * 100 end)
 
     # Generate the full price series
-    Enum.map(1..count, fn i ->
-      price = base_price + Enum.sum(Enum.take(price_changes, i))
-
+    Enum.map(prices, fn price ->
       %{
         open: Decimal.new("#{price}"),
         high: Decimal.new("#{price * 1.001}"),
         low: Decimal.new("#{price * 0.999}"),
         close: Decimal.new("#{price}"),
         volume: Decimal.new("100"),
-        close_time: DateTime.utc_now() |> DateTime.add(i * 3600)
+        close_time: DateTime.utc_now() |> DateTime.add(3600)
       }
     end)
   end
