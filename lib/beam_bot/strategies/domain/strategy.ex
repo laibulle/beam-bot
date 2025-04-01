@@ -6,6 +6,17 @@ defmodule BeamBot.Strategies.Domain.Strategy do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{
+          id: integer() | nil,
+          name: String.t(),
+          status: String.t(),
+          activated_at: DateTime.t() | nil,
+          last_execution_at: DateTime.t() | nil,
+          params: map(),
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
   schema "strategies" do
     field :name, :string
     # :active, :paused, :stopped
