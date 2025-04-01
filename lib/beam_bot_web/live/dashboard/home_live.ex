@@ -102,12 +102,6 @@ defmodule BeamBotWeb.HomeLive do
                     >
                       View Details
                     </.link>
-                    <.link
-                      navigate={~p"/exchange/strategy/#{symbol.symbol}"}
-                      class="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      Analyze Strategy
-                    </.link>
                   </div>
                 </div>
               </div>
