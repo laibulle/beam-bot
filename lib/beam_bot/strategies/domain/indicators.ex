@@ -45,7 +45,7 @@ defmodule BeamBot.Strategies.Domain.Indicators do
   def ema(prices, period) when length(prices) >= period do
     k = 2 / (period + 1)
 
-    [head | tail] = Enum.take(prices, period)
+    [_head | tail] = Enum.take(prices, period)
     initial_sma = sma(Enum.take(prices, period), period)
 
     Enum.reduce(tail, initial_sma, fn price, acc ->
