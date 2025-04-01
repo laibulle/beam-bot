@@ -18,7 +18,7 @@ config :git_hooks,
         # {:mix_task, :dialyzer, ["--force-check"]},
         {:mix_task, :credo, ["--strict"]},
         # {:cmd, "mix compile --force --warnings-as-errors", env: [{"MIX_ENV", "test"}]},
-        # {:mix_task, :test, ["--color"]},
+        {:mix_task, :test, ["--color"]},
         # {:cmd, "mix coveralls.cobertura"},
         {:cmd, "echo 'success!' 🎉"}
       ]
