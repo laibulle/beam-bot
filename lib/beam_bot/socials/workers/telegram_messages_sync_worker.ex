@@ -52,13 +52,8 @@ defmodule BeamBot.Socials.Workers.TelegramMessagesSyncWorker do
 
   @impl true
   def handle_info(:sync_messages, state) do
-    case SocialAdapterTelegram.fetch_crypto_influencer_messages(@crypto_channels) do
-      {:ok, results} ->
-        Enum.each(results, &handle_messages/1)
-
-      {:error, reason} ->
-        Logger.error("Failed to sync Telegram messages: #{inspect(reason)}")
-    end
+    {:ok, results} = SocialAdapterTelegram.fetch_crypto_influencer_messages(@crypto_channels)
+    Enum.each(results, &handle_messages/1)
 
     # Schedule next sync
     schedule_sync()
@@ -66,17 +61,11 @@ defmodule BeamBot.Socials.Workers.TelegramMessagesSyncWorker do
   end
 
   defp handle_messages({channel, messages}) do
-    case messages do
-      {:error, error} ->
-        Logger.error("Failed to fetch messages from #{channel}: #{inspect(error)}")
-
-      messages ->
-        Logger.info("Successfully fetched #{length(messages)} messages from #{channel}")
-        # For now, just log the first message as an example
-        if length(messages) > 0 do
-          first_message = List.first(messages)
-          Logger.info("Latest message from #{channel}: #{inspect(first_message)}")
-        end
+    Logger.info("Successfully fetched #{length(messages)} messages from #{channel}")
+    # For now, just log the first message as an example
+    if length(messages) > 0 do
+      first_message = List.first(messages)
+      Logger.info("Latest message from #{channel}: #{inspect(first_message)}")
     end
   end
 

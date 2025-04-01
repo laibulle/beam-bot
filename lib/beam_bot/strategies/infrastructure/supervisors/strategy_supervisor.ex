@@ -37,10 +37,6 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
         # Start strategies in a separate process to avoid blocking supervisor initialization
         Task.start(fn -> start_strategies(strategies) end)
         supervisor_state
-
-      {:error, reason} ->
-        Logger.error("Failed to load active strategies: #{inspect(reason)}")
-        supervisor_state
     end
   end
 
@@ -49,13 +45,8 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
   end
 
   defp start_single_strategy(strategy) do
-    case create_strategy_from_db(strategy) do
-      {:ok, child_spec} ->
-        start_and_register_strategy(strategy, child_spec)
-
-      {:error, reason} ->
-        log_strategy_error(strategy, "Failed to create strategy from DB", reason)
-    end
+    child_spec = create_strategy_from_db(strategy)
+    start_and_register_strategy(strategy, child_spec)
   end
 
   defp start_and_register_strategy(strategy, child_spec) do
@@ -98,11 +89,10 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
       )
 
     # Create a child spec for the strategy runner
-    {:ok,
-     %{
-       id: "strategy_#{strategy.id}",
-       start: {StrategyRunner, :start_link, [strategy_instance]},
-       type: :worker
-     }}
+    %{
+      id: "strategy_#{strategy.id}",
+      start: {StrategyRunner, :start_link, [strategy_instance]},
+      type: :worker
+    }
   end
 end
