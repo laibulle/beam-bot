@@ -4,7 +4,6 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
   import Mox
 
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryMock
-  alias BeamBot.Repositories.KlinesRepository
   alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
 
   setup do
