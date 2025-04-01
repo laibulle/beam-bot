@@ -84,12 +84,45 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
 
   describe "analyze_market_with_data/2" do
     test "generates buy signal when conditions are met" do
-      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"))
+      IO.puts("\n=== Running Buy Signal Test ===")
+
+      strategy =
+        SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"),
+          max_risk_percentage: "2",
+          rsi_oversold_threshold: 30,
+          rsi_overbought_threshold: 70,
+          ma_short_period: 7,
+          ma_long_period: 25,
+          timeframe: "1h",
+          maker_fee: Decimal.new("0.02"),
+          taker_fee: Decimal.new("0.1")
+        )
 
       # Generate data that will trigger both RSI oversold and MA crossover conditions
       klines = generate_test_klines_for_buy_signal(100, 50_000.0)
 
+      # Debug: Print the last few prices to verify the trend
+      last_prices = Enum.take(klines, 5) |> Enum.map(&Decimal.to_float(&1.close))
+      IO.puts("\nLast 5 prices: #{inspect(last_prices)}")
+
       assert {:ok, result} = SmallInvestorStrategy.analyze_market_with_data(klines, strategy)
+
+      # Debug: Print all indicator values and signal conditions
+      IO.puts("\nSignal: #{result.signal}")
+      IO.puts("Price: #{result.price}")
+      IO.puts("Reasons: #{inspect(result.reasons)}")
+
+      if result.indicators do
+        IO.puts("\nIndicator Values:")
+        IO.puts("RSI: #{result.indicators.rsi}")
+        IO.puts("MA Short: #{result.indicators.ma_short}")
+        IO.puts("MA Long: #{result.indicators.ma_long}")
+        IO.puts("MACD: #{inspect(result.indicators.macd)}")
+        IO.puts("Bollinger Bands: #{inspect(result.indicators.bollinger)}")
+      end
+
+      IO.puts("\n=== End Buy Signal Test ===\n")
+
       assert result.signal == :buy
       assert is_number(result.price)
       assert is_struct(result.max_risk_amount, Decimal)
@@ -99,12 +132,35 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
     end
 
     test "generates sell signal when conditions are met" do
+      IO.puts("\n=== Running Sell Signal Test ===")
+
       strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"))
 
       # Generate data that will trigger both RSI overbought and MA crossover conditions
       klines = generate_test_klines_for_sell_signal(100, 50_000.0)
 
+      # Debug: Print the last few prices to verify the trend
+      last_prices = Enum.take(klines, 5) |> Enum.map(&Decimal.to_float(&1.close))
+      IO.puts("\nLast 5 prices: #{inspect(last_prices)}")
+
       assert {:ok, result} = SmallInvestorStrategy.analyze_market_with_data(klines, strategy)
+
+      # Debug: Print all indicator values and signal conditions
+      IO.puts("\nSignal: #{result.signal}")
+      IO.puts("Price: #{result.price}")
+      IO.puts("Reasons: #{inspect(result.reasons)}")
+
+      if result.indicators do
+        IO.puts("\nIndicator Values:")
+        IO.puts("RSI: #{result.indicators.rsi}")
+        IO.puts("MA Short: #{result.indicators.ma_short}")
+        IO.puts("MA Long: #{result.indicators.ma_long}")
+        IO.puts("MACD: #{inspect(result.indicators.macd)}")
+        IO.puts("Bollinger Bands: #{inspect(result.indicators.bollinger)}")
+      end
+
+      IO.puts("\n=== End Sell Signal Test ===\n")
+
       assert result.signal == :sell
       assert is_number(result.price)
       assert is_struct(result.max_risk_amount, Decimal)
@@ -126,64 +182,73 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
 
   # Helper functions
 
-  defp generate_test_klines_for_buy_signal(count, base_price) do
-    # Generate price data that will result in:
-    # 1. RSI below oversold threshold (30)
-    # 2. MA crossover (short MA above long MA)
-    # 3. MACD histogram increasing and positive
-
-    # Create a sequence of prices that will:
-    # 1. First drop sharply to create oversold RSI
-    # 2. Then rise sharply to create MA crossover and positive MACD
-    # First 15 points: sharp downtrend for oversold RSI
-    # Next 26 points: sharp uptrend for MA crossover and MACD
-    # Remaining points: slight uptrend to maintain signals
+  defp generate_test_klines_for_sell_signal(count, base_price) do
+    # Generate a sequence of prices that will definitely trigger sell signals:
+    # 1. Start with a low price
+    # 2. Rise sharply to create overbought RSI
+    # 3. Drop sharply to create MA crossover
+    # First 30 points: Steeper uptrend from base_price to base_price*2.5
+    # Next 30 points: Steeper downtrend from base_price*2.5 to base_price*1.2
+    # Remaining points: Slight downtrend to maintain signals
     prices =
-      Enum.map(1..15, fn i -> base_price - i * 1000 end) ++
-        Enum.map(1..26, fn i -> base_price - 15 * 1000 + i * 500 end) ++
-        Enum.map(1..(count - 41), fn i -> base_price - 15 * 1000 + 26 * 500 + i * 100 end)
+      Enum.map(1..30, fn i -> base_price + i * (base_price * 1.5 / 30) end) ++
+        Enum.map(1..30, fn i -> base_price * 2.5 - i * (base_price * 1.3 / 30) end) ++
+        Enum.map(1..(count - 60), fn i ->
+          base_price * 1.2 - i * (base_price * 0.1 / (count - 60))
+        end)
 
-    # Generate the full price series
-    Enum.map(prices, fn price ->
+    # Generate klines with timestamps
+    now = DateTime.utc_now()
+
+    # Generate klines in reverse chronological order (newest to oldest)
+    # This ensures indicators look at the most recent prices first
+    Enum.with_index(prices, fn price, index ->
       %{
         open: Decimal.new("#{price}"),
         high: Decimal.new("#{price * 1.001}"),
         low: Decimal.new("#{price * 0.999}"),
         close: Decimal.new("#{price}"),
         volume: Decimal.new("100"),
-        close_time: DateTime.utc_now() |> DateTime.add(3600)
+        close_time: DateTime.add(now, -index * 3600, :second)
       }
     end)
+    |> Enum.reverse()
   end
 
-  defp generate_test_klines_for_sell_signal(count, base_price) do
-    # Generate price data that will result in:
-    # 1. RSI above overbought threshold (70)
-    # 2. MA crossover (short MA below long MA)
-    # 3. MACD histogram decreasing and negative
-
-    # Create a sequence of prices that will:
-    # 1. First rise sharply to create overbought RSI
-    # 2. Then drop sharply to create MA crossover and negative MACD
-    # First 15 points: sharp uptrend for overbought RSI
-    # Next 26 points: sharp downtrend for MA crossover and MACD
-    # Remaining points: slight downtrend to maintain signals
+  defp generate_test_klines_for_buy_signal(count, base_price) do
+    # Generate a sequence of prices that will definitely trigger buy signals:
+    # 1. Start with a high price
+    # 2. Drop sharply to create oversold RSI
+    # 3. Rise moderately to create MA crossover
+    # First 20 points: Sharp downtrend from base_price to base_price/3
+    # Next 20 points: Moderate uptrend from base_price/3 to base_price/2
+    # Remaining points: Slight uptrend to maintain signals
     prices =
-      Enum.map(1..15, fn i -> base_price + i * 1000 end) ++
-        Enum.map(1..26, fn i -> base_price + 15 * 1000 - i * 500 end) ++
-        Enum.map(1..(count - 41), fn i -> base_price + 15 * 1000 - 26 * 500 - i * 100 end)
+      Enum.map(1..20, fn i -> base_price - i * (base_price * 0.67 / 20) end) ++
+        Enum.map(1..20, fn i -> base_price * 0.33 + i * (base_price * 0.17 / 20) end) ++
+        Enum.map(1..(count - 40), fn i ->
+          base_price * 0.5 + i * (base_price * 0.05 / (count - 40))
+        end)
 
-    # Generate the full price series
-    Enum.map(prices, fn price ->
+    # Debug: Print the generated prices
+    IO.puts("Generated Prices: #{inspect(prices)}")
+
+    # Generate klines with timestamps
+    now = DateTime.utc_now()
+
+    # Generate klines in reverse chronological order (newest to oldest)
+    # This ensures indicators look at the most recent prices first
+    Enum.with_index(prices, fn price, index ->
       %{
         open: Decimal.new("#{price}"),
         high: Decimal.new("#{price * 1.001}"),
         low: Decimal.new("#{price * 0.999}"),
         close: Decimal.new("#{price}"),
         volume: Decimal.new("100"),
-        close_time: DateTime.utc_now() |> DateTime.add(3600)
+        close_time: DateTime.add(now, -index * 3600, :second)
       }
     end)
+    |> Enum.reverse()
   end
 end
 

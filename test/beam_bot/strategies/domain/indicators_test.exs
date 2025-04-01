@@ -53,6 +53,12 @@ defmodule BeamBot.Strategies.Domain.IndicatorsTest do
       prices = [1, 2, 3]
       assert Indicators.rsi(prices, 4) == nil
     end
+
+    test "returns RSI less than 30 for a downward trend" do
+      # Using a sequence that should give us an RSI value less than 30
+      prices = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30]
+      assert Indicators.rsi(prices, 14) < 30.0
+    end
   end
 
   describe "macd/4" do
