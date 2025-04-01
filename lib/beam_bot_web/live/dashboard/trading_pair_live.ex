@@ -1,7 +1,6 @@
 defmodule BeamBotWeb.TradingPairLive do
   use BeamBotWeb, :live_view
 
-  (@Application).compile_env(:beam_bot, :binance_req_adapter)
   @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
   @klines_repository Application.compile_env(:beam_bot, :klines_repository)
 
