@@ -277,11 +277,13 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
           sell: false
         }
 
-      %{histogram: histogram, previous_histogram: previous_histogram}
-      when not is_nil(histogram) and not is_nil(previous_histogram) ->
+      %{histogram: histogram} = macd when not is_nil(histogram) ->
+        histogram_increasing = histogram > macd.histogram
+        histogram_decreasing = histogram < macd.histogram
+
         %{
-          buy: histogram > 0 and histogram > previous_histogram,
-          sell: histogram < 0 and histogram < previous_histogram
+          buy: histogram > 0 and histogram_increasing,
+          sell: histogram < 0 and histogram_decreasing
         }
 
       _ ->
@@ -293,31 +295,15 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
   end
 
   defp buy_signal?(signal_data) do
-    # Require at least 2 indicators to show buy signal
-    buy_signals =
-      [
-        signal_data.rsi.buy,
-        signal_data.ma.buy,
-        signal_data.bollinger.buy,
-        signal_data.macd.buy
-      ]
-      |> Enum.count(& &1)
-
-    buy_signals >= 2
+    (signal_data.rsi.buy and signal_data.ma.buy) or
+      (signal_data.bollinger.buy and signal_data.rsi.buy) or
+      (signal_data.macd.buy and signal_data.rsi.buy)
   end
 
   defp sell_signal?(signal_data) do
-    # Require at least 2 indicators to show sell signal
-    sell_signals =
-      [
-        signal_data.rsi.sell,
-        signal_data.ma.sell,
-        signal_data.bollinger.sell,
-        signal_data.macd.sell
-      ]
-      |> Enum.count(& &1)
-
-    sell_signals >= 2
+    (signal_data.rsi.sell and signal_data.ma.sell) or
+      (signal_data.bollinger.sell and signal_data.rsi.sell) or
+      (signal_data.macd.sell and signal_data.rsi.sell)
   end
 
   defp calculate_max_risk(
