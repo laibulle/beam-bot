@@ -30,7 +30,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
       end)
 
     # Set up mock expectations for KlinesRepositoryMock
-    expect(KlinesRepositoryMock, :get_klines, fn trading_pair, timeframe, limit ->
+    expect(KlinesRepositoryMock, :get_klines, fn _trading_pair, _timeframe, _limit ->
       {:ok, klines_data}
     end)
 
