@@ -3,7 +3,9 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   A runner for trading strategies that handles execution, tracking, and reporting.
   """
 
+  use GenServer
   require Logger
+
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
 
   @klines_repository Application.compile_env!(:beam_bot, :klines_repository)
@@ -19,25 +21,71 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
           reason: String.t()
         }
 
-  @doc """
-  Runs a strategy once and returns the result.
+  # Client API
 
-  ## Parameters
-    - strategy: The strategy struct to execute
+  def start_link(strategy) do
+    GenServer.start_link(__MODULE__, strategy)
+  end
 
-  ## Returns
-    - {:ok, execution_result} on success
-    - {:error, reason} on failure
+  def run_once(pid) do
+    GenServer.call(pid, :run_once)
+  end
 
-  ## Examples
-      iex> BeamBot.Strategies.Domain.StrategyRunner.run_once(%BeamBot.Strategies.Domain.SmallInvestorStrategy{
-        trading_pair: "BTCUSDT",
-        timeframe: "1h",
-        ma_long_period: 20,
-        ma_short_period: 5
-      })
-  """
-  def run_once(strategy) do
+  def run_simulation(pid, start_date, end_date) do
+    GenServer.call(pid, {:run_simulation, start_date, end_date})
+  end
+
+  def setup_dca_plan(pid, frequency \\ 7, duration \\ 90) do
+    GenServer.call(pid, {:setup_dca_plan, frequency, duration})
+  end
+
+  # Server callbacks
+
+  @impl true
+  def init(strategy) do
+    # Schedule first execution
+    Process.send_after(self(), :execute_strategy, 5_000)
+
+    {:ok,
+     %{
+       strategy: strategy,
+       last_execution: nil,
+       last_result: nil
+     }}
+  end
+
+  @impl true
+  def handle_call(:run_once, _from, state) do
+    result = execute_strategy(state.strategy)
+    {:reply, result, %{state | last_execution: DateTime.utc_now(), last_result: result}}
+  end
+
+  @impl true
+  def handle_call({:run_simulation, start_date, end_date}, _from, state) do
+    result = run_simulation_internal(state.strategy, start_date, end_date)
+    {:reply, result, state}
+  end
+
+  @impl true
+  def handle_call({:setup_dca_plan, frequency, duration}, _from, state) do
+    result = setup_dca_plan(state.strategy, frequency, duration)
+    {:reply, result, state}
+  end
+
+  @impl true
+  def handle_info(:execute_strategy, state) do
+    # Execute the strategy
+    result = execute_strategy(state.strategy)
+
+    # Schedule next execution (every 30 minutes)
+    Process.send_after(self(), :execute_strategy, :timer.minutes(30))
+
+    {:noreply, %{state | last_execution: DateTime.utc_now(), last_result: result}}
+  end
+
+  # Private functions
+
+  defp execute_strategy(strategy) do
     %SmallInvestorStrategy{} = strategy
 
     with {:ok, saved_strategy} <- save_strategy(strategy),
@@ -59,70 +107,6 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
       {:ok, execution_result}
     end
   end
-
-  @doc """
-  Runs a strategy in simulation mode across historical data.
-
-  ## Parameters
-    - strategy: The strategy struct to simulate
-    - start_date: Starting date for the simulation
-    - end_date: Ending date for the simulation
-
-  ## Returns
-    - {:ok, simulation_results} on success
-    - {:error, reason} on failure
-
-  ## Examples
-      iex> BeamBot.Strategies.Domain.StrategyRunner.run_simulation(%BeamBot.Strategies.Domain.SmallInvestorStrategy{
-        trading_pair: "BTCUSDT",
-        timeframe: "1h",
-        ma_long_period: 20,
-        ma_short_period: 5
-      }, DateTime.utc_now() |> DateTime.add(-30 * 24 * 60 * 60, :second), DateTime.utc_now())
-  """
-  def run_simulation(strategy, start_date, end_date) do
-    %SmallInvestorStrategy{} = strategy
-
-    with {:ok, klines} <- fetch_historical_klines(strategy, start_date, end_date),
-         {:ok, final_state} <- run_simulation_with_klines(strategy, klines) do
-      build_simulation_results(strategy, final_state, klines)
-    end
-  end
-
-  @doc """
-  Sets up a DCA (Dollar Cost Averaging) plan based on a strategy.
-
-  ## Parameters
-    - strategy: The strategy struct to use for DCA
-    - frequency: How often to execute the DCA (in days)
-    - duration: How long to run the DCA plan (in days)
-
-  ## Returns
-    - {:ok, dca_plan} on success
-    - {:error, reason} on failure
-  """
-  def setup_dca_plan(strategy, frequency \\ 7, duration \\ 90) do
-    %SmallInvestorStrategy{} = strategy
-
-    with {:ok, saved_strategy} <- save_strategy(strategy),
-         {:ok, dca_result} <- SmallInvestorStrategy.execute_dca(strategy) do
-      dca_plan = %{
-        trading_pair: strategy.trading_pair,
-        total_investment: strategy.investment_amount,
-        part_amount: dca_result.dca_part_amount,
-        frequency_days: frequency,
-        duration_days: duration,
-        start_date: DateTime.utc_now(),
-        end_date: DateTime.utc_now() |> DateTime.add(duration * 24 * 60 * 60, :second),
-        status: "active"
-      }
-
-      Logger.info("DCA plan created: #{inspect(dca_plan)}")
-      {:ok, dca_plan}
-    end
-  end
-
-  # Private functions
 
   defp save_strategy(strategy) do
     strategy_attrs = %{
@@ -191,6 +175,15 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
       start_datetime,
       end_datetime
     )
+  end
+
+  defp run_simulation_internal(strategy, start_date, end_date) do
+    %SmallInvestorStrategy{} = strategy
+
+    with {:ok, klines} <- fetch_historical_klines(strategy, start_date, end_date),
+         {:ok, final_state} <- run_simulation_with_klines(strategy, klines) do
+      build_simulation_results(strategy, final_state, klines)
+    end
   end
 
   defp run_simulation_with_klines(strategy, klines) do
@@ -312,16 +305,20 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   end
 
   defp execute_sell_trade(state, current_price, timestamp, strategy) do
-    # Sell all holdings
-    proceeds = Decimal.mult(state.holdings, current_price)
-
     # Calculate fees (using taker fee for market orders)
-    fee = Decimal.mult(proceeds, Decimal.div(strategy.taker_fee, Decimal.new("100")))
-    net_proceeds = Decimal.sub(proceeds, fee)
+    fee =
+      Decimal.mult(
+        Decimal.mult(state.holdings, current_price),
+        Decimal.div(strategy.taker_fee, Decimal.new("100"))
+      )
 
     %{
       state
-      | cash: Decimal.add(state.cash, net_proceeds),
+      | cash:
+          Decimal.add(
+            state.cash,
+            Decimal.sub(Decimal.mult(state.holdings, current_price), fee)
+          ),
         holdings: Decimal.new("0"),
         current_position: :none,
         trades: [
@@ -337,18 +334,16 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
     }
   end
 
-  defp get_last_price([]), do: Decimal.new("0")
-
   defp get_last_price(klines) do
-    kline = List.last(klines)
-    kline.close
+    List.last(klines).close
   end
 
   defp calculate_roi_percentage(initial_investment, final_value) do
-    profit = Decimal.sub(final_value, initial_investment)
-
     Decimal.mult(
-      Decimal.div(profit, initial_investment),
+      Decimal.div(
+        Decimal.sub(final_value, initial_investment),
+        initial_investment
+      ),
       Decimal.new("100")
     )
   end

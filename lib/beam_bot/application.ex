@@ -28,7 +28,9 @@ defmodule BeamBot.Application do
       # Start the Registry for WebSocket connections
       {Registry, keys: :unique, name: BeamBot.Registry},
       # Start the Binance WebSocket supervisor
-      BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor
+      BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor,
+      # Start the strategy supervisor
+      BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor
     ]
 
     test_children = [
