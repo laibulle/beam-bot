@@ -99,7 +99,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   @doc """
   Handle WebSocket disconnection
   """
-  def handle_disconnect(%{reason: reason}, state) do
+  def handle_disconnect(%{reason: reason, conn: conn}, state) do
     reconnect_count = (state[:reconnect_count] || 0) + 1
     delay = if state[:is_initial_connection], do: @initial_connect_delay, else: @reconnect_delay
 
@@ -107,7 +107,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
       "Disconnected from Binance WebSocket server for #{state.symbol}. Reason: #{inspect(reason)}. Reconnecting in #{delay / 1000} seconds..."
     )
 
-    {:reconnect, %WebSockex.Conn{},
+    {:reconnect, conn,
      %{state | connected: false, reconnect_count: reconnect_count, is_initial_connection: false}}
   end
 
