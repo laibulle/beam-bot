@@ -1,38 +1,52 @@
 defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
   use ExUnit.Case
-  alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.TradingPairsRepositoryMock
-  alias BeamBot.Repositories.KlinesRepository
+
+  import Mox
+
+  alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.{
+    KlinesRepositoryMock,
+    TradingPairsRepositoryMock
+  }
+
   alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
 
-  # Mock the KlinesRepository for testing
-  defmodule MockKlinesRepository do
-    def get_klines(trading_pair, timeframe, limit, start_date, end_date) do
-      # Return mock klines data for testing
+  setup do
+    # Set up mock expectations for KlinesRepositoryMock
+    expect(KlinesRepositoryMock, :get_klines, fn trading_pair,
+                                                 timeframe,
+                                                 limit,
+                                                 start_date,
+                                                 end_date ->
       {:ok,
        [
          %{
-           timestamp: DateTime.utc_now() |> DateTime.add(-3600, :second),
-           open: "50000.0",
-           high: "51000.0",
-           low: "49000.0",
-           close: "50500.0",
-           volume: "100.0"
+           timestamp: start_date,
+           open: Decimal.new("50000.0"),
+           high: Decimal.new("51000.0"),
+           low: Decimal.new("49000.0"),
+           close: Decimal.new("50500.0"),
+           volume: Decimal.new("100.0"),
+           quote_volume: Decimal.new("5050000.0"),
+           trades_count: 1000,
+           taker_buy_base_volume: Decimal.new("50.0"),
+           taker_buy_quote_volume: Decimal.new("2525000.0"),
+           ignore: Decimal.new("0")
          },
          %{
-           timestamp: DateTime.utc_now(),
-           open: "50500.0",
-           high: "51500.0",
-           low: "49500.0",
-           close: "51000.0",
-           volume: "100.0"
+           timestamp: end_date,
+           open: Decimal.new("50500.0"),
+           high: Decimal.new("51500.0"),
+           low: Decimal.new("49500.0"),
+           close: Decimal.new("51000.0"),
+           volume: Decimal.new("100.0"),
+           quote_volume: Decimal.new("5100000.0"),
+           trades_count: 1000,
+           taker_buy_base_volume: Decimal.new("50.0"),
+           taker_buy_quote_volume: Decimal.new("2550000.0"),
+           ignore: Decimal.new("0")
          }
        ]}
-    end
-  end
-
-  setup do
-    # Configure the application to use our mock repository
-    Application.put_env(:beam_bot, :klines_repository, MockKlinesRepository)
+    end)
 
     # Create a test strategy
     strategy = %SmallInvestorStrategy{
@@ -89,13 +103,13 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
       start_date = DateTime.add(end_date, -3600, :second)
 
       # Override the mock to return empty klines
-      defmodule EmptyKlinesRepository do
-        def get_klines(_trading_pair, _timeframe, _limit, _start_date, _end_date) do
-          {:ok, []}
-        end
-      end
-
-      Application.put_env(:beam_bot, :klines_repository, EmptyKlinesRepository)
+      expect(KlinesRepositoryMock, :get_klines, fn _trading_pair,
+                                                   _timeframe,
+                                                   _limit,
+                                                   _start_date,
+                                                   _end_date ->
+        {:ok, []}
+      end)
 
       assert {:ok, results} = StrategyRunner.run_simulation(strategy, start_date, end_date)
 
@@ -103,8 +117,8 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
       assert results.end_date
       assert results.trading_pair == "BTCUSDT"
       assert results.initial_investment == Decimal.new("1000")
-      assert results.final_value == Decimal.new("1000")
-      assert results.roi_percentage == Decimal.new("0")
+      assert Decimal.equal?(results.final_value, Decimal.new("1000"))
+      assert Decimal.equal?(results.roi_percentage, Decimal.new("0"))
       assert results.trades == []
     end
   end
