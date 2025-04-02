@@ -26,7 +26,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker do
   def handle_info(:sync_trading_pairs, state) do
     case SyncTradingPairsUseCase.sync_trading_pairs() do
       {:ok, trading_pairs} ->
-        Logger.info("Successfully synced #{length(trading_pairs)} trading pairs")
+        Logger.debug("Successfully synced #{length(trading_pairs)} trading pairs")
 
       {:error, reason} ->
         Logger.error("Failed to sync trading pairs: #{inspect(reason)}")

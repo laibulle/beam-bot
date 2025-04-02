@@ -61,11 +61,11 @@ defmodule BeamBot.Socials.Workers.TelegramMessagesSyncWorker do
   end
 
   defp handle_messages({channel, messages}) do
-    Logger.info("Successfully fetched #{length(messages)} messages from #{channel}")
+    Logger.debug("Successfully fetched #{length(messages)} messages from #{channel}")
     # For now, just log the first message as an example
     if length(messages) > 0 do
       first_message = List.first(messages)
-      Logger.info("Latest message from #{channel}: #{inspect(first_message)}")
+      Logger.debug("Latest message from #{channel}: #{inspect(first_message)}")
     end
   end
 

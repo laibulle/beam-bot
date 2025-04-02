@@ -33,7 +33,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataForSymbolUseCase do
     {:ok, res} =
       @binance_req_adapter.get_klines(symbol, interval, 1000, start_timestamp, end_timestamp)
 
-    Logger.info("Fetched #{length(res)} klines for #{symbol} in #{interval} interval")
+    Logger.debug("Fetched #{length(res)} klines for #{symbol} in #{interval} interval")
 
     klines =
       Enum.map(res, fn [

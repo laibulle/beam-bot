@@ -34,7 +34,7 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
   defp load_active_strategies(supervisor_state) do
     case @strategy_repository.get_active_strategies() do
       {:ok, strategies} ->
-        Logger.info("Loading #{length(strategies)} active strategies from database")
+        Logger.debug("Loading #{length(strategies)} active strategies from database")
         # Start strategies in a separate process to avoid blocking supervisor initialization
         Task.start(fn -> start_strategies(strategies) end)
         supervisor_state
@@ -58,7 +58,7 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
   end
 
   defp register_strategy_with_supervisor(strategy, child_spec, pid) do
-    Logger.info("Started strategy #{strategy.id} with pid #{inspect(pid)}")
+    Logger.debug("Started strategy #{strategy.id} with pid #{inspect(pid)}")
 
     DynamicSupervisor.start_child(__MODULE__, %{
       child_spec

@@ -78,14 +78,14 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   Handle WebSocket connection established
   """
   def handle_connect(_conn, state) do
-    Logger.info("Connected to Binance WebSocket server for #{state.symbol}")
+    Logger.debug("Connected to Binance WebSocket server for #{state.symbol}")
 
     # For reconnections, resubscribe to streams
     if state[:reconnect_count] > 0 do
       streams = state[:streams] || []
 
       if streams != [] do
-        Logger.info(
+        Logger.debug(
           "Resubscribing to streams after reconnection for #{state.symbol}: #{inspect(streams)}"
         )
 
@@ -218,7 +218,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
 
   defp handle_message(%{"stream" => stream, "data" => data}, state) do
     # Broadcast the message to subscribers
-    Logger.info("Received data from stream #{stream} for #{state.symbol}: #{inspect(data)}")
+    Logger.debug("Received data from stream #{stream} for #{state.symbol}: #{inspect(data)}")
 
     process_message(stream, data)
 
@@ -227,7 +227,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
 
   defp handle_message(%{"result" => nil, "id" => id}, state) do
     # Handle subscription/unsubscription confirmations
-    Logger.info("Received confirmation for request ID #{id} for #{state.symbol}")
+    Logger.debug("Received confirmation for request ID #{id} for #{state.symbol}")
     {:ok, state}
   end
 

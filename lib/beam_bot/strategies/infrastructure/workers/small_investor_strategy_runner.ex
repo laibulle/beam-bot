@@ -120,7 +120,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
       # Update last execution time
       @strategy_repository.update_last_execution(saved_strategy.id, execution_result.timestamp)
 
-      Logger.info("Strategy execution result: #{inspect(execution_result)}")
+      Logger.debug("Strategy execution result: #{inspect(execution_result)}")
       {:ok, execution_result}
     end
   end

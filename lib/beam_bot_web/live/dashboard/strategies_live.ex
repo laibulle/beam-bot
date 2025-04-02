@@ -25,7 +25,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
 
   @impl true
   def handle_event("find_best_pairs", params, socket) do
-    Logger.info("Starting find_best_pairs with params: #{inspect(params)}")
+    Logger.debug("Starting find_best_pairs with params: #{inspect(params)}")
 
     # Set loading state
     socket = assign(socket, loading: true, results: [], error: nil, progress: 0)
@@ -45,18 +45,18 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
       |> Enum.filter(& &1.is_active)
 
     total_pairs = length(active_symbols)
-    Logger.info("Found #{total_pairs} active trading pairs")
+    Logger.debug("Found #{total_pairs} active trading pairs")
 
     # Start async task with streaming
     task =
       Task.async(fn ->
-        Logger.info("Starting task with params: #{inspect(converted_params)}")
+        Logger.debug("Starting task with params: #{inspect(converted_params)}")
 
         result =
           FindBestTradingPairSmallInvestorUseCase.find_best_trading_pairs_small_investor_stream(
             converted_params,
             fn result ->
-              Logger.info("Received result: #{inspect(result)}")
+              Logger.debug("Received result: #{inspect(result)}")
               # Send progress update to LiveView
               Phoenix.PubSub.broadcast(
                 BeamBot.PubSub,
@@ -66,7 +66,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
             end
           )
 
-        Logger.info("Task completed with result: #{inspect(result)}")
+        Logger.debug("Task completed with result: #{inspect(result)}")
         # Send final result to LiveView
         Phoenix.PubSub.broadcast(
           BeamBot.PubSub,
@@ -85,7 +85,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
 
   @impl true
   def handle_info({:progress_update, result}, socket) do
-    Logger.info("Received progress update: #{inspect(result)}")
+    Logger.debug("Received progress update: #{inspect(result)}")
 
     # Update results list with new result and sort by ROI
     new_results =
@@ -93,14 +93,14 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
       |> Enum.reject(&Map.has_key?(&1, :error))
       |> Enum.sort_by(
         fn %{simulation_results: results} ->
-          Decimal.to_float(results.roi_percentage)
+          results.roi_percentage
         end,
-        :desc
+        fn a, b -> Decimal.compare(a, b) == :gt end
       )
 
     # Calculate progress
     progress = min(100, round(length(new_results) / socket.assigns.total_pairs * 100))
-    Logger.info("Updated progress: #{progress}% with #{length(new_results)} results")
+    Logger.debug("Updated progress: #{progress}% with #{length(new_results)} results")
 
     {:noreply,
      assign(socket,
@@ -112,8 +112,8 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
 
   @impl true
   def handle_info({:task_complete, {:ok, final_results}}, socket) do
-    Logger.info("Task completed with results: #{inspect(final_results)}")
-    Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
+    Logger.debug("Task completed with results: #{inspect(final_results)}")
+    Logger.debug("Current socket assigns: #{inspect(socket.assigns)}")
 
     # Update results with final results and sort by ROI
     final_results_list =
@@ -121,9 +121,9 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
       |> Enum.reject(&Map.has_key?(&1, :error))
       |> Enum.sort_by(
         fn %{simulation_results: results} ->
-          Decimal.to_float(results.roi_percentage)
+          results.roi_percentage
         end,
-        :desc
+        fn a, b -> Decimal.compare(a, b) == :gt end
       )
 
     # Store the results in the socket assigns
@@ -134,7 +134,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
   # since we're already handling it via PubSub
   @impl true
   def handle_info({ref, {:ok, _final_results}}, socket) when is_reference(ref) do
-    Logger.info("Received direct task result, but using PubSub result instead")
+    Logger.debug("Received direct task result, but using PubSub result instead")
     Process.demonitor(ref, [:flush])
     {:noreply, socket}
   end
@@ -142,19 +142,19 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
   @impl true
   def handle_info({:task_complete, {:error, reason}}, socket) do
     Logger.error("Task failed with reason: #{inspect(reason)}")
-    Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
+    Logger.debug("Current socket assigns: #{inspect(socket.assigns)}")
     {:noreply, assign(socket, loading: false, error: reason)}
   end
 
   @impl true
   def handle_info({:DOWN, ref, :process, _pid, reason}, socket) when is_reference(ref) do
-    Logger.info("Task process down with reason: #{inspect(reason)}")
-    Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
+    Logger.debug("Task process down with reason: #{inspect(reason)}")
+    Logger.debug("Current socket assigns: #{inspect(socket.assigns)}")
 
     # If we're still loading but the process is down, we should update the loading state
     # This handles cases where the task completes but we haven't received the task_complete message
     if socket.assigns.loading do
-      Logger.info("Task process down while still loading, updating loading state")
+      Logger.debug("Task process down while still loading, updating loading state")
       {:noreply, assign(socket, loading: false, task_ref: nil)}
     else
       {:noreply, assign(socket, task_ref: nil)}

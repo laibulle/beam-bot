@@ -67,7 +67,7 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
           # Run simulation directly without starting a GenServer
           case SmallInvestorStrategyRunner.run_simulation(strategy, start_date, end_date) do
             {:ok, simulation_results} ->
-              Logger.info(
+              Logger.debug(
                 "Simulation results for #{trading_pair.symbol}: #{inspect(simulation_results)}"
               )
 
@@ -110,20 +110,20 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
       |> Enum.reject(&Map.has_key?(&1, :error))
       |> Enum.sort_by(
         fn %{simulation_results: results} ->
-          Decimal.to_float(results.roi_percentage)
+          results.roi_percentage
         end,
-        :desc
+        fn a, b -> Decimal.compare(a, b) == :gt end
       )
 
     {:ok, profitable_pairs}
   end
 
   def find_best_trading_pairs_small_investor_stream(params, callback) do
-    Logger.info("Starting streaming analysis with params: #{inspect(params)}")
+    Logger.debug("Starting streaming analysis with params: #{inspect(params)}")
 
     # Get all active trading pairs
     active_symbols = @trading_pairs_adapter.list_trading_pairs() |> Enum.filter(& &1.is_active)
-    Logger.info("Found #{length(active_symbols)} active trading pairs")
+    Logger.debug("Found #{length(active_symbols)} active trading pairs")
 
     # Convert params to appropriate types
     decimal_amount = Decimal.new(params.investment_amount)
@@ -153,7 +153,7 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
           # Run simulation directly without starting a GenServer
           case SmallInvestorStrategyRunner.run_simulation(strategy, start_date, end_date) do
             {:ok, simulation_results} ->
-              Logger.info(
+              Logger.debug(
                 "Simulation results for #{trading_pair.symbol}: #{inspect(simulation_results)}"
               )
 
@@ -202,12 +202,12 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
       |> Enum.reject(&Map.has_key?(&1, :error))
       |> Enum.sort_by(
         fn %{simulation_results: results} ->
-          Decimal.to_float(results.roi_percentage)
+          results.roi_percentage
         end,
-        :desc
+        fn a, b -> Decimal.compare(a, b) == :gt end
       )
 
-    Logger.info("Streaming analysis completed with #{length(profitable_pairs)} profitable pairs")
+    Logger.debug("Streaming analysis completed with #{length(profitable_pairs)} profitable pairs")
     {:ok, profitable_pairs}
   end
 end

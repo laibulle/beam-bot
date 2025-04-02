@@ -70,7 +70,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
         for trading_pair <- pairs_chunk,
             {interval, days} <- @intervals do
           Task.async(fn ->
-            Logger.info("Starting sync for #{trading_pair.symbol} with interval #{interval}")
+            Logger.debug("Starting sync for #{trading_pair.symbol} with interval #{interval}")
             start_time = DateTime.utc_now()
 
             try do
@@ -89,7 +89,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
               end_time = DateTime.utc_now()
               duration = DateTime.diff(end_time, start_time, :second)
 
-              Logger.info(
+              Logger.debug(
                 "Successfully synced #{trading_pair.symbol} with interval #{interval} in #{duration} seconds"
               )
 
@@ -166,7 +166,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
        }}
     )
 
-    Logger.info("Completed syncing historical data for all trading pairs")
+    Logger.debug("Completed syncing historical data for all trading pairs")
     :ok
   end
 end

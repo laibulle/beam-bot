@@ -42,7 +42,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
       @trading_pairs_repository.list_trading_pairs()
       |> Enum.filter(& &1.is_active)
 
-    Logger.info(
+    Logger.debug(
       "Starting Binance WebSocket supervisor with #{length(trading_pairs)} active trading pairs"
     )
 
@@ -50,7 +50,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
     Enum.each(trading_pairs, fn trading_pair ->
       case Registry.lookup(BeamBot.Registry, {BinanceWsAdapter, trading_pair.symbol}) do
         [{pid, _}] ->
-          Logger.info("Found existing process for #{trading_pair.symbol}, terminating it")
+          Logger.debug("Found existing process for #{trading_pair.symbol}, terminating it")
           Process.exit(pid, :normal)
 
         [] ->
