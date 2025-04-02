@@ -4,6 +4,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
 
   import Mox
 
+  alias BeamBot.Accounts
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryMock
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
   alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner
@@ -12,6 +13,13 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
   setup do
     # Start the Ecto sandbox
     :ok = Sandbox.checkout(BeamBot.Repo)
+
+    # Create a test user
+    {:ok, user} =
+      Accounts.register_user(%{
+        email: Faker.Internet.email(),
+        password: "@dmin@admin@admin"
+      })
 
     # Generate enough klines data for indicator calculation (ma_long_period * 3 = 60)
     klines_data =
@@ -43,7 +51,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
       ma_short_period: 5,
       investment_amount: Decimal.new("1000"),
       taker_fee: Decimal.new("0.1"),
-      max_risk_percentage: Decimal.new("2")
+      max_risk_percentage: Decimal.new("2"),
+      user_id: user.id
     }
 
     # Start the SmallInvestorStrategyRunner process and allow it to use the sandbox
@@ -68,7 +77,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
       {:ok, klines_data}
     end)
 
-    {:ok, strategy: strategy, pid: pid}
+    {:ok, strategy: strategy, pid: pid, user: user}
   end
 
   describe "run_once/1" do

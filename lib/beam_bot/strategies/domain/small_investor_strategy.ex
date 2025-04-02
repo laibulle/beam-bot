@@ -23,7 +23,8 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
           timeframe: String.t(),
           activated_at: DateTime.t() | nil,
           maker_fee: Decimal.t(),
-          taker_fee: Decimal.t()
+          taker_fee: Decimal.t(),
+          user_id: integer()
         }
 
   defstruct [
@@ -37,7 +38,8 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
     :timeframe,
     :activated_at,
     :maker_fee,
-    :taker_fee
+    :taker_fee,
+    :user_id
   ]
 
   @doc """

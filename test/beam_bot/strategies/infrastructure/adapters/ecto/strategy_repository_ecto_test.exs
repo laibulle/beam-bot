@@ -1,6 +1,7 @@
 defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEctoTest do
   use BeamBot.DataCase
 
+  alias BeamBot.Accounts
   alias BeamBot.Repo
   alias BeamBot.Strategies.Domain.Strategy
   alias BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
@@ -8,15 +9,24 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
   setup do
     # Clean up the strategies table before each test
     Repo.delete_all(Strategy)
-    :ok
+
+    # Create a test user
+    {:ok, user} =
+      Accounts.register_user(%{
+        email: Faker.Internet.email(),
+        password: "password123@freferferfrefref"
+      })
+
+    {:ok, user: user}
   end
 
   describe "save_strategy/1" do
-    test "successfully saves a new strategy" do
+    test "successfully saves a new strategy", %{user: user} do
       strategy_params = %{
         "name" => "Test Strategy",
         "status" => "active",
         "activated_at" => DateTime.utc_now() |> DateTime.truncate(:second),
+        "user_id" => user.id,
         "params" => %{
           "trading_pair" => "BTCUSDT",
           "timeframe" => "1h",
@@ -31,14 +41,16 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
       assert saved_strategy.status == strategy_params["status"]
       assert DateTime.compare(saved_strategy.activated_at, strategy_params["activated_at"]) == :eq
       assert saved_strategy.params == strategy_params["params"]
+      assert saved_strategy.user_id == user.id
     end
 
-    test "returns error for invalid strategy data" do
+    test "returns error for invalid strategy data", %{user: user} do
       invalid_params = %{
         # Invalid empty name
         "name" => "",
         "status" => "active",
         "activated_at" => DateTime.utc_now() |> DateTime.truncate(:second),
+        "user_id" => user.id,
         "params" => %{}
       }
 
@@ -46,12 +58,13 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
       assert "can't be blank" in errors_on(changeset).name
     end
 
-    test "returns error for invalid status" do
+    test "returns error for invalid status", %{user: user} do
       invalid_params = %{
         "name" => "Test Strategy",
         # Invalid status
         "status" => "invalid_status",
         "activated_at" => DateTime.utc_now() |> DateTime.truncate(:second),
+        "user_id" => user.id,
         "params" => %{}
       }
 
@@ -61,12 +74,13 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
   end
 
   describe "get_active_strategies/0" do
-    test "returns all active strategies" do
+    test "returns all active strategies", %{user: user} do
       # Create some test strategies
       active_strategy = %Strategy{
         name: "Active Strategy",
         status: "active",
         activated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        user_id: user.id,
         params: %{
           "trading_pair" => "BTCUSDT",
           "timeframe" => "1h"
@@ -77,6 +91,7 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
         name: "Inactive Strategy",
         status: "stopped",
         activated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        user_id: user.id,
         params: %{
           "trading_pair" => "ETHUSDT",
           "timeframe" => "4h"
@@ -97,11 +112,12 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
   end
 
   describe "get_strategy_by_id/1" do
-    test "returns strategy when it exists" do
+    test "returns strategy when it exists", %{user: user} do
       strategy = %Strategy{
         name: "Test Strategy",
         status: "active",
         activated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        user_id: user.id,
         params: %{
           "trading_pair" => "BTCUSDT",
           "timeframe" => "1h"
@@ -116,6 +132,7 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
       assert retrieved_strategy.id == saved_strategy.id
       assert retrieved_strategy.name == strategy.name
       assert retrieved_strategy.params == strategy.params
+      assert retrieved_strategy.user_id == user.id
     end
 
     test "returns error when strategy does not exist" do
@@ -124,11 +141,12 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
   end
 
   describe "update_strategy_status/2" do
-    test "successfully updates strategy status" do
+    test "successfully updates strategy status", %{user: user} do
       strategy = %Strategy{
         name: "Test Strategy",
         status: "active",
         activated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        user_id: user.id,
         params: %{
           "trading_pair" => "BTCUSDT",
           "timeframe" => "1h"
@@ -148,11 +166,12 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
                StrategyRepositoryEcto.update_strategy_status(-1, "paused")
     end
 
-    test "returns error for invalid status" do
+    test "returns error for invalid status", %{user: user} do
       strategy = %Strategy{
         name: "Test Strategy",
         status: "active",
         activated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        user_id: user.id,
         params: %{
           "trading_pair" => "BTCUSDT",
           "timeframe" => "1h"
@@ -169,11 +188,12 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto
   end
 
   describe "update_last_execution/2" do
-    test "successfully updates last execution timestamp" do
+    test "successfully updates last execution timestamp", %{user: user} do
       strategy = %Strategy{
         name: "Test Strategy",
         status: "active",
         activated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        user_id: user.id,
         params: %{
           "trading_pair" => "BTCUSDT",
           "timeframe" => "1h"

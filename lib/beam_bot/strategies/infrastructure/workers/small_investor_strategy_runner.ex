@@ -130,6 +130,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
       name: "SmallInvestorStrategy",
       status: "active",
       activated_at: DateTime.utc_now(),
+      user_id: strategy.user_id,
       params: %{
         trading_pair: strategy.trading_pair,
         timeframe: strategy.timeframe,
