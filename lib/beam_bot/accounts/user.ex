@@ -5,6 +5,15 @@ defmodule BeamBot.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{
+          id: integer() | nil,
+          email: String.t(),
+          password: String.t(),
+          hashed_password: String.t(),
+          current_password: String.t(),
+          confirmed_at: DateTime.t() | nil
+        }
+
   schema "users" do
     field :email, :string
     field :password, :string, virtual: true, redact: true

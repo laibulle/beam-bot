@@ -8,11 +8,13 @@ defmodule BeamBot.Repo.Migrations.CreateStrategies do
       add :activated_at, :utc_datetime, null: false
       add :last_execution_at, :utc_datetime
       add :params, :map, null: false
+      add :user_id, references(:users, on_delete: :delete_all), null: false
 
       timestamps()
     end
 
     create index(:strategies, [:name])
     create index(:strategies, [:status])
+    create index(:strategies, [:user_id])
   end
 end

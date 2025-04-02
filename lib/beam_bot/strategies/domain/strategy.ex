@@ -13,6 +13,8 @@ defmodule BeamBot.Strategies.Domain.Strategy do
           activated_at: DateTime.t() | nil,
           last_execution_at: DateTime.t() | nil,
           params: map(),
+          user_id: integer(),
+          user: BeamBot.Accounts.User.t() | Ecto.Association.NotLoaded.t(),
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
         }
@@ -26,6 +28,8 @@ defmodule BeamBot.Strategies.Domain.Strategy do
     # Stores strategy-specific parameters
     field :params, :map
 
+    belongs_to :user, BeamBot.Accounts.User
+
     timestamps()
   end
 
@@ -34,8 +38,9 @@ defmodule BeamBot.Strategies.Domain.Strategy do
   """
   def changeset(strategy, attrs) do
     strategy
-    |> cast(attrs, [:name, :status, :activated_at, :last_execution_at, :params])
-    |> validate_required([:name, :status, :activated_at, :params])
+    |> cast(attrs, [:name, :status, :activated_at, :last_execution_at, :params, :user_id])
+    |> validate_required([:name, :status, :activated_at, :params, :user_id])
     |> validate_inclusion(:status, ["active", "paused", "stopped"])
+    |> foreign_key_constraint(:user_id)
   end
 end
