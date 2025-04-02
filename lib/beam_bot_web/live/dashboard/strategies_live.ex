@@ -68,7 +68,12 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
 
         Logger.info("Task completed with result: #{inspect(result)}")
         # Send final result to LiveView
-        Phoenix.PubSub.broadcast(BeamBot.PubSub, "strategies:progress", {:task_complete, result})
+        Phoenix.PubSub.broadcast(
+          BeamBot.PubSub,
+          "strategies:progress",
+          {:task_complete, result}
+        )
+
         result
       end)
 
@@ -121,26 +126,17 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
         :desc
       )
 
+    # Store the results in the socket assigns
     {:noreply, assign(socket, loading: false, progress: 100, results: final_results_list)}
   end
 
+  # Handle direct task result - just demonitor the ref and ignore the result
+  # since we're already handling it via PubSub
   @impl true
-  def handle_info({ref, {:ok, final_results}}, socket) when is_reference(ref) do
-    Logger.info("Task completed with results: #{inspect(final_results)}")
-    Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
-
-    # Update results with final results and sort by ROI
-    final_results_list =
-      final_results
-      |> Enum.reject(&Map.has_key?(&1, :error))
-      |> Enum.sort_by(
-        fn %{simulation_results: results} ->
-          Decimal.to_float(results.roi_percentage)
-        end,
-        :desc
-      )
-
-    {:noreply, assign(socket, loading: false, progress: 100, results: final_results_list)}
+  def handle_info({ref, {:ok, _final_results}}, socket) when is_reference(ref) do
+    Logger.info("Received direct task result, but using PubSub result instead")
+    Process.demonitor(ref, [:flush])
+    {:noreply, socket}
   end
 
   @impl true
@@ -154,7 +150,15 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
   def handle_info({:DOWN, ref, :process, _pid, reason}, socket) when is_reference(ref) do
     Logger.info("Task process down with reason: #{inspect(reason)}")
     Logger.info("Current socket assigns: #{inspect(socket.assigns)}")
-    {:noreply, assign(socket, task_ref: nil)}
+
+    # If we're still loading but the process is down, we should update the loading state
+    # This handles cases where the task completes but we haven't received the task_complete message
+    if socket.assigns.loading do
+      Logger.info("Task process down while still loading, updating loading state")
+      {:noreply, assign(socket, loading: false, task_ref: nil)}
+    else
+      {:noreply, assign(socket, task_ref: nil)}
+    end
   end
 
   @impl true
