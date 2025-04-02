@@ -55,13 +55,13 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
         result =
           FindBestTradingPairSmallInvestorUseCase.find_best_trading_pairs_small_investor_stream(
             converted_params,
-            fn result ->
-              Logger.debug("Received result: #{inspect(result)}")
+            fn batch_results ->
+              Logger.debug("Received batch results: #{length(batch_results)} pairs")
               # Send progress update to LiveView
               Phoenix.PubSub.broadcast(
                 BeamBot.PubSub,
                 "strategies:progress",
-                {:progress_update, result}
+                {:progress_update, batch_results}
               )
             end
           )
@@ -84,22 +84,22 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
   end
 
   @impl true
-  def handle_info({:progress_update, result}, socket) do
-    Logger.debug("Received progress update: #{inspect(result)}")
+  def handle_info({:progress_update, batch_results}, socket) do
+    Logger.debug("Received progress update with #{length(batch_results)} pairs")
 
-    # Update results list with new result and sort by ROI
-    new_results =
-      [result | socket.assigns.results]
-      |> Enum.reject(&Map.has_key?(&1, :error))
-      |> Enum.sort_by(
-        fn %{simulation_results: results} ->
-          results.roi_percentage
-        end,
-        fn a, b -> Decimal.compare(a, b) == :gt end
-      )
+    # Update results list with batch results
+    # The batch results are already sorted by ROI from the strategy
+    new_results = batch_results
 
-    # Calculate progress
-    progress = min(100, round(length(new_results) / socket.assigns.total_pairs * 100))
+    # Calculate progress based on the number of results
+    # Add safety check to prevent division by zero
+    progress =
+      if socket.assigns.total_pairs > 0 do
+        min(100, round(length(new_results) / socket.assigns.total_pairs * 100))
+      else
+        0
+      end
+
     Logger.debug("Updated progress: #{progress}% with #{length(new_results)} results")
 
     {:noreply,

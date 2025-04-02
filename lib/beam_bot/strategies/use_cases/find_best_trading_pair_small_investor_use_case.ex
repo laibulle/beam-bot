@@ -274,7 +274,8 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
             options,
             start_date,
             end_date,
-            callback
+            # Don't call the callback for each individual result
+            fn _result -> :ok end
           )
         end,
         max_concurrency: min(@max_concurrency, length(batch)),
@@ -319,6 +320,9 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
     # Update processed count
     new_processed_count = acc_processed_count + length(batch)
     Logger.debug("Processed #{new_processed_count}/#{total_pairs} trading pairs")
+
+    # Send batch update via callback
+    callback.(merged_profitable_pairs)
 
     # Hint garbage collection after each batch
     :erlang.garbage_collect()
