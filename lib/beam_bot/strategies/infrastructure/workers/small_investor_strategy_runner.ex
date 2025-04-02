@@ -1,4 +1,4 @@
-defmodule BeamBot.Strategies.Domain.StrategyRunner do
+defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner do
   @moduledoc """
   A runner for trading strategies that handles execution, tracking, and reporting.
   """

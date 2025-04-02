@@ -5,7 +5,7 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
   use DynamicSupervisor
   require Logger
 
-  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
+  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, SmallInvestorStrategyRunner}
 
   @strategy_repository Application.compile_env!(:beam_bot, :strategy_repository)
 
@@ -50,7 +50,7 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
   end
 
   defp start_and_register_strategy(strategy, child_spec) do
-    case StrategyRunner.start_link(child_spec.start) do
+    case SmallInvestorStrategyRunner.start_link(child_spec.start) do
       {:ok, pid} -> register_strategy_with_supervisor(strategy, child_spec, pid)
       {:error, reason} -> log_strategy_error(strategy, "Failed to start strategy", reason)
     end
@@ -91,7 +91,7 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
     # Create a child spec for the strategy runner
     %{
       id: "strategy_#{strategy.id}",
-      start: {StrategyRunner, :start_link, [strategy_instance]},
+      start: {SmallInvestorStrategyRunner, :start_link, [strategy_instance]},
       type: :worker
     }
   end

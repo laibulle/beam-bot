@@ -8,7 +8,7 @@ defmodule BeamBotWeb.TradingPairLive do
   @refresh_interval 10_000
 
   alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker
-  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
+  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, SmallInvestorStrategyRunner}
 
   @impl true
   def mount(%{"symbol" => symbol}, _session, socket) do
@@ -178,11 +178,11 @@ defmodule BeamBotWeb.TradingPairLive do
 
     # Execute simulation in Task to avoid blocking the LiveView process
     Task.async(fn ->
-      # Start the StrategyRunner GenServer
-      {:ok, pid} = StrategyRunner.start_link(strategy)
+      # Start the SmallInvestorStrategyRunner GenServer
+      {:ok, pid} = SmallInvestorStrategyRunner.start_link(strategy)
 
       result =
-        case StrategyRunner.run_simulation(strategy, start_date, end_date) do
+        case SmallInvestorStrategyRunner.run_simulation(strategy, start_date, end_date) do
           {:ok, results} -> {:simulation_complete, results}
           {:error, reason} -> {:simulation_error, reason}
         end

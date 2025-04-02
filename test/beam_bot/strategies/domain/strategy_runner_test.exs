@@ -1,4 +1,4 @@
-defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
+defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerTest do
   use ExUnit.Case
   use BeamBot.DataCase
 
@@ -6,7 +6,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
 
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryMock
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
-  alias BeamBot.Strategies.Domain.StrategyRunner
+  alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner
   alias Ecto.Adapters.SQL.Sandbox
 
   setup do
@@ -46,8 +46,8 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
       max_risk_percentage: Decimal.new("2")
     }
 
-    # Start the StrategyRunner process and allow it to use the sandbox
-    {:ok, pid} = StrategyRunner.start_link(strategy)
+    # Start the SmallInvestorStrategyRunner process and allow it to use the sandbox
+    {:ok, pid} = SmallInvestorStrategyRunner.start_link(strategy)
     Sandbox.allow(BeamBot.Repo, self(), pid)
 
     # Allow the GenServer process to use the mock
@@ -76,7 +76,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
       strategy: _strategy,
       pid: pid
     } do
-      assert {:ok, result} = StrategyRunner.run_once(pid)
+      assert {:ok, result} = SmallInvestorStrategyRunner.run_once(pid)
 
       assert result.timestamp
       assert result.strategy_name == "SmallInvestorStrategy"
@@ -90,11 +90,11 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
     test "handles strategy execution failure", %{strategy: strategy} do
       # Modify the strategy to cause a failure by setting max_risk_percentage to nil
       invalid_strategy = %{strategy | max_risk_percentage: nil}
-      {:ok, invalid_pid} = StrategyRunner.start_link(invalid_strategy)
+      {:ok, invalid_pid} = SmallInvestorStrategyRunner.start_link(invalid_strategy)
       Sandbox.allow(BeamBot.Repo, self(), invalid_pid)
       allow(KlinesRepositoryMock, self(), invalid_pid)
 
-      assert {:error, _reason} = StrategyRunner.run_once(invalid_pid)
+      assert {:error, _reason} = SmallInvestorStrategyRunner.run_once(invalid_pid)
     end
   end
 
@@ -134,7 +134,8 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
         {:ok, simulation_klines}
       end)
 
-      assert {:ok, results} = StrategyRunner.run_simulation(strategy, start_date, end_date)
+      assert {:ok, results} =
+               SmallInvestorStrategyRunner.run_simulation(strategy, start_date, end_date)
 
       assert results.start_date
       assert results.end_date
@@ -158,7 +159,8 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
         {:ok, []}
       end)
 
-      assert {:ok, results} = StrategyRunner.run_simulation(strategy, start_date, end_date)
+      assert {:ok, results} =
+               SmallInvestorStrategyRunner.run_simulation(strategy, start_date, end_date)
 
       assert results.start_date
       assert results.end_date
@@ -172,7 +174,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
 
   describe "setup_dca_plan/2" do
     test "successfully creates DCA plan with default parameters", %{strategy: _strategy, pid: pid} do
-      assert {:ok, plan} = StrategyRunner.setup_dca_plan(pid)
+      assert {:ok, plan} = SmallInvestorStrategyRunner.setup_dca_plan(pid)
 
       assert plan.trading_pair == "BTCUSDT"
       assert plan.total_investment == Decimal.new("1000")
@@ -184,7 +186,7 @@ defmodule BeamBot.Strategies.Domain.StrategyRunnerTest do
     end
 
     test "successfully creates DCA plan with custom parameters", %{strategy: _strategy, pid: pid} do
-      assert {:ok, plan} = StrategyRunner.setup_dca_plan(pid, 14, 180)
+      assert {:ok, plan} = SmallInvestorStrategyRunner.setup_dca_plan(pid, 14, 180)
 
       assert plan.trading_pair == "BTCUSDT"
       assert plan.total_investment == Decimal.new("1000")

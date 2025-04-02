@@ -24,7 +24,7 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
                      :max_best_trading_pairs_small_investor_concurrency
                    )
 
-  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
+  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, SmallInvestorStrategyRunner}
 
   def find_best_trading_pairs_small_investor(
         %{
@@ -64,7 +64,7 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
           strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
 
           # Run simulation directly without starting a GenServer
-          case StrategyRunner.run_simulation(strategy, start_date, end_date) do
+          case SmallInvestorStrategyRunner.run_simulation(strategy, start_date, end_date) do
             {:ok, simulation_results} ->
               Logger.info(
                 "Simulation results for #{trading_pair.symbol}: #{inspect(simulation_results)}"
@@ -150,7 +150,7 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
           strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
 
           # Run simulation directly without starting a GenServer
-          case StrategyRunner.run_simulation(strategy, start_date, end_date) do
+          case SmallInvestorStrategyRunner.run_simulation(strategy, start_date, end_date) do
             {:ok, simulation_results} ->
               Logger.info(
                 "Simulation results for #{trading_pair.symbol}: #{inspect(simulation_results)}"

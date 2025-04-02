@@ -9,7 +9,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker 
   require Logger
 
   alias BeamBot.Exchanges.Domain.MarkPriceUpdate
-  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, StrategyRunner}
+  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, SmallInvestorStrategyRunner}
 
   # Default interval is 30 minutes
   @check_interval :timer.minutes(30)
@@ -197,7 +197,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker 
         state.strategy
       end
 
-    case StrategyRunner.run_once(strategy_with_context) do
+    case SmallInvestorStrategyRunner.run_once(strategy_with_context) do
       {:ok, result} ->
         new_state = %{
           state
