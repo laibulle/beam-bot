@@ -24,7 +24,8 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
                      :max_best_trading_pairs_small_investor_concurrency
                    )
 
-  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, SmallInvestorStrategyRunner}
+  alias BeamBot.Strategies.Domain.SmallInvestorStrategy
+  alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner
 
   def find_best_trading_pairs_small_investor(
         %{

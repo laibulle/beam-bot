@@ -7,8 +7,8 @@ defmodule BeamBotWeb.TradingPairLive do
   # Define refresh interval in milliseconds
   @refresh_interval 10_000
 
-  alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyWorker
-  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, SmallInvestorStrategyRunner}
+  alias BeamBot.Strategies.Domain.SmallInvestorStrategy
+  alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner
 
   @impl true
   def mount(%{"symbol" => symbol}, _session, socket) do
@@ -22,7 +22,7 @@ defmodule BeamBotWeb.TradingPairLive do
     {:ok, data} = @klines_repository.get_klines(symbol, "1h")
 
     # Get strategy status if it exists
-    strategy_status = SmallInvestorStrategyWorker.get_status()
+    strategy_status = get_strategy_status()
 
     {:ok,
      socket
@@ -40,7 +40,7 @@ defmodule BeamBotWeb.TradingPairLive do
     Process.send_after(self(), :refresh_status, @refresh_interval)
 
     # Get updated status
-    strategy_status = SmallInvestorStrategyWorker.get_status()
+    strategy_status = get_strategy_status()
 
     {:noreply, assign(socket, strategy_status: strategy_status)}
   end
@@ -95,11 +95,17 @@ defmodule BeamBotWeb.TradingPairLive do
       max_risk_percentage: decimal_max_risk
     ]
 
-    # Start the strategy worker
-    :ok = SmallInvestorStrategyWorker.start_strategy(trading_pair.symbol, decimal_amount, options)
+    # Create strategy
+    strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
+
+    # Start the strategy runner
+    {:ok, pid} = SmallInvestorStrategyRunner.start_link(strategy)
+
+    # Store the pid in the process dictionary for later use
+    Process.put(:strategy_runner_pid, pid)
 
     # Get updated status
-    strategy_status = SmallInvestorStrategyWorker.get_status()
+    strategy_status = get_strategy_status()
 
     message =
       "Started strategy for #{trading_pair.symbol} with investment amount #{investment_amount} USDT"
@@ -112,11 +118,14 @@ defmodule BeamBotWeb.TradingPairLive do
 
   @impl true
   def handle_event("stop_strategy", _params, socket) do
-    # Stop the strategy
-    SmallInvestorStrategyWorker.stop_strategy()
+    # Stop the strategy if it's running
+    if pid = Process.get(:strategy_runner_pid) do
+      GenServer.stop(pid)
+      Process.delete(:strategy_runner_pid)
+    end
 
     # Get updated status
-    strategy_status = SmallInvestorStrategyWorker.get_status()
+    strategy_status = get_strategy_status()
 
     {:noreply,
      socket
@@ -126,14 +135,16 @@ defmodule BeamBotWeb.TradingPairLive do
 
   @impl true
   def handle_event("run_now", _params, socket) do
-    # Manually run the strategy once
-    SmallInvestorStrategyWorker.run_now()
+    # Manually run the strategy once if it's running
+    if pid = Process.get(:strategy_runner_pid) do
+      SmallInvestorStrategyRunner.run_once(pid)
+    end
 
     # Wait a moment for the strategy to execute
     Process.sleep(1000)
 
     # Get updated status
-    strategy_status = SmallInvestorStrategyWorker.get_status()
+    strategy_status = get_strategy_status()
 
     {:noreply,
      socket
@@ -193,6 +204,26 @@ defmodule BeamBotWeb.TradingPairLive do
     end)
 
     {:noreply, socket}
+  end
+
+  # Helper function to get strategy status
+  defp get_strategy_status do
+    if pid = Process.get(:strategy_runner_pid) do
+      # Try to get status from the runner
+      case SmallInvestorStrategyRunner.run_once(pid) do
+        {:ok, result} ->
+          %{
+            status: :running,
+            last_result: result,
+            last_check: DateTime.utc_now()
+          }
+
+        {:error, _} ->
+          %{status: :error}
+      end
+    else
+      %{status: :idle}
+    end
   end
 
   @impl true

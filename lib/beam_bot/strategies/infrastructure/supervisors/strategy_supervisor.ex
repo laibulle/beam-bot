@@ -5,7 +5,8 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
   use DynamicSupervisor
   require Logger
 
-  alias BeamBot.Strategies.Domain.{SmallInvestorStrategy, SmallInvestorStrategyRunner}
+  alias BeamBot.Strategies.Domain.SmallInvestorStrategy
+  alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner
 
   @strategy_repository Application.compile_env!(:beam_bot, :strategy_repository)
 
