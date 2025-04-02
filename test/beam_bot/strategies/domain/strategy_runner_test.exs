@@ -6,6 +6,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
 
   alias BeamBot.Accounts
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryMock
+  alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapterMock
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
   alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner
   alias Ecto.Adapters.SQL.Sandbox
@@ -59,22 +60,23 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     {:ok, pid} = SmallInvestorStrategyRunner.start_link(strategy)
     Sandbox.allow(BeamBot.Repo, self(), pid)
 
-    # Allow the GenServer process to use the mock
+    # Allow the GenServer process to use the mocks
     allow(KlinesRepositoryMock, self(), pid)
+    allow(BinanceReqAdapterMock, self(), pid)
 
     # Set up mock expectations for KlinesRepositoryMock
     # First set up the 5-argument version for simulation
-    expect(KlinesRepositoryMock, :get_klines, fn _trading_pair,
-                                                 _timeframe,
+    expect(KlinesRepositoryMock, :get_klines, fn _symbol,
+                                                 _interval,
                                                  _limit,
-                                                 _start_date,
-                                                 _end_date ->
+                                                 _start_time,
+                                                 _end_time ->
       {:ok, klines_data}
     end)
 
-    # Then set up the 3-argument version for regular strategy execution
-    expect(KlinesRepositoryMock, :get_klines, fn _trading_pair, _timeframe, _limit ->
-      {:ok, klines_data}
+    # Set up mock expectations for BinanceReqAdapterMock
+    expect(BinanceReqAdapterMock, :place_order, fn params ->
+      {:ok, %{"orderId" => "test_order_id", "status" => "NEW"}}
     end)
 
     {:ok, strategy: strategy, pid: pid, user: user}
