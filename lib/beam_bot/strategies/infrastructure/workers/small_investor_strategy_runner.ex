@@ -10,6 +10,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
 
   @klines_repository Application.compile_env!(:beam_bot, :klines_repository)
   @strategy_repository Application.compile_env!(:beam_bot, :strategy_repository)
+  @binance_req_adapter Application.compile_env!(:beam_bot, :binance_req_adapter)
 
   @type execution_result :: %{
           timestamp: DateTime.t(),
@@ -18,7 +19,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
           trading_pair: String.t(),
           price: float(),
           position_size: Decimal.t() | nil,
-          reason: String.t()
+          reason: String.t(),
+          order_id: String.t() | nil
         }
 
   # Client API
@@ -106,7 +108,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     %SmallInvestorStrategy{} = strategy
 
     with {:ok, saved_strategy} <- save_strategy(strategy),
-         {:ok, result} <- SmallInvestorStrategy.analyze_market(strategy) do
+         {:ok, result} <- SmallInvestorStrategy.analyze_market(strategy),
+         {:ok, order_id} <- place_order(result, strategy) do
       execution_result = %{
         timestamp: DateTime.utc_now(),
         strategy_name: "SmallInvestorStrategy",
@@ -114,7 +117,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
         trading_pair: strategy.trading_pair,
         price: result.price,
         position_size: calculate_position_size(result, strategy),
-        reason: get_signal_reason(result)
+        reason: get_signal_reason(result),
+        order_id: order_id
       }
 
       # Update last execution time
@@ -122,6 +126,48 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
 
       Logger.debug("Strategy execution result: #{inspect(execution_result)}")
       {:ok, execution_result}
+    end
+  end
+
+  defp place_order(result, strategy) do
+    case result.signal do
+      :buy ->
+        # For buy signals, calculate position size based on risk management
+        position_size = calculate_position_size(result, strategy)
+
+        # Place a market buy order
+        params = %{
+          symbol: strategy.trading_pair,
+          side: "BUY",
+          type: "MARKET",
+          quantity: position_size
+        }
+
+        case @binance_req_adapter.place_order(params) do
+          {:ok, order} -> {:ok, order["orderId"]}
+          {:error, reason} -> {:error, "Failed to place buy order: #{inspect(reason)}"}
+        end
+
+      :sell ->
+        # For sell signals, we need to get current holdings
+        # This is a simplified version - in production you'd want to track actual holdings
+        position_size = calculate_position_size(result, strategy)
+
+        # Place a market sell order
+        params = %{
+          symbol: strategy.trading_pair,
+          side: "SELL",
+          type: "MARKET",
+          quantity: position_size
+        }
+
+        case @binance_req_adapter.place_order(params) do
+          {:ok, order} -> {:ok, order["orderId"]}
+          {:error, reason} -> {:error, "Failed to place sell order: #{inspect(reason)}"}
+        end
+
+      :hold ->
+        {:ok, nil}
     end
   end
 
