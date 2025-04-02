@@ -65,7 +65,12 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     allow(BinanceReqAdapterMock, self(), pid)
 
     # Set up mock expectations for KlinesRepositoryMock
-    # First set up the 5-argument version for simulation
+    # Set up the 3-argument version for regular strategy execution
+    expect(KlinesRepositoryMock, :get_klines, fn _symbol, _interval, _limit ->
+      {:ok, klines_data}
+    end)
+
+    # Set up the 5-argument version for simulation
     expect(KlinesRepositoryMock, :get_klines, fn _symbol,
                                                  _interval,
                                                  _limit,
