@@ -3,7 +3,10 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   An adapter for interacting with the Binance API using Req.
   """
 
+  @behaviour BeamBot.Exchanges.Domain.Ports.ExchangePort
+
   require Logger
+  alias Decimal
 
   @api_key Application.compile_env(:beam_bot, :binance_api_key)
   @api_secret_key Application.compile_env(:beam_bot, :binance_api_secret_key)
@@ -78,6 +81,70 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
 
     request("/api/v3/klines", params)
   end
+
+  @doc """
+  Places a new order on Binance.
+
+  ## Parameters
+    * params - Map containing order parameters:
+      * symbol - The trading pair symbol (e.g., "BTCUSDT")
+      * side - The order side ("BUY" or "SELL")
+      * type - The order type ("LIMIT" or "MARKET")
+      * quantity - The quantity to trade (as Decimal)
+      * price - The price per unit as Decimal (required for LIMIT orders)
+      * time_in_force - Time in force type (required for LIMIT orders, e.g., "GTC", "IOC", "FOK")
+
+  ## Returns
+    * `{:ok, order_info}` - On successful order placement
+    * `{:error, reason}` - On failure
+
+  ## Examples
+
+      iex> params = %{
+      ...>   symbol: "BTCUSDT",
+      ...>   side: "BUY",
+      ...>   type: "LIMIT",
+      ...>   quantity: Decimal.new("0.001"),
+      ...>   price: Decimal.new("50000"),
+      ...> }
+      iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.place_order(params)
+      {:ok, %{orderId: 123456, status: "NEW", ...}}
+
+      iex> market_params = %{
+      ...>   symbol: "BTCUSDT",
+      ...>   side: "SELL",
+      ...>   type: "MARKET",
+      ...>   quantity: Decimal.new("0.001")
+      ...> }
+      iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.place_order(market_params)
+      {:ok, %{orderId: 123457, status: "FILLED", ...}}
+  """
+  def place_order(%{symbol: symbol, side: side, type: type, quantity: quantity} = params) do
+    timestamp = :os.system_time(:millisecond)
+
+    base_params = %{
+      symbol: symbol,
+      side: side,
+      type: type,
+      quantity: Decimal.to_string(quantity),
+      timestamp: timestamp
+    }
+
+    params =
+      base_params
+      |> maybe_add_limit_params(type, Map.get(params, :price))
+
+    signed_params = sign_params(params)
+    request("/api/v3/order", signed_params, @api_key)
+  end
+
+  defp maybe_add_limit_params(params, "LIMIT", price) when not is_nil(price) do
+    params
+    |> Map.put(:price, Decimal.to_string(price))
+    |> Map.put(:timeInForce, Map.get(params, :time_in_force))
+  end
+
+  defp maybe_add_limit_params(params, "MARKET", _price), do: params
 
   defp maybe_add_time_range(params, nil, nil), do: params
   defp maybe_add_time_range(params, start_time, nil), do: Map.put(params, :startTime, start_time)
