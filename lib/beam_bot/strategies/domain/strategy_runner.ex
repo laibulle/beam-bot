@@ -44,6 +44,9 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
 
   @impl true
   def init(strategy) do
+    # Subscribe to kline events for this strategy's trading pair
+    Phoenix.PubSub.subscribe(BeamBot.PubSub, "binance:kline:#{strategy.trading_pair}")
+
     # Schedule first execution
     Process.send_after(self(), :execute_strategy, 5_000)
 
@@ -71,6 +74,19 @@ defmodule BeamBot.Strategies.Domain.StrategyRunner do
   def handle_call({:setup_dca_plan, frequency, duration}, _from, state) do
     result = setup_dca_plan_internal(state.strategy, frequency, duration)
     {:reply, result, state}
+  end
+
+  @impl true
+  def handle_info(kline, state)
+      when is_map(kline) and is_struct(kline, BeamBot.Exchanges.Domain.Kline) do
+    # Only process klines for our trading pair and timeframe
+    if kline.symbol == state.strategy.trading_pair and kline.interval == state.strategy.timeframe do
+      # Execute strategy when we receive a new kline
+      result = execute_strategy(state.strategy)
+      {:noreply, %{state | last_execution: DateTime.utc_now(), last_result: result}}
+    else
+      {:noreply, state}
+    end
   end
 
   @impl true
