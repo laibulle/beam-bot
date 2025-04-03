@@ -10,6 +10,18 @@ defmodule BeamBot.Repo.Migrations.CreateExchanges do
       timestamps()
     end
 
+    create table(:platform_credentials) do
+      add :api_key, :string, null: false
+      add :api_secret, :string, null: false
+      add :exchange_id, references(:exchanges, on_delete: :delete_all), null: false
+      add :user_id, references(:users, on_delete: :delete_all), null: false
+      add :is_active, :boolean, default: true, null: false
+
+      timestamps()
+    end
+
+    create unique_index(:platform_credentials, [:user_id, :exchange_id])
+
     create table(:trading_pairs) do
       add :exchange_id, references(:exchanges, on_delete: :delete_all), null: false
       add :symbol, :string, null: false
