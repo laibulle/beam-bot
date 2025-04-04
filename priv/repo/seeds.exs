@@ -9,6 +9,13 @@
 #
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
+
+# Load environment variables from .env file
+if File.exists?(".env") do
+  Dotenv.load()
+  Mix.shell().info("Loaded environment variables from .env file")
+end
+
 alias BeamBot.Accounts
 alias BeamBot.Repo
 alias BeamBot.Exchanges.Domain.Exchange
@@ -35,10 +42,10 @@ binance_exchange =
   }
   |> Repo.insert!()
 
-# Create Binance platform credentials
+# Create Binance platform credentials with values from environment variables
 %PlatformCredentials{
-  api_key: "api_key",
-  api_secret: "api_secret",
+  api_key: System.get_env("DEFAULT_USER_BINANCE_API_KEY"),
+  api_secret: System.get_env("DEFAULT_USER_BINANCE_API_SECRET"),
   exchange_id: binance_exchange.id,
   user_id: user.id
 }

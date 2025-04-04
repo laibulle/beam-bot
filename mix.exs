@@ -97,7 +97,8 @@ defmodule BeamBot.MixProject do
       {:git_hooks, "~> 0.8.0", only: [:dev], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
-      {:redix, "~> 1.5"}
+      {:redix, "~> 1.5"},
+      {:dotenv, "~> 3.1.0", only: [:dev, :test]}
     ]
   end
 
