@@ -45,9 +45,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_account_info()
       {:ok, account_info}
   """
-  def get_account_info(%{api_key: api_key, api_secret: _api_secret}) do
+  def get_account_info(%{api_key: api_key, api_secret: api_secret}) do
     timestamp = :os.system_time(:millisecond)
-    params = %{timestamp: timestamp}
+    params = %{timestamp: timestamp, api_secret: api_secret}
     signed_params = sign_params(params)
 
     request("/api/v3/account", signed_params, api_key)
@@ -118,7 +118,14 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       {:ok, %{orderId: 123457, status: "FILLED", ...}}
   """
   def place_order(
-        %{symbol: symbol, side: side, type: type, quantity: quantity, api_key: api_key} = params
+        %{
+          symbol: symbol,
+          side: side,
+          type: type,
+          quantity: quantity,
+          api_key: api_key,
+          api_secret: api_secret
+        } = params
       ) do
     timestamp = :os.system_time(:millisecond)
 
@@ -133,6 +140,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
     params =
       base_params
       |> maybe_add_limit_params(type, Map.get(params, :price))
+      |> Map.put(:api_secret, api_secret)
 
     signed_params = sign_params(params)
     request("/api/v3/order", signed_params, api_key)
@@ -183,7 +191,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
     query_string = URI.encode_query(params)
 
     signature =
-      :crypto.mac(:hmac, :sha256, @api_secret_key, query_string) |> Base.encode16(case: :lower)
+      :crypto.mac(:hmac, :sha256, params.api_secret, query_string) |> Base.encode16(case: :lower)
 
     Map.put(params, :signature, signature)
   end

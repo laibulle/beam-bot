@@ -9,7 +9,9 @@ defmodule BeamBot.Exchanges.Domain.Ports.ExchangePort do
           side: String.t(),
           type: String.t(),
           quantity: Decimal.t(),
-          price: Decimal.t() | nil
+          price: Decimal.t() | nil,
+          api_key: String.t(),
+          api_secret: String.t()
         }
 
   @doc """
@@ -36,11 +38,17 @@ defmodule BeamBot.Exchanges.Domain.Ports.ExchangePort do
   @doc """
   Fetches account information. Requires API key and signature.
 
+  ## Parameters
+    * credentials - Map containing authentication parameters:
+      * api_key - The API key for authentication
+      * api_secret - The API secret for signing requests
+
   ## Returns
     * `{:ok, account_info}` - On successful retrieval
     * `{:error, reason}` - On failure
   """
-  @callback get_account_info() :: {:ok, map()} | {:error, String.t()}
+  @callback get_account_info(credentials :: %{api_key: String.t(), api_secret: String.t()}) ::
+              {:ok, map()} | {:error, String.t()}
 
   @doc """
   Fetches historical klines/candlestick data for a symbol.
@@ -68,13 +76,15 @@ defmodule BeamBot.Exchanges.Domain.Ports.ExchangePort do
   Places a new order on the exchange.
 
   ## Parameters
-    * params - Map containing order parameters:
+    * params - Map containing all parameters:
       * symbol - The trading pair symbol (e.g., "BTCUSDT")
       * side - The order side ("BUY" or "SELL")
       * type - The order type ("LIMIT" or "MARKET")
       * quantity - The quantity to trade (as Decimal)
       * price - The price per unit as Decimal (required for LIMIT orders)
       * time_in_force - Time in force type (required for LIMIT orders, e.g., "GTC", "IOC", "FOK")
+      * api_key - The API key for authentication
+      * api_secret - The API secret for signing requests
 
   ## Returns
     * `{:ok, order_info}` - On successful order placement
@@ -87,7 +97,9 @@ defmodule BeamBot.Exchanges.Domain.Ports.ExchangePort do
       ...>   type: "LIMIT",
       ...>   quantity: Decimal.new("0.001"),
       ...>   price: Decimal.new("50000"),
-      ...>   time_in_force: "GTC"
+      ...>   time_in_force: "GTC",
+      ...>   api_key: "your_api_key",
+      ...>   api_secret: "your_api_secret"
       ...> }
       iex> place_order(params)
       {:ok, %{orderId: 123456, status: "NEW", ...}}
