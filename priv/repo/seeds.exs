@@ -11,6 +11,8 @@
 # and so on) as they will fail if something goes wrong.
 alias BeamBot.Accounts
 alias BeamBot.Repo
+alias BeamBot.Exchanges.Domain.Exchange
+alias BeamBot.Exchanges.Domain.PlatformCredentials
 
 # Create and confirm test user
 {:ok, user} =
@@ -21,3 +23,23 @@ alias BeamBot.Repo
 
 # Update the user directly to confirm them
 user |> Accounts.User.confirm_changeset() |> Repo.update!()
+
+# Create Binance exchange
+binance_exchange =
+  %Exchange{
+    name: "Binance",
+    identifier: "binance",
+    is_active: true,
+    inserted_at: ~N[2025-04-01 10:20:50],
+    updated_at: ~N[2025-04-01 10:20:50]
+  }
+  |> Repo.insert!()
+
+# Create Binance platform credentials
+%PlatformCredentials{
+  api_key: "api_key",
+  api_secret: "api_secret",
+  exchange_id: binance_exchange.id,
+  user_id: user.id
+}
+|> Repo.insert!()
