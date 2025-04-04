@@ -11,6 +11,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
   @klines_repository Application.compile_env!(:beam_bot, :klines_repository)
   @strategy_repository Application.compile_env!(:beam_bot, :strategy_repository)
   @binance_req_adapter Application.compile_env!(:beam_bot, :binance_req_adapter)
+  @exchanges_repository Application.compile_env!(:beam_bot, :exchanges_repository)
 
   @type execution_result :: %{
           timestamp: DateTime.t(),
@@ -52,11 +53,18 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     # Schedule first execution
     Process.send_after(self(), :execute_strategy, 5_000)
 
+    {:ok, exchange} = @exchanges_repository.get_by_identifier(:binance)
+
+    {:ok, exchange_credentials} =
+      @platform_credentials_repository.get_by_user_id_and_platform(strategy.user_id, exchange.id)
+
     {:ok,
      %{
        strategy: strategy,
        last_execution: nil,
-       last_result: nil
+       last_result: nil,
+       exchange: exchange,
+       exchange_credentials: exchange_credentials
      }}
   end
 
