@@ -8,8 +8,6 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   require Logger
   alias Decimal
 
-  @api_key Application.compile_env(:beam_bot, :binance_api_key)
-  @api_secret_key Application.compile_env(:beam_bot, :binance_api_secret_key)
   @base_url Application.compile_env(:beam_bot, :binance_base_url, "https://api.binance.com")
 
   @doc """
@@ -47,12 +45,12 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_account_info()
       {:ok, account_info}
   """
-  def get_account_info do
+  def get_account_info(%{api_key: api_key, api_secret: _api_secret}) do
     timestamp = :os.system_time(:millisecond)
     params = %{timestamp: timestamp}
     signed_params = sign_params(params)
 
-    request("/api/v3/account", signed_params, @api_key)
+    request("/api/v3/account", signed_params, api_key)
   end
 
   @doc """
@@ -119,7 +117,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.place_order(market_params)
       {:ok, %{orderId: 123457, status: "FILLED", ...}}
   """
-  def place_order(%{symbol: symbol, side: side, type: type, quantity: quantity} = params) do
+  def place_order(
+        %{symbol: symbol, side: side, type: type, quantity: quantity, api_key: api_key} = params
+      ) do
     timestamp = :os.system_time(:millisecond)
 
     base_params = %{
@@ -135,7 +135,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       |> maybe_add_limit_params(type, Map.get(params, :price))
 
     signed_params = sign_params(params)
-    request("/api/v3/order", signed_params, @api_key)
+    request("/api/v3/order", signed_params, api_key)
   end
 
   defp maybe_add_limit_params(params, "LIMIT", price) when not is_nil(price) do
