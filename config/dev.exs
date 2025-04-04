@@ -27,9 +27,7 @@ config :git_hooks,
   project_path: project_path
 
 config :beam_bot,
-  env: :dev,
-  binance_api_key: "HbAPCWKfr0Krm0awgNDr1YJ5VZizDtERNhzdpVbUjn3KEXHOtK7HyYLty99dK3aQ",
-  binance_api_secret_key: "vMYhQY7X7ysuZKqslyUzzLJmut5DuS1qIp1i7p1bhfgt40SxbrCRVQOXmZ5vLs19"
+  env: :dev
 
 config :beam_bot,
   max_best_trading_pairs_small_investor_concurrency: 10,
