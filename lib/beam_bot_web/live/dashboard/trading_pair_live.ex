@@ -26,6 +26,15 @@ defmodule BeamBotWeb.TradingPairLive do
     # Get strategy status if it exists
     strategy_status = get_strategy_status()
 
+    # Default simulation settings
+    simulation_settings = %{
+      investment_amount: "5",
+      timeframe: "1h",
+      rsi_oversold: "30",
+      rsi_overbought: "70",
+      days: "30"
+    }
+
     {:ok,
      socket
      |> assign(data: data)
@@ -33,6 +42,7 @@ defmodule BeamBotWeb.TradingPairLive do
      |> assign(strategy_status: strategy_status)
      |> assign(strategy_message: nil)
      |> assign(simulation_results: nil)
+     |> assign(simulation_settings: simulation_settings)
      |> assign(simulating: false)}
   end
 
@@ -190,10 +200,24 @@ defmodule BeamBotWeb.TradingPairLive do
       "days" => days
     } = params
 
+    # Store the simulation settings
+    simulation_settings = %{
+      investment_amount: investment_amount,
+      timeframe: timeframe,
+      rsi_oversold: rsi_oversold,
+      rsi_overbought: rsi_overbought,
+      days: days
+    }
+
     trading_pair = socket.assigns.trading_pair
 
-    # Set simulating status to show loading indicator
-    socket = assign(socket, simulating: true, simulation_results: nil)
+    # Set simulating status to show loading indicator and store settings
+    socket =
+      assign(socket,
+        simulating: true,
+        simulation_results: nil,
+        simulation_settings: simulation_settings
+      )
 
     # Convert params to appropriate types
     decimal_amount = Decimal.new(investment_amount)
@@ -472,7 +496,7 @@ defmodule BeamBotWeb.TradingPairLive do
               <input
                 type="number"
                 name="investment_amount"
-                value="5"
+                value={@simulation_settings.investment_amount}
                 min="1"
                 step="0"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -484,12 +508,16 @@ defmodule BeamBotWeb.TradingPairLive do
                 name="timeframe"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
-                <option value="1m">1 minute</option>
-                <option value="5m">5 minutes</option>
-                <option value="15m">15 minutes</option>
-                <option value="1h" selected>1 hour</option>
-                <option value="4h">4 hours</option>
-                <option value="1d">1 day</option>
+                <option value="1m" selected={@simulation_settings.timeframe == "1m"}>1 minute</option>
+                <option value="5m" selected={@simulation_settings.timeframe == "5m"}>
+                  5 minutes
+                </option>
+                <option value="15m" selected={@simulation_settings.timeframe == "15m"}>
+                  15 minutes
+                </option>
+                <option value="1h" selected={@simulation_settings.timeframe == "1h"}>1 hour</option>
+                <option value="4h" selected={@simulation_settings.timeframe == "4h"}>4 hours</option>
+                <option value="1d" selected={@simulation_settings.timeframe == "1d"}>1 day</option>
               </select>
             </div>
             <div>
@@ -497,7 +525,7 @@ defmodule BeamBotWeb.TradingPairLive do
               <input
                 type="number"
                 name="days"
-                value="30"
+                value={@simulation_settings.days}
                 min="1"
                 max="365"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -510,7 +538,7 @@ defmodule BeamBotWeb.TradingPairLive do
               <input
                 type="number"
                 name="rsi_oversold"
-                value="30"
+                value={@simulation_settings.rsi_oversold}
                 min="1"
                 max="49"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -523,7 +551,7 @@ defmodule BeamBotWeb.TradingPairLive do
               <input
                 type="number"
                 name="rsi_overbought"
-                value="70"
+                value={@simulation_settings.rsi_overbought}
                 min="51"
                 max="99"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
