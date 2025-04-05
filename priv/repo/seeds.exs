@@ -11,8 +11,8 @@ alias BeamBot.Exchanges.Domain.PlatformCredentials
 # Create and confirm test user
 {:ok, user} =
   Accounts.register_user(%{
-    email: "admin@beambot.com",
-    password: "@dmin@admin@admin"
+    email: System.get_env("DEFAULT_USER_EMAIL"),
+    password: System.get_env("DEFAULT_USER_PASSWORD")
   })
 
 # Update the user directly to confirm them
