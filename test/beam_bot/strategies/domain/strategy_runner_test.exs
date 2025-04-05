@@ -65,8 +65,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
       {:ok, %{id: 1, name: "Binance", identifier: :binance}}
     end)
 
-    Mox.stub(PlatformCredentialsRepositoryMock, :get_by_user_id_and_platform, fn _user_id,
-                                                                                 _platform_id ->
+    Mox.stub(PlatformCredentialsRepositoryMock, :get_by_user_id_and_exchange_id, fn _user_id,
+                                                                                    _platform_id ->
       {:ok, %{api_key: "test_api_key", api_secret: "test_api_secret"}}
     end)
 

@@ -60,7 +60,10 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     {:ok, exchange} = @exchanges_repository.get_by_identifier(:binance)
 
     {:ok, exchange_credentials} =
-      @platform_credentials_repository.get_by_user_id_and_platform(strategy.user_id, exchange.id)
+      @platform_credentials_repository.get_by_user_id_and_exchange_id(
+        strategy.user_id,
+        exchange.id
+      )
 
     {:ok,
      %{

@@ -27,7 +27,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepo
   end
 
   @impl true
-  def get_by_user_id_and_platform(user_id, platform_id) do
+  def get_by_user_id_and_exchange_id(user_id, platform_id) do
     case Repo.get_by(PlatformCredentials, user_id: user_id, exchange_id: platform_id) do
       nil -> {:error, "Platform credentials not found"}
       credentials -> {:ok, credentials}

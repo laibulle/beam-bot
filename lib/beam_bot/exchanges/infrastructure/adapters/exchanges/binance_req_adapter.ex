@@ -42,7 +42,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
 
   ## Examples
 
-      iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_account_info()
+      iex> {:ok, platform_credentials} = BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEcto.get_by_user_id_and_exchange_id(1, 1)
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.get_account_info(platform_credentials)
       {:ok, account_info}
   """
   def get_account_info(%{api_key: api_key, api_secret: api_secret}) do

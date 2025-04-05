@@ -70,25 +70,31 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepo
       assert {:ok, %PlatformCredentials{}} = PlatformCredentialsRepositoryEcto.delete(credentials)
 
       assert {:error, "Platform credentials not found"} =
-               PlatformCredentialsRepositoryEcto.get_by_user_id_and_platform(user.id, exchange.id)
+               PlatformCredentialsRepositoryEcto.get_by_user_id_and_exchange_id(
+                 user.id,
+                 exchange.id
+               )
     end
   end
 
-  describe "get_by_user_id_and_platform/2" do
+  describe "get_by_user_id_and_exchange_id/2" do
     test "returns platform credentials when they exist" do
       exchange = exchange_fixture()
       user = user_fixture()
       credentials = platform_credentials_fixture(%{exchange: exchange, user: user})
 
       assert {:ok, %PlatformCredentials{} = found_credentials} =
-               PlatformCredentialsRepositoryEcto.get_by_user_id_and_platform(user.id, exchange.id)
+               PlatformCredentialsRepositoryEcto.get_by_user_id_and_exchange_id(
+                 user.id,
+                 exchange.id
+               )
 
       assert found_credentials.id == credentials.id
     end
 
     test "returns error when platform credentials do not exist" do
       assert {:error, "Platform credentials not found"} =
-               PlatformCredentialsRepositoryEcto.get_by_user_id_and_platform(123, 456)
+               PlatformCredentialsRepositoryEcto.get_by_user_id_and_exchange_id(123, 456)
     end
   end
 end
