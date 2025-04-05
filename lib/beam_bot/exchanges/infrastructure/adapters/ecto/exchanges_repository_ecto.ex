@@ -16,7 +16,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryEcto
   """
   def get_by_identifier(identifier) do
     case Repo.get_by(Exchange, identifier: identifier) do
-      nil -> {:error, "Exchange not found"}
+      nil -> {:error, :exchange_not_found}
       exchange -> {:ok, exchange}
     end
   end

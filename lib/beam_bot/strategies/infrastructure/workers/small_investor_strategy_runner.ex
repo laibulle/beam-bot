@@ -70,7 +70,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
          exchange_credentials: exchange_credentials
        }}
     else
-      {:error, :not_found} ->
+      {:error, :exchange_not_found} ->
         Logger.error(
           "Failed to find Binance exchange or credentials for user #{strategy.user_id}"
         )
