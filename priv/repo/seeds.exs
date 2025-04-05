@@ -18,16 +18,22 @@ alias BeamBot.Exchanges.Domain.PlatformCredentials
 # Update the user directly to confirm them
 user |> Accounts.User.confirm_changeset() |> Repo.update!()
 
-# Create Binance exchange
+# Create Binance exchange if it doesn't exist
 binance_exchange =
-  %Exchange{
-    name: "Binance",
-    identifier: "binance",
-    is_active: true,
-    inserted_at: ~N[2025-04-01 10:20:50],
-    updated_at: ~N[2025-04-01 10:20:50]
-  }
-  |> Repo.insert!()
+  case Repo.get_by(Exchange, identifier: "binance") do
+    nil ->
+      %Exchange{
+        name: "Binance",
+        identifier: "binance",
+        is_active: true,
+        inserted_at: ~N[2025-04-01 10:20:50],
+        updated_at: ~N[2025-04-01 10:20:50]
+      }
+      |> Repo.insert!()
+
+    existing_exchange ->
+      existing_exchange
+  end
 
 # Create Binance platform credentials with values from environment variables
 %PlatformCredentials{
