@@ -155,12 +155,10 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
           symbol: strategy.trading_pair,
           side: "BUY",
           type: "MARKET",
-          quantity: position_size,
-          api_key: exchange_credentials.api_key,
-          api_secret: exchange_credentials.api_secret
+          quantity: position_size
         }
 
-        case @binance_req_adapter.place_order(params) do
+        case @binance_req_adapter.place_order(params, exchange_credentials) do
           {:ok, order} -> {:ok, order["orderId"]}
           {:error, reason} -> {:error, "Failed to place buy order: #{inspect(reason)}"}
         end
@@ -175,12 +173,10 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
           symbol: strategy.trading_pair,
           side: "SELL",
           type: "MARKET",
-          quantity: position_size,
-          api_key: exchange_credentials.api_key,
-          api_secret: exchange_credentials.api_secret
+          quantity: position_size
         }
 
-        case @binance_req_adapter.place_order(params) do
+        case @binance_req_adapter.place_order(params, exchange_credentials) do
           {:ok, order} -> {:ok, order["orderId"]}
           {:error, reason} -> {:error, "Failed to place sell order: #{inspect(reason)}"}
         end

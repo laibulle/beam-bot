@@ -6,6 +6,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   @behaviour BeamBot.Exchanges.Domain.Ports.ExchangePort
 
   require Logger
+
+  alias BeamBot.Exchanges.Domain.PlatformCredentials
   alias Decimal
 
   @base_url Application.compile_env(:beam_bot, :binance_base_url, "https://api.binance.com")
@@ -46,7 +48,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.get_account_info(platform_credentials)
       {:ok, account_info}
   """
-  def get_account_info(%{api_key: api_key, api_secret: api_secret}) do
+  def get_account_info(%PlatformCredentials{api_key: api_key, api_secret: api_secret}) do
     signed_params =
       sign_params(%{timestamp: :os.system_time(:millisecond), api_secret: api_secret})
 
@@ -122,10 +124,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
           symbol: symbol,
           side: side,
           type: type,
-          quantity: quantity,
-          api_key: api_key,
-          api_secret: api_secret
-        } = params
+          quantity: quantity
+        } = params,
+        %PlatformCredentials{api_key: api_key, api_secret: api_secret}
       ) do
     timestamp = :os.system_time(:millisecond)
 

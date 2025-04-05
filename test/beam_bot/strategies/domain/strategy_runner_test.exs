@@ -76,7 +76,13 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     end)
 
     # Set up mock expectations for BinanceReqAdapterMock
-    expect(BinanceReqAdapterMock, :place_order, fn _params ->
+    expect(BinanceReqAdapterMock, :place_order, fn params, credentials ->
+      assert params.symbol == "BTCUSDT"
+      assert params.side in ["BUY", "SELL"]
+      assert params.type == "MARKET"
+      assert is_struct(params.quantity, Decimal)
+      assert credentials.api_key == "test_api_key"
+      assert credentials.api_secret == "test_api_secret"
       {:ok, %{"orderId" => "test_order_id", "status" => "NEW"}}
     end)
 

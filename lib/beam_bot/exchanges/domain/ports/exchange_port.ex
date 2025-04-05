@@ -10,8 +10,7 @@ defmodule BeamBot.Exchanges.Domain.Ports.ExchangePort do
           type: String.t(),
           quantity: Decimal.t(),
           price: Decimal.t() | nil,
-          api_key: String.t(),
-          api_secret: String.t()
+          time_in_force: String.t() | nil
         }
 
   @doc """
@@ -76,13 +75,14 @@ defmodule BeamBot.Exchanges.Domain.Ports.ExchangePort do
   Places a new order on the exchange.
 
   ## Parameters
-    * params - Map containing all parameters:
+    * params - Map containing order parameters:
       * symbol - The trading pair symbol (e.g., "BTCUSDT")
       * side - The order side ("BUY" or "SELL")
       * type - The order type ("LIMIT" or "MARKET")
       * quantity - The quantity to trade (as Decimal)
       * price - The price per unit as Decimal (required for LIMIT orders)
       * time_in_force - Time in force type (required for LIMIT orders, e.g., "GTC", "IOC", "FOK")
+    * credentials - Map containing authentication parameters:
       * api_key - The API key for authentication
       * api_secret - The API secret for signing requests
 
@@ -97,12 +97,14 @@ defmodule BeamBot.Exchanges.Domain.Ports.ExchangePort do
       ...>   type: "LIMIT",
       ...>   quantity: Decimal.new("0.001"),
       ...>   price: Decimal.new("50000"),
-      ...>   time_in_force: "GTC",
-      ...>   api_key: "your_api_key",
-      ...>   api_secret: "your_api_secret"
+      ...>   time_in_force: "GTC"
       ...> }
-      iex> place_order(params)
+      iex> credentials = %{api_key: "your_api_key", api_secret: "your_api_secret"}
+      iex> place_order(params, credentials)
       {:ok, %{orderId: 123456, status: "NEW", ...}}
   """
-  @callback place_order(params :: order_params()) :: {:ok, map()} | {:error, String.t()}
+  @callback place_order(
+              params :: order_params(),
+              credentials :: %{api_key: binary(), api_secret: binary()}
+            ) :: {:ok, map()} | {:error, String.t()}
 end
