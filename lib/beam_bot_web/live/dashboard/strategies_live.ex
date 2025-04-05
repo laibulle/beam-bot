@@ -63,7 +63,42 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
     Logger.debug("Task complete with results: #{inspect(results)}")
     final_results = process_results(results)
     Logger.debug("Processed results: #{inspect(final_results)}")
-    {:noreply, assign(socket, loading: false, progress: 100, results: final_results)}
+
+    # Save each simulation result
+    saved_simulations =
+      Enum.map(final_results, fn result ->
+        simulation_attrs = %{
+          "trading_pair" => result.trading_pair,
+          "initial_investment" => result.simulation_results.initial_investment,
+          "final_value" => result.simulation_results.final_value,
+          "roi_percentage" => result.simulation_results.roi_percentage,
+          "start_date" => result.simulation_results.start_date,
+          "end_date" => result.simulation_results.end_date,
+          "user_id" => socket.assigns.current_user.id,
+          "trades" => result.simulation_results.trades
+        }
+
+        case @simulation_results_repository.save_simulation_result(simulation_attrs) do
+          {:ok, simulation} -> simulation
+          {:error, _reason} -> nil
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+
+    # Update previous simulations list with new results
+    updated_previous_simulations =
+      (saved_simulations ++ socket.assigns.previous_simulations)
+      |> Enum.sort_by(&Decimal.to_float(&1.roi_percentage), :desc)
+      # Keep only top 100 simulations
+      |> Enum.take(100)
+
+    {:noreply,
+     assign(socket,
+       loading: false,
+       progress: 100,
+       results: final_results,
+       previous_simulations: updated_previous_simulations
+     )}
   end
 
   @impl true
