@@ -44,17 +44,21 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
 
   @impl true
   def handle_info({:task_complete, {:ok, results}}, socket) do
+    Logger.debug("Task complete with results: #{inspect(results)}")
     final_results = process_results(results)
+    Logger.debug("Processed results: #{inspect(final_results)}")
     {:noreply, assign(socket, loading: false, progress: 100, results: final_results)}
   end
 
   @impl true
   def handle_info({:task_complete, {:error, reason}}, socket) do
+    Logger.error("Task failed with error: #{inspect(reason)}")
     {:noreply, assign(socket, loading: false, error: reason)}
   end
 
   @impl true
   def handle_info({:progress_update, progress}, socket) do
+    Logger.debug("Progress update: #{progress}%")
     {:noreply, assign(socket, progress: progress)}
   end
 
@@ -105,7 +109,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
 
     # Only send task completion if we have final results (100% progress)
     if progress >= 100 do
-      Process.send_after(pid, {:task_complete, {:ok, results}}, 100)
+      send(pid, {:task_complete, {:ok, results}})
     end
   end
 
