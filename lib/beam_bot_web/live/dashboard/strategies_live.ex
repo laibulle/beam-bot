@@ -44,15 +44,18 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
 
   @impl true
   def handle_info({:task_complete, {:ok, results}}, socket) do
-    Logger.debug("Task completed with results: #{inspect(results)}")
     final_results = process_results(results)
     {:noreply, assign(socket, loading: false, progress: 100, results: final_results)}
   end
 
   @impl true
   def handle_info({:task_complete, {:error, reason}}, socket) do
-    Logger.error("Task failed with reason: #{inspect(reason)}")
     {:noreply, assign(socket, loading: false, error: reason)}
+  end
+
+  @impl true
+  def handle_info({:progress_update, progress}, socket) do
+    {:noreply, assign(socket, progress: progress)}
   end
 
   # Private helpers
@@ -79,11 +82,13 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
   end
 
   defp start_analysis(params) do
+    parent = self()
+
     Task.start(fn ->
       handle_analysis_result(
         FindBestTradingPairSmallInvestorUseCase.find_best_trading_pairs_small_investor_stream(
           params,
-          &handle_batch_results/1
+          fn results -> handle_batch_results(results, parent) end
         )
       )
     end)
@@ -94,7 +99,15 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
   defp handle_analysis_result({:error, reason}),
     do: send(self(), {:task_complete, {:error, reason}})
 
-  defp handle_batch_results(results), do: send(self(), {:task_complete, {:ok, results}})
+  defp handle_batch_results({results, progress}, pid) do
+    # Always send the progress update
+    send(pid, {:progress_update, progress})
+
+    # Only send task completion if we have final results (100% progress)
+    if progress >= 100 do
+      Process.send_after(pid, {:task_complete, {:ok, results}}, 100)
+    end
+  end
 
   defp process_results(results) do
     results

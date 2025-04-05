@@ -331,10 +331,18 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
 
     # Update processed count
     new_processed_count = acc_processed_count + length(batch)
-    Logger.debug("Processed #{new_processed_count}/#{total_pairs} trading pairs")
+
+    # Calculate progress percentage
+    progress = round(new_processed_count / total_pairs * 100)
 
     # Send batch update via callback
-    callback.(merged_profitable_pairs)
+    if new_processed_count >= total_pairs do
+      # Final batch - send results with 100% progress
+      callback.({merged_profitable_pairs, 100})
+    else
+      # Intermediate batch - send results with current progress
+      callback.({merged_profitable_pairs, progress})
+    end
 
     # Hint garbage collection after each batch
     :erlang.garbage_collect()
