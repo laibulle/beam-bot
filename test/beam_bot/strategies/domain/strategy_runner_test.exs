@@ -5,11 +5,15 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
   import Mox
 
   alias BeamBot.Accounts
+  alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryMock
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryMock
+  alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryMock
   alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapterMock
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
   alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner
   alias Ecto.Adapters.SQL.Sandbox
+
+  setup :set_mox_global
 
   setup do
     # Start the Ecto sandbox
@@ -56,26 +60,18 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
       user_id: user.id
     }
 
-    # Start the SmallInvestorStrategyRunner process and allow it to use the sandbox
-    {:ok, pid} = SmallInvestorStrategyRunner.start_link(strategy)
-    Sandbox.allow(BeamBot.Repo, self(), pid)
-
-    # Allow the GenServer process to use the mocks
-    allow(KlinesRepositoryMock, self(), pid)
-    allow(BinanceReqAdapterMock, self(), pid)
-
-    # Set up mock expectations for KlinesRepositoryMock
-    # Set up the 3-argument version for regular strategy execution
-    expect(KlinesRepositoryMock, :get_klines, fn _symbol, _interval, _limit ->
-      {:ok, klines_data}
+    # Set up global mock stubs
+    Mox.stub(ExchangesRepositoryMock, :get_by_identifier, fn :binance ->
+      {:ok, %{id: 1, name: "Binance", identifier: :binance}}
     end)
 
-    # Set up the 5-argument version for simulation
-    expect(KlinesRepositoryMock, :get_klines, fn _symbol,
-                                                 _interval,
-                                                 _limit,
-                                                 _start_time,
-                                                 _end_time ->
+    Mox.stub(PlatformCredentialsRepositoryMock, :get_by_user_id_and_platform, fn _user_id,
+                                                                                 _platform_id ->
+      {:ok, %{api_key: "test_api_key", api_secret: "test_api_secret"}}
+    end)
+
+    # Set up mock expectations for KlinesRepositoryMock
+    expect(KlinesRepositoryMock, :get_klines, fn _symbol, _interval, _limit ->
       {:ok, klines_data}
     end)
 
@@ -83,6 +79,14 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     expect(BinanceReqAdapterMock, :place_order, fn params ->
       {:ok, %{"orderId" => "test_order_id", "status" => "NEW"}}
     end)
+
+    # Start the SmallInvestorStrategyRunner process and allow it to use the sandbox
+    {:ok, pid} = SmallInvestorStrategyRunner.start_link(strategy)
+    Sandbox.allow(BeamBot.Repo, self(), pid)
+
+    # Allow the GenServer process to use the mocks
+    allow(KlinesRepositoryMock, self(), pid)
+    allow(BinanceReqAdapterMock, self(), pid)
 
     {:ok, strategy: strategy, pid: pid, user: user}
   end
@@ -107,6 +111,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
       # Modify the strategy to cause a failure by setting max_risk_percentage to nil
       invalid_strategy = %{strategy | max_risk_percentage: nil}
       {:ok, invalid_pid} = SmallInvestorStrategyRunner.start_link(invalid_strategy)
+
+      # Allow the new process to use the mocks
       Sandbox.allow(BeamBot.Repo, self(), invalid_pid)
       allow(KlinesRepositoryMock, self(), invalid_pid)
 
@@ -171,7 +177,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
                                                    _timeframe,
                                                    _limit,
                                                    _start_date,
-                                                   _end_date ->
+                                                   _end_time ->
         {:ok, []}
       end)
 
@@ -188,6 +194,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     end
   end
 
+  @moduletag :aaa
   describe "setup_dca_plan/2" do
     test "successfully creates DCA plan with default parameters", %{strategy: _strategy, pid: pid} do
       assert {:ok, plan} = SmallInvestorStrategyRunner.setup_dca_plan(pid)

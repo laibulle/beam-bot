@@ -15,3 +15,7 @@ defmock(BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryMock,
 defmock(BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapterMock,
   for: BeamBot.Exchanges.Domain.Ports.ExchangePort
 )
+
+defmock(BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryMock,
+  for: BeamBot.Exchanges.Domain.Ports.PlatformCredentialsRepository
+)

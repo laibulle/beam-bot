@@ -12,6 +12,10 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
   @strategy_repository Application.compile_env!(:beam_bot, :strategy_repository)
   @binance_req_adapter Application.compile_env!(:beam_bot, :binance_req_adapter)
   @exchanges_repository Application.compile_env!(:beam_bot, :exchanges_repository)
+  @platform_credentials_repository Application.compile_env!(
+                                     :beam_bot,
+                                     :platform_credentials_repository
+                                   )
 
   @type execution_result :: %{
           timestamp: DateTime.t(),
