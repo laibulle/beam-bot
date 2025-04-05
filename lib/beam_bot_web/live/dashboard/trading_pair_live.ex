@@ -3,6 +3,10 @@ defmodule BeamBotWeb.TradingPairLive do
 
   @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
   @klines_repository Application.compile_env(:beam_bot, :klines_repository)
+  @simulation_results_repository Application.compile_env(
+                                   :beam_bot,
+                                   :simulation_results_repository
+                                 )
 
   # Define refresh interval in milliseconds
   @refresh_interval 10_000
@@ -26,6 +30,10 @@ defmodule BeamBotWeb.TradingPairLive do
     # Get strategy status if it exists
     strategy_status = get_strategy_status()
 
+    # Get previous simulation results for this trading pair
+    previous_simulations =
+      @simulation_results_repository.get_simulation_results_by_trading_pair(symbol)
+
     # Default simulation settings
     simulation_settings = %{
       investment_amount: "5",
@@ -43,7 +51,8 @@ defmodule BeamBotWeb.TradingPairLive do
      |> assign(strategy_message: nil)
      |> assign(simulation_results: nil)
      |> assign(simulation_settings: simulation_settings)
-     |> assign(simulating: false)}
+     |> assign(simulating: false)
+     |> assign(previous_simulations: previous_simulations)}
   end
 
   @impl true
@@ -262,6 +271,33 @@ defmodule BeamBotWeb.TradingPairLive do
     end)
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("load_simulation", %{"id" => id}, socket) do
+    # Find the simulation in the previous simulations list
+    case Enum.find(socket.assigns.previous_simulations, &(&1.id == String.to_integer(id))) do
+      nil ->
+        {:noreply, socket}
+
+      simulation ->
+        # Update the simulation settings based on the loaded simulation
+        simulation_settings = %{
+          investment_amount: Decimal.to_string(simulation.initial_investment),
+          # This is hardcoded as it's not stored in the simulation results
+          timeframe: "1h",
+          # These values are not stored in the simulation results
+          rsi_oversold: "30",
+          # We could consider storing them in the future
+          rsi_overbought: "70",
+          days: "30"
+        }
+
+        {:noreply,
+         socket
+         |> assign(simulation_results: simulation)
+         |> assign(simulation_settings: simulation_settings)}
+    end
   end
 
   # Helper function to get strategy status
@@ -697,6 +733,62 @@ defmodule BeamBotWeb.TradingPairLive do
           <% end %>
         </div>
       </div>
+
+      <%= if @previous_simulations && length(@previous_simulations) > 0 do %>
+        <div class="mt-8">
+          <h6 class="text-lg font-semibold mb-4">Previous Simulations</h6>
+          <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th class="px-4 py-2 text-left font-medium text-gray-500">Date</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-500">Investment</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-500">Final Value</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-500">ROI</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-500">Trades</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  <%= for simulation <- @previous_simulations do %>
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-4 py-2">
+                        {simulation.start_date |> Calendar.strftime("%Y-%m-%d %H:%M")}
+                      </td>
+                      <td class="px-4 py-2">
+                        {simulation.initial_investment} USDT
+                      </td>
+                      <td class="px-4 py-2">
+                        {:erlang.float_to_binary(Decimal.to_float(simulation.final_value),
+                          decimals: 2
+                        )} USDT
+                      </td>
+                      <td class={"px-4 py-2 #{if Decimal.to_float(simulation.roi_percentage) > 0, do: "text-green-600", else: "text-red-600"}"}>
+                        {:erlang.float_to_binary(Decimal.to_float(simulation.roi_percentage),
+                          decimals: 2
+                        )}%
+                      </td>
+                      <td class="px-4 py-2">
+                        {length(simulation.trades)}
+                      </td>
+                      <td class="px-4 py-2">
+                        <button
+                          phx-click="load_simulation"
+                          phx-value-id={simulation.id}
+                          class="text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% end %>
 
       <%= if !@strategy_status || @strategy_status.status != :running do %>
         <div class="mt-8">
