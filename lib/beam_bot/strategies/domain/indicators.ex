@@ -181,7 +181,9 @@ defmodule BeamBot.Strategies.Domain.Indicators do
       iex> Indicators.bollinger_bands(prices, 20, 2)
       %{upper_band: 45.2, middle_band: 42.1, lower_band: 39.0}
   """
-  def bollinger_bands(prices, period \\ 20, deviation \\ 2) when length(prices) >= period do
+  def bollinger_bands(prices, period \\ 20, deviation \\ 2)
+
+  def bollinger_bands(prices, period, deviation) when length(prices) >= period do
     # Calculate the middle band (SMA)
     middle_band = sma(prices, period)
 

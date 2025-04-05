@@ -76,7 +76,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     end)
 
     # Set up mock expectations for BinanceReqAdapterMock
-    expect(BinanceReqAdapterMock, :place_order, fn params ->
+    expect(BinanceReqAdapterMock, :place_order, fn _params ->
       {:ok, %{"orderId" => "test_order_id", "status" => "NEW"}}
     end)
 

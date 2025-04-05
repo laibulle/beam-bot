@@ -1,7 +1,6 @@
 defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEctoTest do
   use BeamBot.DataCase
 
-  alias BeamBot.Exchanges.Domain.Exchange
   alias BeamBot.Exchanges.Domain.PlatformCredentials
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEcto
 
