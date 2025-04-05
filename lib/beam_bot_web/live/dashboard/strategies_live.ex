@@ -5,6 +5,11 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
 
   alias BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase
 
+  @simulation_results_repository Application.compile_env(
+                                   :beam_bot,
+                                   :simulation_results_repository
+                                 )
+
   @impl true
   def mount(_params, _session, socket) do
     # Default form settings
@@ -16,13 +21,24 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
       days: "30"
     }
 
+    # Load previous simulations if user is authenticated
+    previous_simulations =
+      case socket.assigns do
+        %{current_user: %{id: user_id}} ->
+          @simulation_results_repository.get_simulation_results_by_user_id(user_id)
+
+        _ ->
+          []
+      end
+
     {:ok,
      assign(socket,
        loading: false,
        results: [],
        error: nil,
        progress: 0,
-       form_settings: form_settings
+       form_settings: form_settings,
+       previous_simulations: previous_simulations
      )}
   end
 
@@ -323,6 +339,65 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
                   </li>
                 <% end %>
               </ul>
+            </div>
+          </div>
+        <% end %>
+
+        <%= if @previous_simulations && length(@previous_simulations) > 0 do %>
+          <div class="mt-8">
+            <h6 class="text-lg font-semibold mb-4">Previous Simulations</h6>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-sm divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th class="px-4 py-2 text-left font-medium text-gray-500">Date</th>
+                      <th class="px-4 py-2 text-left font-medium text-gray-500">Trading Pair</th>
+                      <th class="px-4 py-2 text-left font-medium text-gray-500">Investment</th>
+                      <th class="px-4 py-2 text-left font-medium text-gray-500">Final Value</th>
+                      <th class="px-4 py-2 text-left font-medium text-gray-500">ROI</th>
+                      <th class="px-4 py-2 text-left font-medium text-gray-500">Trades</th>
+                      <th class="px-4 py-2 text-left font-medium text-gray-500">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200">
+                    <%= for simulation <- @previous_simulations do %>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2">
+                          {simulation.start_date |> Calendar.strftime("%Y-%m-%d %H:%M")}
+                        </td>
+                        <td class="px-4 py-2">
+                          {simulation.trading_pair}
+                        </td>
+                        <td class="px-4 py-2">
+                          {simulation.initial_investment} USDT
+                        </td>
+                        <td class="px-4 py-2">
+                          {:erlang.float_to_binary(Decimal.to_float(simulation.final_value),
+                            decimals: 2
+                          )} USDT
+                        </td>
+                        <td class={"px-4 py-2 #{if Decimal.to_float(simulation.roi_percentage) > 0, do: "text-green-600", else: "text-red-600"}"}>
+                          {:erlang.float_to_binary(Decimal.to_float(simulation.roi_percentage),
+                            decimals: 2
+                          )}%
+                        </td>
+                        <td class="px-4 py-2">
+                          {length(simulation.trades)}
+                        </td>
+                        <td class="px-4 py-2">
+                          <.link
+                            navigate={~p"/dashboard/trading-pair/#{simulation.trading_pair}"}
+                            class="text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            View Details
+                          </.link>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         <% end %>
