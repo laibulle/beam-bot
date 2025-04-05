@@ -295,7 +295,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     with {:ok, klines} <- fetch_historical_klines(strategy, start_date, end_date),
          {:ok, final_state} <- run_simulation_with_klines(strategy, klines),
          {:ok, results} <- build_simulation_results(strategy, final_state, klines) do
-      {:ok, saved_results} <- save_simulation_results(results, strategy.user_id)
+      save_simulation_results(results, strategy.user_id)
     end
   end
 
