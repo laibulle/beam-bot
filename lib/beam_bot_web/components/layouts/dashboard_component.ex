@@ -21,6 +21,7 @@ defmodule BeamBotWeb.Layouts.DashboardComponent do
     assigns =
       assign(assigns, :nav_links, [
         %{path: ~p"/dashboard", label: gettext("Symbols")},
+        %{path: ~p"/dashboard/exchange-use-info", label: gettext("Exchange Use Info")},
         %{path: ~p"/dashboard/strategies", label: gettext("Strategies")},
         %{path: ~p"/dashboard/admin", label: gettext("Admin")}
       ])

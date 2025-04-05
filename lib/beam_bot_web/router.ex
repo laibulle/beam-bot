@@ -71,6 +71,7 @@ defmodule BeamBotWeb.Router do
       live "/dashboard/admin", AdminLive
       live "/dashboard/trading-pair/:symbol", TradingPairLive
       live "/dashboard/strategies", Dashboard.StrategiesLive
+      live "/dashboard/exchange-use-info", ExchangeUseInfoLive
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
     end
