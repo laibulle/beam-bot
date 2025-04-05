@@ -80,10 +80,6 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
       {:error, reason} ->
         Logger.error("Failed to initialize strategy runner: #{inspect(reason)}")
         {:stop, reason}
-
-      error ->
-        Logger.error("Unexpected error initializing strategy runner: #{inspect(error)}")
-        {:stop, :initialization_failed}
     end
   rescue
     e ->
