@@ -16,6 +16,10 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
                                      :beam_bot,
                                      :platform_credentials_repository
                                    )
+  @simulation_results_repository Application.compile_env!(
+                                   :beam_bot,
+                                   :simulation_results_repository
+                                 )
 
   @type execution_result :: %{
           timestamp: DateTime.t(),
@@ -289,8 +293,9 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     %SmallInvestorStrategy{} = strategy
 
     with {:ok, klines} <- fetch_historical_klines(strategy, start_date, end_date),
-         {:ok, final_state} <- run_simulation_with_klines(strategy, klines) do
-      build_simulation_results(strategy, final_state, klines)
+         {:ok, final_state} <- run_simulation_with_klines(strategy, klines),
+         {:ok, results} <- build_simulation_results(strategy, final_state, klines) do
+      {:ok, saved_results} <- save_simulation_results(results, strategy.user_id)
     end
   end
 
@@ -454,5 +459,29 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
       ),
       Decimal.new("100")
     )
+  end
+
+  defp save_simulation_results(results, user_id) do
+    # Convert atom keys to strings for trades
+    trades =
+      Enum.map(results.trades, fn trade ->
+        trade
+        |> Map.update!(:type, &Atom.to_string/1)
+        |> Map.new(fn {k, v} -> {Atom.to_string(k), v} end)
+      end)
+
+    # Prepare simulation attributes with string keys
+    simulation_attrs = %{
+      "trading_pair" => results.trading_pair,
+      "initial_investment" => results.initial_investment,
+      "final_value" => results.final_value,
+      "roi_percentage" => results.roi_percentage,
+      "start_date" => results.start_date,
+      "end_date" => results.end_date,
+      "user_id" => user_id,
+      "trades" => trades
+    }
+
+    @simulation_results_repository.save_simulation_result(simulation_attrs)
   end
 end

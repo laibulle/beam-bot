@@ -18,6 +18,10 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
   require Logger
 
   @trading_pairs_adapter Application.compile_env(:beam_bot, :trading_pairs_repository)
+  @simulation_results_repository Application.compile_env(
+                                   :beam_bot,
+                                   :simulation_results_repository
+                                 )
 
   @max_concurrency Application.compile_env(
                      :beam_bot,
@@ -54,7 +58,8 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
     options = [
       timeframe: timeframe,
       rsi_oversold_threshold: oversold,
-      rsi_overbought_threshold: overbought
+      rsi_overbought_threshold: overbought,
+      user_id: user_id
     ]
 
     # Process trading pairs in batches to reduce memory usage
@@ -218,7 +223,8 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
     options = [
       timeframe: params.timeframe,
       rsi_oversold_threshold: oversold,
-      rsi_overbought_threshold: overbought
+      rsi_overbought_threshold: overbought,
+      user_id: params.user_id
     ]
 
     # Process trading pairs in batches to reduce memory usage
@@ -349,8 +355,13 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
          end_date,
          callback
        ) do
+    # Extract user_id from options
+    user_id = Keyword.get(options, :user_id)
+    strategy_options = Keyword.drop(options, [:user_id])
+
     # Create strategy for this trading pair
-    strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
+    strategy =
+      SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, user_id, strategy_options)
 
     # Run simulation directly without starting a GenServer
     case SmallInvestorStrategyRunner.run_simulation(strategy, start_date, end_date) do

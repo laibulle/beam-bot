@@ -1,0 +1,103 @@
+<form phx-submit="find_best_pairs" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      Investment Amount (USDT)
+    </label>
+    <input
+      type="number"
+      name="investment_amount"
+      value={@form_settings.investment_amount}
+      min="1"
+      step="0"
+      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+    />
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">Timeframe</label>
+    <select
+      name="timeframe"
+      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+    >
+      <option value="1m" selected={@form_settings.timeframe == "1m"}>1 minute</option>
+      <option value="5m" selected={@form_settings.timeframe == "5m"}>5 minutes</option>
+      <option value="15m" selected={@form_settings.timeframe == "15m"}>15 minutes</option>
+      <option value="1h" selected={@form_settings.timeframe == "1h"}>1 hour</option>
+      <option value="4h" selected={@form_settings.timeframe == "4h"}>4 hours</option>
+      <option value="1d" selected={@form_settings.timeframe == "1d"}>1 day</option>
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">Days to Analyze</label>
+    <input
+      type="number"
+      name="days"
+      value={@form_settings.days}
+      min="1"
+      max="365"
+      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+    />
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      RSI Oversold Threshold
+    </label>
+    <input
+      type="number"
+      name="rsi_oversold"
+      value={@form_settings.rsi_oversold}
+      min="1"
+      max="49"
+      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+    />
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      RSI Overbought Threshold
+    </label>
+    <input
+      type="number"
+      name="rsi_overbought"
+      value={@form_settings.rsi_overbought}
+      min="51"
+      max="99"
+      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+    />
+  </div>
+  <div class="flex items-end">
+    <button
+      type="submit"
+      class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      disabled={@loading}
+    >
+      <%= if @loading do %>
+        <span class="flex items-center justify-center">
+          <svg
+            class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            >
+            </circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            >
+            </path>
+          </svg>
+          Analyzing...
+        </span>
+      <% else %>
+        Find Best Trading Pairs
+      <% end %>
+    </button>
+  </div>
+</form>

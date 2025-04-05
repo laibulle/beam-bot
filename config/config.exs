@@ -15,7 +15,9 @@ config :beam_bot,
   strategy_repository: BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto,
   binance_req_adapter: BeamBot.Exchanges.Infrastructure.Adapters.Binance.BinanceReqAdapter,
   generators: [timestamp_type: :utc_datetime],
-  telegram_bot_token: "7366626666:AAGgnLf1jlbNRxRXfK-48Yn9BXGBdwRoJYk"
+  telegram_bot_token: "7366626666:AAGgnLf1jlbNRxRXfK-48Yn9BXGBdwRoJYk",
+  simulation_results_repository:
+    BeamBot.Strategies.Infrastructure.Adapters.Ecto.SimulationResultsRepositoryEcto
 
 config :beam_bot, :basic_auth, username: "admin", password: "admin123"
 

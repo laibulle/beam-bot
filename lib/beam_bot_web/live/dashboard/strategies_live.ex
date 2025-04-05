@@ -5,14 +5,8 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
 
   alias BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase
 
-  @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
-
   @impl true
   def mount(_params, _session, socket) do
-    if connected?(socket) do
-      Phoenix.PubSub.subscribe(BeamBot.PubSub, "strategies:progress")
-    end
-
     # Default form settings
     form_settings = %{
       investment_amount: "5",
@@ -23,168 +17,92 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
     }
 
     {:ok,
-     socket
-     |> assign(:loading, false)
-     |> assign(:results, [])
-     |> assign(:error, nil)
-     |> assign(:progress, 0)
-     |> assign(:total_pairs, 0)
-     |> assign(:task_ref, nil)
-     |> assign(:form_settings, form_settings)}
-  end
-
-  @impl true
-  def handle_event("find_best_pairs", params, socket) do
-    Logger.debug("Starting find_best_pairs with params: #{inspect(params)}")
-
-    # Store form settings
-    form_settings = %{
-      investment_amount: params["investment_amount"],
-      timeframe: params["timeframe"],
-      rsi_oversold: params["rsi_oversold"],
-      rsi_overbought: params["rsi_overbought"],
-      days: params["days"]
-    }
-
-    # Set loading state and update form settings
-    socket =
-      assign(socket,
-        loading: true,
-        results: [],
-        error: nil,
-        progress: 0,
-        form_settings: form_settings
-      )
-
-    # Convert string params to atom keys
-    converted_params = %{
-      investment_amount: params["investment_amount"],
-      timeframe: params["timeframe"],
-      rsi_oversold: params["rsi_oversold"],
-      rsi_overbought: params["rsi_overbought"],
-      days: params["days"]
-    }
-
-    # Get total number of active trading pairs
-    active_symbols =
-      @trading_pairs_repository.list_trading_pairs()
-      |> Enum.filter(& &1.is_active)
-
-    total_pairs = length(active_symbols)
-    Logger.debug("Found #{total_pairs} active trading pairs")
-
-    # Start async task with streaming
-    task =
-      Task.async(fn ->
-        Logger.debug("Starting task with params: #{inspect(converted_params)}")
-
-        result =
-          FindBestTradingPairSmallInvestorUseCase.find_best_trading_pairs_small_investor_stream(
-            converted_params,
-            fn batch_results ->
-              Logger.debug("Received batch results: #{length(batch_results)} pairs")
-              # Send progress update to LiveView
-              Phoenix.PubSub.broadcast(
-                BeamBot.PubSub,
-                "strategies:progress",
-                {:progress_update, batch_results}
-              )
-            end
-          )
-
-        Logger.debug("Task completed with result: #{inspect(result)}")
-        # Send final result to LiveView
-        Phoenix.PubSub.broadcast(
-          BeamBot.PubSub,
-          "strategies:progress",
-          {:task_complete, result}
-        )
-
-        result
-      end)
-
-    # Monitor the task process
-    Process.monitor(task.pid)
-
-    {:noreply, assign(socket, total_pairs: total_pairs, task_ref: task.ref)}
-  end
-
-  @impl true
-  def handle_info({:progress_update, batch_results}, socket) do
-    Logger.debug("Received progress update with #{length(batch_results)} pairs")
-
-    # Update results list with batch results
-    # The batch results are already sorted by ROI from the strategy
-    new_results = batch_results
-
-    # Calculate progress based on the number of results
-    # Add safety check to prevent division by zero
-    progress =
-      if socket.assigns.total_pairs > 0 do
-        min(100, round(length(new_results) / socket.assigns.total_pairs * 100))
-      else
-        0
-      end
-
-    Logger.debug("Updated progress: #{progress}% with #{length(new_results)} results")
-
-    {:noreply,
      assign(socket,
-       results: new_results,
-       progress: progress,
-       total_pairs: socket.assigns.total_pairs
+       loading: false,
+       results: [],
+       error: nil,
+       progress: 0,
+       form_settings: form_settings
      )}
   end
 
   @impl true
-  def handle_info({:task_complete, {:ok, final_results}}, socket) do
-    Logger.debug("Task completed with results: #{inspect(final_results)}")
-    Logger.debug("Current socket assigns: #{inspect(socket.assigns)}")
+  def handle_event("find_best_pairs", params, socket) do
+    # Convert params and start analysis
+    converted_params = prepare_params(params, socket.assigns.current_user.id)
+    form_settings = extract_form_settings(params)
+    start_analysis(converted_params)
 
-    # Update results with final results and sort by ROI
-    final_results_list =
-      final_results
-      |> Enum.reject(&Map.has_key?(&1, :error))
-      |> Enum.sort_by(
-        fn %{simulation_results: results} ->
-          results.roi_percentage
-        end,
-        fn a, b -> Decimal.compare(a, b) == :gt end
-      )
-
-    # Store the results in the socket assigns
-    {:noreply, assign(socket, loading: false, progress: 100, results: final_results_list)}
+    {:noreply,
+     assign(socket,
+       loading: true,
+       progress: 0,
+       results: [],
+       form_settings: form_settings
+     )}
   end
 
-  # Handle direct task result - just demonitor the ref and ignore the result
-  # since we're already handling it via PubSub
   @impl true
-  def handle_info({ref, {:ok, _final_results}}, socket) when is_reference(ref) do
-    Logger.debug("Received direct task result, but using PubSub result instead")
-    Process.demonitor(ref, [:flush])
-    {:noreply, socket}
+  def handle_info({:task_complete, {:ok, results}}, socket) do
+    Logger.debug("Task completed with results: #{inspect(results)}")
+    final_results = process_results(results)
+    {:noreply, assign(socket, loading: false, progress: 100, results: final_results)}
   end
 
   @impl true
   def handle_info({:task_complete, {:error, reason}}, socket) do
     Logger.error("Task failed with reason: #{inspect(reason)}")
-    Logger.debug("Current socket assigns: #{inspect(socket.assigns)}")
     {:noreply, assign(socket, loading: false, error: reason)}
   end
 
-  @impl true
-  def handle_info({:DOWN, ref, :process, _pid, reason}, socket) when is_reference(ref) do
-    Logger.debug("Task process down with reason: #{inspect(reason)}")
-    Logger.debug("Current socket assigns: #{inspect(socket.assigns)}")
+  # Private helpers
 
-    # If we're still loading but the process is down, we should update the loading state
-    # This handles cases where the task completes but we haven't received the task_complete message
-    if socket.assigns.loading do
-      Logger.debug("Task process down while still loading, updating loading state")
-      {:noreply, assign(socket, loading: false, task_ref: nil)}
-    else
-      {:noreply, assign(socket, task_ref: nil)}
-    end
+  defp prepare_params(params, user_id) do
+    %{
+      investment_amount: params["investment_amount"],
+      timeframe: params["timeframe"],
+      rsi_oversold: params["rsi_oversold"],
+      rsi_overbought: params["rsi_overbought"],
+      days: params["days"],
+      user_id: user_id
+    }
+  end
+
+  defp extract_form_settings(params) do
+    %{
+      investment_amount: params["investment_amount"],
+      timeframe: params["timeframe"],
+      rsi_oversold: params["rsi_oversold"],
+      rsi_overbought: params["rsi_overbought"],
+      days: params["days"]
+    }
+  end
+
+  defp start_analysis(params) do
+    Task.start(fn ->
+      handle_analysis_result(
+        FindBestTradingPairSmallInvestorUseCase.find_best_trading_pairs_small_investor_stream(
+          params,
+          &handle_batch_results/1
+        )
+      )
+    end)
+  end
+
+  defp handle_analysis_result({:ok, _}), do: :ok
+
+  defp handle_analysis_result({:error, reason}),
+    do: send(self(), {:task_complete, {:error, reason}})
+
+  defp handle_batch_results(results), do: send(self(), {:task_complete, {:ok, results}})
+
+  defp process_results(results) do
+    results
+    |> Enum.reject(&Map.has_key?(&1, :error))
+    |> Enum.sort_by(
+      fn %{simulation_results: results} -> results.roi_percentage end,
+      fn a, b -> Decimal.compare(a, b) == :gt end
+    )
   end
 
   @impl true
