@@ -4,6 +4,8 @@ defmodule BeamBot.Exchanges.Domain.Ports.ExchangePort do
   Defines the contract for interacting with cryptocurrency exchanges.
   """
 
+  alias BeamBot.Exchanges.Domain.PlatformCredentials
+
   @type order_params :: %{
           symbol: String.t(),
           side: String.t(),
@@ -46,7 +48,7 @@ defmodule BeamBot.Exchanges.Domain.Ports.ExchangePort do
     * `{:ok, account_info}` - On successful retrieval
     * `{:error, reason}` - On failure
   """
-  @callback get_account_info(credentials :: %{api_key: String.t(), api_secret: String.t()}) ::
+  @callback get_account_info(credentials :: PlatformCredentials.t()) ::
               {:ok, map()} | {:error, String.t()}
 
   @doc """
@@ -105,6 +107,6 @@ defmodule BeamBot.Exchanges.Domain.Ports.ExchangePort do
   """
   @callback place_order(
               params :: order_params(),
-              credentials :: %{api_key: binary(), api_secret: binary()}
+              credentials :: PlatformCredentials.t()
             ) :: {:ok, map()} | {:error, String.t()}
 end
