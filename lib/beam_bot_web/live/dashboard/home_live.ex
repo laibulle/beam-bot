@@ -6,7 +6,10 @@ defmodule BeamBotWeb.TradingPairsLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    symbols = @trading_pairs_repository.list_trading_pairs()
+    symbols =
+      @trading_pairs_repository.list_trading_pairs()
+      |> Enum.filter(& &1.is_active)
+
     {:ok, assign(socket, symbols: symbols, search: "", loading: false)}
   end
 
