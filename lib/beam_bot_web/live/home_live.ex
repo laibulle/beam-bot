@@ -2,8 +2,6 @@ defmodule BeamBotWeb.HomeLive do
   import Phoenix.Component
   use BeamBotWeb, :live_view
 
-  @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
-
   @impl true
   def mount(_params, _session, socket) do
     {:ok, socket}

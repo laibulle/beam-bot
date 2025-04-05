@@ -19,7 +19,7 @@ defmodule BeamBotWeb.TradingPairLive do
 
     {:ok, trading_pair} = @trading_pairs_repository.get_trading_pair_by_symbol(symbol)
 
-    {:ok, data} = @klines_repository.get_klines(symbol, "1h")
+    {:ok, data} = @klines_repository.get_klines(symbol, "1h", 500)
 
     # Get strategy status if it exists
     strategy_status = get_strategy_status()
