@@ -89,7 +89,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     e ->
       Logger.error("Crashed while initializing strategy runner: #{inspect(e)}")
 
-      {:stop, :crash}
+      {:stop, "Crashed while initializing strategy runner: #{inspect(e)}"}
   end
 
   @impl true
