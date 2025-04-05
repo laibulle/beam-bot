@@ -51,28 +51,40 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
 
   @impl true
   def init(strategy) do
-    # Subscribe to kline events for this strategy's trading pair
-    Phoenix.PubSub.subscribe(BeamBot.PubSub, "binance:kline:#{strategy.trading_pair}")
+    with :ok <-
+           Phoenix.PubSub.subscribe(BeamBot.PubSub, "binance:kline:#{strategy.trading_pair}"),
+         # Schedule first execution
+         _timer_ref <- Process.send_after(self(), :execute_strategy, 5_000),
+         {:ok, exchange} <- @exchanges_repository.get_by_identifier("binance"),
+         {:ok, exchange_credentials} <-
+           @platform_credentials_repository.get_by_user_id_and_exchange_id(
+             strategy.user_id,
+             exchange.id
+           ) do
+      {:ok,
+       %{
+         strategy: strategy,
+         last_execution: nil,
+         last_result: nil,
+         exchange: exchange,
+         exchange_credentials: exchange_credentials
+       }}
+    else
+      {:error, :not_found} ->
+        Logger.error(
+          "Failed to find Binance exchange or credentials for user #{strategy.user_id}"
+        )
 
-    # Schedule first execution
-    Process.send_after(self(), :execute_strategy, 5_000)
+        {:stop, :exchange_not_found}
 
-    {:ok, exchange} = @exchanges_repository.get_by_identifier(:binance)
+      {:error, reason} ->
+        Logger.error("Failed to initialize strategy runner: #{inspect(reason)}")
+        {:stop, reason}
 
-    {:ok, exchange_credentials} =
-      @platform_credentials_repository.get_by_user_id_and_exchange_id(
-        strategy.user_id,
-        exchange.id
-      )
-
-    {:ok,
-     %{
-       strategy: strategy,
-       last_execution: nil,
-       last_result: nil,
-       exchange: exchange,
-       exchange_credentials: exchange_credentials
-     }}
+      error ->
+        Logger.error("Unexpected error initializing strategy runner: #{inspect(error)}")
+        {:stop, :initialization_failed}
+    end
   end
 
   @impl true

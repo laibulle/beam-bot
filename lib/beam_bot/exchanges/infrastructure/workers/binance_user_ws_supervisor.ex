@@ -77,7 +77,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceUserWsSupervisor do
   """
   def start_user_connection(user_id) when is_integer(user_id) do
     with {:ok, credentials} <-
-           @platform_credentials_repository.get_by_user_id_and_exchange_id(user_id, :binance),
+           @platform_credentials_repository.get_by_user_id_and_exchange_id(user_id, "binance"),
          {:ok, pid} <- BinanceUserWsAdapter.start_link(credentials) do
       child_spec = %{
         id: {:binance_user_ws, user_id},
