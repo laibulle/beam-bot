@@ -13,6 +13,15 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
       Phoenix.PubSub.subscribe(BeamBot.PubSub, "strategies:progress")
     end
 
+    # Default form settings
+    form_settings = %{
+      investment_amount: "5",
+      timeframe: "1h",
+      rsi_oversold: "30",
+      rsi_overbought: "70",
+      days: "30"
+    }
+
     {:ok,
      socket
      |> assign(:loading, false)
@@ -20,15 +29,32 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
      |> assign(:error, nil)
      |> assign(:progress, 0)
      |> assign(:total_pairs, 0)
-     |> assign(:task_ref, nil)}
+     |> assign(:task_ref, nil)
+     |> assign(:form_settings, form_settings)}
   end
 
   @impl true
   def handle_event("find_best_pairs", params, socket) do
     Logger.debug("Starting find_best_pairs with params: #{inspect(params)}")
 
-    # Set loading state
-    socket = assign(socket, loading: true, results: [], error: nil, progress: 0)
+    # Store form settings
+    form_settings = %{
+      investment_amount: params["investment_amount"],
+      timeframe: params["timeframe"],
+      rsi_oversold: params["rsi_oversold"],
+      rsi_overbought: params["rsi_overbought"],
+      days: params["days"]
+    }
+
+    # Set loading state and update form settings
+    socket =
+      assign(socket,
+        loading: true,
+        results: [],
+        error: nil,
+        progress: 0,
+        form_settings: form_settings
+      )
 
     # Convert string params to atom keys
     converted_params = %{
@@ -181,7 +207,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
               <input
                 type="number"
                 name="investment_amount"
-                value="5"
+                value={@form_settings.investment_amount}
                 min="1"
                 step="1"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -198,13 +224,12 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
               >
-                <option value="1m">1 minute</option>
-                <option value="5m">5 minutes</option>
-                <option value="15m">15 minutes</option>
-                <option value="1h" selected>1 hour</option>
-                <option value="1h">1 hour</option>
-                <option value="4h">4 hours</option>
-                <option value="1d">1 day</option>
+                <option value="1m" selected={@form_settings.timeframe == "1m"}>1 minute</option>
+                <option value="5m" selected={@form_settings.timeframe == "5m"}>5 minutes</option>
+                <option value="15m" selected={@form_settings.timeframe == "15m"}>15 minutes</option>
+                <option value="1h" selected={@form_settings.timeframe == "1h"}>1 hour</option>
+                <option value="4h" selected={@form_settings.timeframe == "4h"}>4 hours</option>
+                <option value="1d" selected={@form_settings.timeframe == "1d"}>1 day</option>
               </select>
             </div>
 
@@ -215,7 +240,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
               <input
                 type="number"
                 name="rsi_oversold"
-                value="30"
+                value={@form_settings.rsi_oversold}
                 min="0"
                 max="100"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -230,7 +255,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
               <input
                 type="number"
                 name="rsi_overbought"
-                value="70"
+                value={@form_settings.rsi_overbought}
                 min="0"
                 max="100"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -245,7 +270,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
               <input
                 type="number"
                 name="days"
-                value="30"
+                value={@form_settings.days}
                 min="1"
                 max="365"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
