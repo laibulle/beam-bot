@@ -152,7 +152,9 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
           symbol: strategy.trading_pair,
           side: "BUY",
           type: "MARKET",
-          quantity: position_size
+          quantity: position_size,
+          api_key: strategy.exchange_credentials.api_key,
+          api_secret: strategy.exchange_credentials.api_secret
         }
 
         case @binance_req_adapter.place_order(params) do
@@ -170,7 +172,9 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
           symbol: strategy.trading_pair,
           side: "SELL",
           type: "MARKET",
-          quantity: position_size
+          quantity: position_size,
+          api_key: strategy.exchange_credentials.api_key,
+          api_secret: strategy.exchange_credentials.api_secret
         }
 
         case @binance_req_adapter.place_order(params) do
