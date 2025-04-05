@@ -30,7 +30,8 @@ defmodule BeamBot.Exchanges.Domain.Ports.KlinesRepository do
   """
   @callback get_klines(
               symbol :: String.t(),
-              interval :: String.t()
+              interval :: String.t(),
+              limit :: non_neg_integer() | nil
             ) :: {:ok, list()} | {:error, String.t()}
 
   @doc """
