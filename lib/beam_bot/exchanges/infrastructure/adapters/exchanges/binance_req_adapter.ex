@@ -47,9 +47,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       {:ok, account_info}
   """
   def get_account_info(%{api_key: api_key, api_secret: api_secret}) do
-    timestamp = :os.system_time(:millisecond)
-    params = %{timestamp: timestamp, api_secret: api_secret}
-    signed_params = sign_params(params)
+    signed_params =
+      sign_params(%{timestamp: :os.system_time(:millisecond), api_secret: api_secret})
 
     request("/api/v3/account", signed_params, api_key)
   end
@@ -189,11 +188,21 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   end
 
   defp sign_params(params) do
-    query_string = URI.encode_query(params)
+    # Remove api_secret from params before generating query string
+    params_without_secret = Map.delete(params, :api_secret)
 
+    # Sort parameters alphabetically and generate query string
+    query_string =
+      params_without_secret
+      |> Enum.sort_by(fn {key, _} -> key end)
+      |> Enum.map_join("&", fn {key, value} -> "#{key}=#{value}" end)
+
+    # Generate signature using the query string
     signature =
       :crypto.mac(:hmac, :sha256, params.api_secret, query_string) |> Base.encode16(case: :lower)
 
-    Map.put(params, :signature, signature)
+    # Add signature to params and remove api_secret
+    params_without_secret
+    |> Map.put(:signature, signature)
   end
 end
