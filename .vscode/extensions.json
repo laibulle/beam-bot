@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "jakebecker.elixir-ls",
+        "phoenixframework.phoenix",
+        "samuel-pordeus.elixir-test",
+        "benvp.vscode-hex-pm-intellisense",
+        "RoyalMist.vscode-eex-format",
+        "ms-vscode.makefile-tools",
+        "ryanluker.vscode-coverage-gutters"
+    ]
+}
