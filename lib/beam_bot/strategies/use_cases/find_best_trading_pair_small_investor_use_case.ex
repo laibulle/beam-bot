@@ -18,10 +18,6 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
   require Logger
 
   @trading_pairs_adapter Application.compile_env(:beam_bot, :trading_pairs_repository)
-  @simulation_results_repository Application.compile_env(
-                                   :beam_bot,
-                                   :simulation_results_repository
-                                 )
 
   @max_concurrency Application.compile_env(
                      :beam_bot,
