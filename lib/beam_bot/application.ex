@@ -27,6 +27,8 @@ defmodule BeamBot.Application do
       {Registry, keys: :unique, name: BeamBot.Registry},
       # Start the Binance WebSocket supervisor
       BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor,
+      # Start the Binance user data WebSocket supervisor
+      BeamBot.Exchanges.Infrastructure.Workers.BinanceUserWsSupervisor,
       # Start the strategy supervisor
       BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor
     ]
