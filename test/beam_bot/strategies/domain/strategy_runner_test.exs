@@ -61,7 +61,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     }
 
     # Set up global mock stubs
-    Mox.stub(ExchangesRepositoryMock, :get_by_identifier, fn :binance ->
+    Mox.stub(ExchangesRepositoryMock, :get_by_identifier, fn "binance" ->
       {:ok, %{id: 1, name: "Binance", identifier: "binance"}}
     end)
 
