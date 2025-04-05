@@ -55,7 +55,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
            Phoenix.PubSub.subscribe(BeamBot.PubSub, "binance:kline:#{strategy.trading_pair}"),
          # Schedule first execution
          _timer_ref <- Process.send_after(self(), :execute_strategy, 5_000),
-         {:ok, exchange} <- @exchanges_repository.get_by_identifier(:binance),
+         {:ok, exchange} <- @exchanges_repository.get_by_identifier("binance"),
          {:ok, exchange_credentials} <-
            @platform_credentials_repository.get_by_user_id_and_exchange_id(
              strategy.user_id,
