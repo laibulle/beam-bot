@@ -1,7 +1,6 @@
 defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryEctoTest do
   use BeamBot.DataCase
 
-  alias BeamBot.Exchanges.Domain.Exchange
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryEcto
 
   import BeamBot.ExchangesFixtures
