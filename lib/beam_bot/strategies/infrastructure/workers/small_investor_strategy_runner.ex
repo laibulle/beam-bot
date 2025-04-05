@@ -74,7 +74,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
 
   @impl true
   def handle_call(:run_once, _from, state) do
-    result = execute_strategy(state.strategy)
+    result = execute_strategy(state.strategy, state.exchange_credentials)
     {:reply, result, %{state | last_execution: DateTime.utc_now(), last_result: result}}
   end
 
@@ -96,7 +96,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     # Only process klines for our trading pair and timeframe
     if kline.symbol == state.strategy.trading_pair and kline.interval == state.strategy.timeframe do
       # Execute strategy when we receive a new kline
-      result = execute_strategy(state.strategy)
+      result = execute_strategy(state.strategy, state.exchange_credentials)
       {:noreply, %{state | last_execution: DateTime.utc_now(), last_result: result}}
     else
       {:noreply, state}
@@ -106,7 +106,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
   @impl true
   def handle_info(:execute_strategy, state) do
     # Execute the strategy
-    result = execute_strategy(state.strategy)
+    result = execute_strategy(state.strategy, state.exchange_credentials)
 
     # Schedule next execution (every 30 minutes)
     Process.send_after(self(), :execute_strategy, :timer.minutes(30))
@@ -116,12 +116,12 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
 
   # Private functions
 
-  defp execute_strategy(strategy) do
+  defp execute_strategy(strategy, exchange_credentials) do
     %SmallInvestorStrategy{} = strategy
 
     with {:ok, saved_strategy} <- save_strategy(strategy),
          {:ok, result} <- SmallInvestorStrategy.analyze_market(strategy),
-         {:ok, order_id} <- place_order(result, strategy) do
+         {:ok, order_id} <- place_order(result, strategy, exchange_credentials) do
       execution_result = %{
         timestamp: DateTime.utc_now(),
         strategy_name: "SmallInvestorStrategy",
@@ -141,7 +141,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     end
   end
 
-  defp place_order(result, strategy) do
+  defp place_order(result, strategy, exchange_credentials) do
     case result.signal do
       :buy ->
         # For buy signals, calculate position size based on risk management
@@ -153,8 +153,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
           side: "BUY",
           type: "MARKET",
           quantity: position_size,
-          api_key: strategy.exchange_credentials.api_key,
-          api_secret: strategy.exchange_credentials.api_secret
+          api_key: exchange_credentials.api_key,
+          api_secret: exchange_credentials.api_secret
         }
 
         case @binance_req_adapter.place_order(params) do
@@ -173,8 +173,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
           side: "SELL",
           type: "MARKET",
           quantity: position_size,
-          api_key: strategy.exchange_credentials.api_key,
-          api_secret: strategy.exchange_credentials.api_secret
+          api_key: exchange_credentials.api_key,
+          api_secret: exchange_credentials.api_secret
         }
 
         case @binance_req_adapter.place_order(params) do
