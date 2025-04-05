@@ -61,10 +61,10 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
     - taker_fee: Taker fee percentage (default: 0.1%)
 
   ## Examples
-      iex> SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"))
+      iex> SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1)
       %SmallInvestorStrategy{trading_pair: "BTCUSDT", investment_amount: #Decimal<500>...}
   """
-  def new(trading_pair, investment_amount, options \\ []) do
+  def new(trading_pair, investment_amount, user_id, options \\ []) do
     # Ensure max_risk_percentage is a Decimal
     max_risk_percentage =
       case Keyword.get(options, :max_risk_percentage) do
@@ -92,7 +92,8 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
       timeframe: Keyword.get(options, :timeframe, "1h"),
       activated_at: DateTime.utc_now(),
       maker_fee: maker_fee,
-      taker_fee: taker_fee
+      taker_fee: taker_fee,
+      user_id: user_id
     }
   end
 

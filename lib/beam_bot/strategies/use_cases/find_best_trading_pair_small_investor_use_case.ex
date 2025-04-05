@@ -33,7 +33,8 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
           timeframe: timeframe,
           rsi_oversold: rsi_oversold,
           rsi_overbought: rsi_overbought,
-          days: days
+          days: days,
+          user_id: user_id
         } = _params
       ) do
     # Get all active trading pairs
@@ -68,7 +69,8 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
       options: options,
       start_date: start_date,
       end_date: end_date,
-      total_pairs: total_pairs
+      total_pairs: total_pairs,
+      user_id: user_id
     }
 
     # Process in batches
@@ -99,7 +101,8 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
            options: options,
            start_date: start_date,
            end_date: end_date,
-           total_pairs: total_pairs
+           total_pairs: total_pairs,
+           user_id: user_id
          } = _context
        ) do
     # Run simulations concurrently for this batch of trading pairs
@@ -107,7 +110,14 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
       batch
       |> Task.async_stream(
         fn trading_pair ->
-          simulate_trading_pair(trading_pair, decimal_amount, options, start_date, end_date)
+          simulate_trading_pair(
+            trading_pair,
+            decimal_amount,
+            options,
+            start_date,
+            end_date,
+            user_id
+          )
         end,
         # Reduced concurrency to prevent overwhelming the system
         max_concurrency: min(50, length(batch)),
@@ -161,9 +171,9 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
   end
 
   # Helper function to simulate a single trading pair
-  defp simulate_trading_pair(trading_pair, decimal_amount, options, start_date, end_date) do
+  defp simulate_trading_pair(trading_pair, decimal_amount, options, start_date, end_date, user_id) do
     # Create strategy for this trading pair
-    strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
+    strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, user_id, options)
 
     # Run simulation directly without starting a GenServer
     case SmallInvestorStrategyRunner.run_simulation(strategy, start_date, end_date) do

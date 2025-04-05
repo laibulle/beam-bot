@@ -7,6 +7,8 @@ defmodule BeamBotWeb.TradingPairLive do
   # Define refresh interval in milliseconds
   @refresh_interval 10_000
 
+  require Logger
+
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
   alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner
 
@@ -77,7 +79,12 @@ defmodule BeamBotWeb.TradingPairLive do
           _params,
         socket
       ) do
+    require Logger
     trading_pair = socket.assigns.trading_pair
+
+    Logger.info(
+      "Starting strategy for #{trading_pair.symbol} with amount: #{investment_amount} USDT"
+    )
 
     # Convert string amount to Decimal
     decimal_amount = Decimal.new(investment_amount)
@@ -85,9 +92,17 @@ defmodule BeamBotWeb.TradingPairLive do
     # Convert and validate max_risk_percentage (use Decimal to avoid float conversion issues)
     decimal_max_risk =
       case max_risk_percentage do
-        risk when is_binary(risk) -> Decimal.new(risk)
-        risk when is_float(risk) -> Decimal.from_float(risk)
-        risk when is_integer(risk) -> Decimal.new(risk)
+        risk when is_binary(risk) ->
+          Logger.debug("Converting risk from string: #{risk}")
+          Decimal.new(risk)
+
+        risk when is_float(risk) ->
+          Logger.debug("Converting risk from float: #{risk}")
+          Decimal.from_float(risk)
+
+        risk when is_integer(risk) ->
+          Logger.debug("Converting risk from integer: #{risk}")
+          Decimal.new(risk)
       end
 
     # Prepare options
@@ -95,25 +110,52 @@ defmodule BeamBotWeb.TradingPairLive do
       max_risk_percentage: decimal_max_risk
     ]
 
+    Logger.debug("Creating strategy with options: #{inspect(options)}")
+
     # Create strategy
-    strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
+    strategy =
+      SmallInvestorStrategy.new(
+        trading_pair.symbol,
+        decimal_amount,
+        socket.assigns.current_user.id,
+        options
+      )
+
+    Logger.debug("Created strategy: #{inspect(strategy)}")
 
     # Start the strategy runner
-    {:ok, pid} = SmallInvestorStrategyRunner.start_link(strategy)
+    case SmallInvestorStrategyRunner.start_link(strategy) do
+      {:ok, pid} ->
+        Logger.info("Successfully started strategy runner with pid: #{inspect(pid)}")
+        # Store the pid in the process dictionary for later use
+        Process.put(:strategy_runner_pid, pid)
 
-    # Store the pid in the process dictionary for later use
-    Process.put(:strategy_runner_pid, pid)
+        # Get updated status
+        strategy_status = get_strategy_status()
 
-    # Get updated status
-    strategy_status = get_strategy_status()
+        message =
+          "Started strategy for #{trading_pair.symbol} with investment amount #{investment_amount} USDT"
 
-    message =
-      "Started strategy for #{trading_pair.symbol} with investment amount #{investment_amount} USDT"
+        {:noreply,
+         socket
+         |> assign(strategy_status: strategy_status)
+         |> assign(strategy_message: message)}
 
-    {:noreply,
-     socket
-     |> assign(strategy_status: strategy_status)
-     |> assign(strategy_message: message)}
+      {:error, reason} ->
+        Logger.error("Failed to start strategy runner: #{inspect(reason)}")
+        message = "Failed to start strategy: #{inspect(reason)}"
+
+        {:noreply,
+         socket
+         |> assign(strategy_message: message)}
+    end
+  rescue
+    e ->
+      Logger.error("Error starting strategy: #{inspect(e)}\n#{Exception.format_stacktrace()}")
+
+      {:noreply,
+       socket
+       |> assign(strategy_message: "Error starting strategy: #{inspect(e)}")}
   end
 
   @impl true
@@ -154,6 +196,8 @@ defmodule BeamBotWeb.TradingPairLive do
 
   @impl true
   def handle_event("simulate_strategy", params, socket) do
+    Logger.info("Simulating strategy with params: #{inspect(params)}")
+
     %{
       "investment_amount" => investment_amount,
       "timeframe" => timeframe,
@@ -181,7 +225,13 @@ defmodule BeamBotWeb.TradingPairLive do
     ]
 
     # Create strategy
-    strategy = SmallInvestorStrategy.new(trading_pair.symbol, decimal_amount, options)
+    strategy =
+      SmallInvestorStrategy.new(
+        trading_pair.symbol,
+        decimal_amount,
+        socket.assigns.current_user.id,
+        options
+      )
 
     # Calculate start and end dates
     end_date = DateTime.utc_now()
@@ -191,6 +241,7 @@ defmodule BeamBotWeb.TradingPairLive do
     Task.async(fn ->
       # Start the SmallInvestorStrategyRunner GenServer
       {:ok, pid} = SmallInvestorStrategyRunner.start_link(strategy)
+      Logger.info("Started strategy runner with pid: #{inspect(pid)}")
 
       result =
         case SmallInvestorStrategyRunner.run_simulation(strategy, start_date, end_date) do

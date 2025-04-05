@@ -86,7 +86,8 @@ defmodule BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor do
         ma_long_period: params["ma_long_period"],
         timeframe: params["timeframe"],
         maker_fee: params["maker_fee"],
-        taker_fee: params["taker_fee"]
+        taker_fee: params["taker_fee"],
+        user_id: params["user_id"]
       )
 
     # Create a child spec for the strategy runner

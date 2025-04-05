@@ -9,7 +9,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
 
   describe "new/3" do
     test "creates strategy with default values" do
-      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"))
+      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1)
 
       assert strategy.trading_pair == "BTCUSDT"
       assert strategy.investment_amount == Decimal.new("500")
@@ -26,7 +26,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
 
     test "creates strategy with custom values" do
       strategy =
-        SmallInvestorStrategy.new("ETHUSDT", Decimal.new("1000"),
+        SmallInvestorStrategy.new("ETHUSDT", Decimal.new("1000"), 1,
           max_risk_percentage: "3",
           rsi_oversold_threshold: 25,
           rsi_overbought_threshold: 75,
@@ -51,7 +51,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
 
     test "handles invalid max_risk_percentage by defaulting to 2%" do
       strategy =
-        SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), max_risk_percentage: nil)
+        SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1, max_risk_percentage: nil)
 
       assert strategy.max_risk_percentage == Decimal.new("2")
     end
@@ -59,7 +59,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
 
   describe "analyze_market/1" do
     test "returns error when market data fetch fails" do
-      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"))
+      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1)
 
       expect(KlinesRepositoryMock, :get_klines, fn _trading_pair, _timeframe, _limit ->
         {:error, "Failed to fetch market data"}
@@ -70,7 +70,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
     end
 
     test "returns error when not enough data points" do
-      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"))
+      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1)
 
       expect(KlinesRepositoryMock, :get_klines, fn _trading_pair, _timeframe, _limit ->
         # Return empty list to trigger insufficient data error
@@ -172,7 +172,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
 
   describe "execute_dca/2" do
     test "splits investment into specified number of parts" do
-      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("1000"))
+      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("1000"), 1)
 
       assert {:ok, result} = SmallInvestorStrategy.execute_dca(strategy, 4)
       assert result.dca_part_amount == Decimal.new("250")
