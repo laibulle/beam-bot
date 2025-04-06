@@ -166,6 +166,45 @@ defmodule BeamBot.Exchanges.Domain.Kline do
       ignore
     }
   end
+
+  @doc """
+  Converts a kline tuple back into a Kline struct.
+  This is the inverse operation of kline_to_tuple/1.
+  """
+  @spec tuple_to_kline(kline_tuple()) :: t()
+  def tuple_to_kline({
+        symbol,
+        platform,
+        interval,
+        timestamp,
+        open,
+        high,
+        low,
+        close,
+        volume,
+        quote_volume,
+        trades_count,
+        taker_buy_base_volume,
+        taker_buy_quote_volume,
+        ignore
+      }) do
+    %__MODULE__{
+      symbol: symbol,
+      platform: platform,
+      interval: interval,
+      timestamp: timestamp,
+      open: open,
+      high: high,
+      low: low,
+      close: close,
+      volume: volume,
+      quote_volume: quote_volume,
+      trades_count: trades_count,
+      taker_buy_base_volume: taker_buy_base_volume,
+      taker_buy_quote_volume: taker_buy_quote_volume,
+      ignore: ignore
+    }
+  end
 end
 
 defimpl Enumerable, for: BeamBot.Exchanges.Domain.Kline do
