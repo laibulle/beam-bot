@@ -30,7 +30,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Pg.KlinesTuplesRepositoryPg 
               low,
               close,
               volume,
-              _quote_volume,
+              quote_volume,
               trades_count,
               taker_buy_base_volume,
               taker_buy_quote_volume,
