@@ -90,6 +90,25 @@ defmodule BeamBot.Exchanges.Domain.Kline do
       :volume
     ])
   end
+
+  def to_tuple(kline) do
+    {
+      kline.symbol,
+      kline.platform,
+      kline.interval,
+      kline.timestamp,
+      kline.open,
+      kline.high,
+      kline.low,
+      kline.close,
+      kline.volume,
+      kline.quote_volume,
+      kline.trades_count,
+      kline.taker_buy_base_volume,
+      kline.taker_buy_quote_volume,
+      kline.ignore
+    }
+  end
 end
 
 defimpl Enumerable, for: BeamBot.Exchanges.Domain.Kline do
