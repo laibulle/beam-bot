@@ -19,3 +19,7 @@ defmock(BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapterMoc
 defmock(BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryMock,
   for: BeamBot.Exchanges.Domain.Ports.PlatformCredentialsRepository
 )
+
+defmock(BeamBot.Exchanges.Infrastructure.Adapters.Pg.KlinesTuplesRepositoryPgMock,
+  for: BeamBot.Exchanges.Domain.Ports.KlinesTuplesRepository
+)

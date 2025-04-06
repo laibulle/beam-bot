@@ -8,4 +8,5 @@ config :beam_bot,
   strategy_repository: BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto,
   exchanges_repository: BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryEcto,
   platform_credentials_repository:
-    BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEcto
+    BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEcto,
+  klines_tuples_repository: BeamBot.Exchanges.Infrastructure.Adapters.Pg.KlinesTuplesRepositoryPg
