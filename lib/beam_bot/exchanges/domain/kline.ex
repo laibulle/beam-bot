@@ -25,6 +25,23 @@ defmodule BeamBot.Exchanges.Domain.Kline do
           ignore: Decimal.t() | nil
         }
 
+  @type kline_tuple :: {
+          String.t(),
+          String.t(),
+          String.t(),
+          DateTime.t(),
+          Decimal.t(),
+          Decimal.t(),
+          Decimal.t(),
+          Decimal.t(),
+          Decimal.t(),
+          Decimal.t() | nil,
+          integer() | nil,
+          Decimal.t() | nil,
+          Decimal.t() | nil,
+          Decimal.t() | nil
+        }
+
   @derive {Jason.Encoder,
            only: [
              :symbol,
@@ -91,6 +108,7 @@ defmodule BeamBot.Exchanges.Domain.Kline do
     ])
   end
 
+  @spec to_tuple(t()) :: kline_tuple()
   def to_tuple(%__MODULE__{} = kline) do
     {
       kline.symbol,
