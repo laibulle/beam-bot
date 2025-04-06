@@ -175,7 +175,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategy do
 
   defp calculate_volatility(prices) do
     if length(prices) >= 2 do
-      [current | previous] = Enum.take(prices, 2)
+      [current | [previous | _]] = Enum.take(prices, 2)
       abs((current - previous) / previous * 100)
     else
       nil
@@ -291,7 +291,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategy do
      "Invalid strategy configuration: investment_amount and max_risk_percentage must be Decimal values"}
   end
 
-  defp build_signal_reasons(signal_data, _indicators) do
+  defp build_signal_reasons(signal_data, indicators) do
     reasons = []
 
     reasons =
