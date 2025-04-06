@@ -192,9 +192,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Pg.KlinesTuplesRepositoryPg 
          ignore
        }) do
     with :ok <- validate_required_string_fields(symbol, platform, interval),
-         :ok <- validate_required_decimal_fields(open, high, low, close, volume),
-         :ok <- validate_required_integer_fields(trades_count) do
-      :ok
+         :ok <- validate_required_decimal_fields(open, high, low, close, volume) do
+      validate_required_integer_fields(trades_count)
     end
   end
 
