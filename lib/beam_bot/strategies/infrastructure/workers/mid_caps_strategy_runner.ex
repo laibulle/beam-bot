@@ -8,9 +8,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.MidCapsStrategyRunner do
 
   alias BeamBot.Strategies.Domain.MidCapsStrategy
 
-  @klines_repository Application.compile_env!(:beam_bot, :klines_repository)
   @strategy_repository Application.compile_env!(:beam_bot, :strategy_repository)
-  @binance_req_adapter Application.compile_env!(:beam_bot, :binance_req_adapter)
   @exchanges_repository Application.compile_env!(:beam_bot, :exchanges_repository)
   @platform_credentials_repository Application.compile_env!(
                                      :beam_bot,
