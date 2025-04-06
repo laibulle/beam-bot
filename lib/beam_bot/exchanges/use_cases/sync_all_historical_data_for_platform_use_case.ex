@@ -11,7 +11,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
                      :beam_bot,
                      :sync_all_historical_data_for_platform_concurrent_pairs
                    )
-  @intervals %{"1m" => 1, "1h" => 30, "1d" => 365, "1w" => 365, "1M" => 3650}
+  @intervals %{"1m" => 30, "1h" => 30, "1d" => 365, "1w" => 365, "1M" => 3650}
 
   @doc """
   Syncs all historical data for a platform.
