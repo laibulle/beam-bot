@@ -192,14 +192,14 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.MidCapsStrategyRunner do
     end
   end
 
-  defp run_simulation_internal(strategy, start_date, end_date) do
+  defp run_simulation_internal(_strategy, _start_date, _end_date) do
     # Implementation for simulation would go here
     # This would involve fetching historical data and running the strategy
     # over that period to evaluate performance
     {:ok, %{simulation_result: "Not implemented yet"}}
   end
 
-  defp place_order(result, strategy, exchange_credentials) do
+  defp place_order(_result, _strategy, _exchange_credentials) do
     # Implementation for placing orders would go here
     # This would involve using the exchange API to place orders
     # based on the strategy signals

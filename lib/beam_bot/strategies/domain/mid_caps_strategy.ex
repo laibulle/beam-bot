@@ -291,7 +291,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategy do
      "Invalid strategy configuration: investment_amount and max_risk_percentage must be Decimal values"}
   end
 
-  defp build_signal_reasons(signal_data, indicators) do
+  defp build_signal_reasons(signal_data, _indicators) do
     reasons = []
 
     reasons =
