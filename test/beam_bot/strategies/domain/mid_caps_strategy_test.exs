@@ -29,7 +29,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
         MidCapsStrategy.new("ETHUSDT", Decimal.new("1000"), 1,
           max_risk_percentage: "2",
           volume_threshold: Decimal.new("2000000"),
-          volatility_threshold: "3",
+          volatility_threshold: Decimal.new("3"),
           ma_short_period: 7,
           ma_long_period: 25,
           timeframe: "4h",
