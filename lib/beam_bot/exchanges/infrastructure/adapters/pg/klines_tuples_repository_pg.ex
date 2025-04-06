@@ -179,17 +179,17 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Pg.KlinesTuplesRepositoryPg 
          symbol,
          platform,
          interval,
-         timestamp,
+         _timestamp,
          open,
          high,
          low,
          close,
          volume,
-         quote_volume,
+         _quote_volume,
          trades_count,
-         taker_buy_base_volume,
-         taker_buy_quote_volume,
-         ignore
+         _taker_buy_base_volume,
+         _taker_buy_quote_volume,
+         _ignore
        }) do
     with :ok <- validate_required_string_fields(symbol, platform, interval),
          :ok <- validate_required_decimal_fields(open, high, low, close, volume) do
