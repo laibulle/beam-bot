@@ -14,10 +14,6 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.MidCapsStrategyRunner do
                                      :beam_bot,
                                      :platform_credentials_repository
                                    )
-  @simulation_results_repository Application.compile_env!(
-                                   :beam_bot,
-                                   :simulation_results_repository
-                                 )
 
   @type execution_result :: %{
           timestamp: DateTime.t(),
