@@ -91,7 +91,7 @@ defmodule BeamBot.Exchanges.Domain.Kline do
     ])
   end
 
-  def to_tuple(kline) do
+  def to_tuple(%__MODULE__{} = kline) do
     {
       kline.symbol,
       kline.platform,
