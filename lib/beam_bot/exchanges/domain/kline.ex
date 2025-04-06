@@ -127,6 +127,45 @@ defmodule BeamBot.Exchanges.Domain.Kline do
       kline.ignore
     }
   end
+
+  @doc """
+  Converts a Kline struct directly to a tuple for improved memory efficiency.
+  This function avoids any intermediate steps and directly returns the tuple representation.
+  """
+  @spec kline_to_tuple(t()) :: kline_tuple()
+  def kline_to_tuple(%__MODULE__{
+        symbol: symbol,
+        platform: platform,
+        interval: interval,
+        timestamp: timestamp,
+        open: open,
+        high: high,
+        low: low,
+        close: close,
+        volume: volume,
+        quote_volume: quote_volume,
+        trades_count: trades_count,
+        taker_buy_base_volume: taker_buy_base_volume,
+        taker_buy_quote_volume: taker_buy_quote_volume,
+        ignore: ignore
+      }) do
+    {
+      symbol,
+      platform,
+      interval,
+      timestamp,
+      open,
+      high,
+      low,
+      close,
+      volume,
+      quote_volume,
+      trades_count,
+      taker_buy_base_volume,
+      taker_buy_quote_volume,
+      ignore
+    }
+  end
 end
 
 defimpl Enumerable, for: BeamBot.Exchanges.Domain.Kline do
