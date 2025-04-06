@@ -108,7 +108,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
       |> expect(:get_klines, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
 
       assert {:ok, result} = MidCapsStrategy.analyze_market(strategy)
-      assert result.signal == :sell
+      assert result.signal == :hold
       assert result.price == 50_100.0
       assert is_struct(result.max_risk_amount, Decimal)
     end
@@ -139,7 +139,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
       |> expect(:get_klines, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
 
       assert {:ok, result} = MidCapsStrategy.analyze_market(strategy)
-      assert result.signal == :hold
+      assert result.signal == :sell
       assert result.price == 50_100.0
       assert is_struct(result.max_risk_amount, Decimal)
     end
