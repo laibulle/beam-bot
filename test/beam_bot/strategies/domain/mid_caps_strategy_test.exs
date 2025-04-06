@@ -55,16 +55,23 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
       strategy = MidCapsStrategy.new("BTCUSDT", Decimal.new("500"), 1)
 
       # Mock klines with high volume and volatility
-      klines = [
-        %BeamBot.Exchanges.Domain.Kline{
-          close: Decimal.new("50000"),
-          volume: Decimal.new("2000000")
-        },
-        %BeamBot.Exchanges.Domain.Kline{
-          close: Decimal.new("51000"),
-          volume: Decimal.new("2500000")
-        }
-      ]
+      klines =
+        Enum.map(1..60, fn i ->
+          %BeamBot.Exchanges.Domain.Kline{
+            close: Decimal.new("50000"),
+            volume: Decimal.new("2000000")
+          }
+        end)
+
+      # Add the last two klines with different values
+      klines =
+        klines ++
+          [
+            %BeamBot.Exchanges.Domain.Kline{
+              close: Decimal.new("51000"),
+              volume: Decimal.new("2500000")
+            }
+          ]
 
       KlinesRepositoryMock
       |> expect(:get_klines, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
@@ -79,16 +86,23 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
       strategy = MidCapsStrategy.new("BTCUSDT", Decimal.new("500"), 1)
 
       # Mock klines with low volume and volatility
-      klines = [
-        %BeamBot.Exchanges.Domain.Kline{
-          close: Decimal.new("50000"),
-          volume: Decimal.new("500000")
-        },
-        %BeamBot.Exchanges.Domain.Kline{
-          close: Decimal.new("50100"),
-          volume: Decimal.new("400000")
-        }
-      ]
+      klines =
+        Enum.map(1..60, fn i ->
+          %BeamBot.Exchanges.Domain.Kline{
+            close: Decimal.new("50000"),
+            volume: Decimal.new("500000")
+          }
+        end)
+
+      # Add the last two klines with different values
+      klines =
+        klines ++
+          [
+            %BeamBot.Exchanges.Domain.Kline{
+              close: Decimal.new("50100"),
+              volume: Decimal.new("400000")
+            }
+          ]
 
       KlinesRepositoryMock
       |> expect(:get_klines, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
@@ -103,16 +117,23 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
       strategy = MidCapsStrategy.new("BTCUSDT", Decimal.new("500"), 1)
 
       # Mock klines with mixed signals
-      klines = [
-        %BeamBot.Exchanges.Domain.Kline{
-          close: Decimal.new("50000"),
-          volume: Decimal.new("2000000")
-        },
-        %BeamBot.Exchanges.Domain.Kline{
-          close: Decimal.new("50100"),
-          volume: Decimal.new("400000")
-        }
-      ]
+      klines =
+        Enum.map(1..60, fn i ->
+          %BeamBot.Exchanges.Domain.Kline{
+            close: Decimal.new("50000"),
+            volume: Decimal.new("2000000")
+          }
+        end)
+
+      # Add the last two klines with different values
+      klines =
+        klines ++
+          [
+            %BeamBot.Exchanges.Domain.Kline{
+              close: Decimal.new("50100"),
+              volume: Decimal.new("400000")
+            }
+          ]
 
       KlinesRepositoryMock
       |> expect(:get_klines, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
