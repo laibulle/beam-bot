@@ -41,7 +41,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
 
     """
     SELECT symbol, open, high, low, close, volume, quote_asset_volume,
-           taker_buy_base_asset_volume, taker_buy_quote_asset_volume, number_of_trades
+           taker_buy_base_asset_volume, taker_buy_quote_asset_volume, number_of_trades, timestamp
     FROM #{table_name}
     WHERE symbol = '#{symbol}' #{time_conditions}
     ORDER BY timestamp DESC
@@ -67,7 +67,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
                            quote_volume,
                            taker_buy_base,
                            taker_buy_quote,
-                           trades
+                           trades,
+                           timestamp
                          ] ->
       [
         symbol,
@@ -81,7 +82,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
         quote_volume,
         taker_buy_base,
         taker_buy_quote,
-        trades
+        trades,
+        timestamp
       ]
     end)
   end

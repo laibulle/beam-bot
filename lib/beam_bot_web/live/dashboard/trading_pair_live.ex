@@ -2,7 +2,7 @@ defmodule BeamBotWeb.TradingPairLive do
   use BeamBotWeb, :live_view
 
   @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
-  @klines_repository Application.compile_env(:beam_bot, :klines_repository)
+  @klines_tuples_repository Application.compile_env(:beam_bot, :klines_tuples_repository)
   @simulation_results_repository Application.compile_env(
                                    :beam_bot,
                                    :simulation_results_repository
@@ -26,7 +26,7 @@ defmodule BeamBotWeb.TradingPairLive do
 
     {:ok, trading_pair} = @trading_pairs_repository.get_trading_pair_by_symbol(symbol)
 
-    {:ok, data} = @klines_repository.get_klines(symbol, "1h", 500)
+    {:ok, data} = @klines_tuples_repository.get_klines_tuples(symbol, "1h", 500)
 
     # Get strategy status if it exists
     strategy_status = get_strategy_status()
@@ -841,13 +841,27 @@ defmodule BeamBotWeb.TradingPairLive do
   end
 
   defp transform_klines_for_chart(klines) do
-    Enum.map(klines, fn kline ->
+    Enum.map(klines, fn [
+                          _symbol,
+                          _interval,
+                          "binance",
+                          open,
+                          high,
+                          low,
+                          close,
+                          _volume,
+                          _quote_volume,
+                          _taker_buy_base,
+                          _taker_buy_quote,
+                          _trades,
+                          timestamp
+                        ] ->
       %{
-        x: kline.timestamp,
-        o: kline.open,
-        h: kline.high,
-        l: kline.low,
-        c: kline.close
+        x: timestamp,
+        o: open,
+        h: high,
+        l: low,
+        c: close
       }
     end)
   end
