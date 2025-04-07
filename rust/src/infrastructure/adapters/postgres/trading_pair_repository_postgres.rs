@@ -19,9 +19,9 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
     async fn save(&self, trading_pair: TradingPair) -> Result<(), Box<dyn Error + Send + Sync>> {
         sqlx::query(
             r#"
-            INSERT INTO trading_pairs (symbol, exchange, base_asset, quote_asset, status, is_margin_trading, is_spot_trading, sync_start_time, sync_end_time)
+            INSERT INTO trading_pairs (symbol, exchange_id, base_asset, quote_asset, status, is_margin_trading, is_spot_trading, sync_start_time, sync_end_time)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            ON CONFLICT (symbol, exchange) DO UPDATE SET
+            ON CONFLICT (symbol, exchange_id) DO UPDATE SET
                 base_asset = EXCLUDED.base_asset,
                 quote_asset = EXCLUDED.quote_asset,
                 status = EXCLUDED.status,
@@ -29,11 +29,12 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 is_spot_trading = EXCLUDED.is_spot_trading,
                 sync_start_time = EXCLUDED.sync_start_time,
                 sync_end_time = EXCLUDED.sync_end_time,
+                inserted_at = CURRENT_TIMESTAMP,
                 updated_at = CURRENT_TIMESTAMP
             "#,
         )
         .bind(&trading_pair.symbol)
-        .bind(&trading_pair.exchange)
+        .bind(&trading_pair.exchange_id)
         .bind(&trading_pair.base_asset)
         .bind(&trading_pair.quote_asset)
         .bind(&trading_pair.status)

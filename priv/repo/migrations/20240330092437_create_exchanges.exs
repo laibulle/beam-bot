@@ -35,6 +35,11 @@ defmodule BeamBot.Repo.Migrations.CreateExchanges do
       add :step_size, :decimal, precision: 30, scale: 10
       add :min_notional, :decimal, precision: 30, scale: 10
       add :is_active, :boolean, default: true, null: false
+      add :status, :string, null: false
+      add :is_margin_trading, :boolean, default: false, null: false
+      add :is_spot_trading, :boolean, default: false, null: false
+      add :sync_start_time, :integer, null: true
+      add :sync_end_time, :integer, null: true
 
       timestamps()
     end

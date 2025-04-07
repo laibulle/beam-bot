@@ -111,7 +111,7 @@ impl BinanceAdapter for BinanceClient {
                                 symbol["status"].as_str().unwrap().to_string(),
                                 symbol["isMarginTradingAllowed"].as_bool().unwrap_or(false),
                                 symbol["isSpotTradingAllowed"].as_bool().unwrap_or(false),
-                                "binance".to_string(),
+                                1,
                                 None,
                                 None,
                             )
