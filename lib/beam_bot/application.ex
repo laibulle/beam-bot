@@ -20,7 +20,7 @@ defmodule BeamBot.Application do
 
     prod_children = [
       # Start the trading pairs sync worker
-      BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
+      # BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker,
       # Start the Registry for WebSocket connections
