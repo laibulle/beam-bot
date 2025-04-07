@@ -24,9 +24,9 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 symbol, exchange_id, base_asset, quote_asset, min_price, max_price, 
                 tick_size, min_qty, max_qty, step_size, min_notional, is_active,
                 status, is_margin_trading, is_spot_trading, sync_start_time, sync_end_time,
-                inserted_at
+                inserted_at, updated_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
             ON CONFLICT (symbol, exchange_id) DO UPDATE SET
                 base_asset = EXCLUDED.base_asset,
                 quote_asset = EXCLUDED.quote_asset,
@@ -63,6 +63,7 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
         .bind(trading_pair.is_spot_trading)
         .bind(&trading_pair.sync_start_time)
         .bind(&trading_pair.sync_end_time)
+        .bind(Utc::now())
         .bind(Utc::now())
         .execute(&self.pool)
         .await?;
