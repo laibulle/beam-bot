@@ -12,10 +12,25 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./docker/postgres/002_add_custom_conf.sh:/docker-entrypoint-initdb.d/002_add_custom_conf.sh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
+  questdb:
+    image: questdb/questdb:latest
+    container_name: questdb
+    ports:
+      - "9000:9000" # REST API and Web Console
+      - "9009:9009" # PostgreSQL wire protocol
+      - "8812:8812" # InfluxDB line protocol
+    volumes:
+      - questdb_data:/var/lib/questdb
+    environment:
+      - QDB_PG_WIRE_ENABLED=true
+      - QDB_HTTP_ENABLED=true
+      - QDB_LINE_TCP_ENABLED=true
+    restart: unless-stopped
 
 volumes:
   postgres-data:
+  questdb_data:
