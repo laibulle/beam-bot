@@ -181,6 +181,25 @@ impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
                                     e
                                 )))
                             } else {
+                                // Publish message when klines are saved
+                                let klines_message = serde_json::json!({
+                                    "symbol": pair.symbol,
+                                    "interval": interval,
+                                    "klines": klines
+                                });
+                                if let Err(e) = self
+                                    .pub_sub
+                                    .publish(
+                                        "klines:saved",
+                                        &serde_json::to_vec(&klines_message).unwrap_or_default(),
+                                    )
+                                    .await
+                                {
+                                    error!(
+                                        "Failed to publish klines saved message for {} ({}): {:?}",
+                                        pair.symbol, interval, e
+                                    );
+                                }
                                 // Update trading pair sync times
                                 let mut updated_pair = pair.clone();
                                 if let Some(last_kline) = klines.last() {
