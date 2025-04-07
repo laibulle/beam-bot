@@ -39,7 +39,6 @@ defmodule BeamBot.Exchanges.Domain.TradingPair do
              :max_qty,
              :step_size,
              :min_notional,
-             :is_active,
              :status
            ]}
   schema "trading_pairs" do
@@ -55,7 +54,6 @@ defmodule BeamBot.Exchanges.Domain.TradingPair do
     field :max_qty, :decimal
     field :step_size, :decimal
     field :min_notional, :decimal
-    field :is_active, :boolean, default: true
 
     timestamps()
   end
@@ -75,7 +73,6 @@ defmodule BeamBot.Exchanges.Domain.TradingPair do
       :max_qty,
       :step_size,
       :min_notional,
-      :is_active,
       :status
     ])
     |> validate_required([
