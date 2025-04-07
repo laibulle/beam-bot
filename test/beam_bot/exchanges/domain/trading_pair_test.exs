@@ -15,7 +15,7 @@ defmodule BeamBot.Exchanges.Domain.TradingPairTest do
         max_qty: Decimal.new("100"),
         step_size: Decimal.new("0.001"),
         min_notional: Decimal.new("10"),
-        is_active: true
+        status: "TRADING"
       }
 
       encoded = Jason.encode!(trading_pair)
@@ -32,8 +32,7 @@ defmodule BeamBot.Exchanges.Domain.TradingPairTest do
                "max_qty" => "100",
                "step_size" => "0.001",
                "min_notional" => "10",
-               "is_active" => true,
-               "status" => nil
+               "status" => "TRADING"
              }
     end
   end
