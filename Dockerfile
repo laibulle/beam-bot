@@ -18,7 +18,30 @@ ARG DEBIAN_VERSION=bullseye-20241223-slim
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
 
-FROM ${BUILDER_IMAGE} as builder
+# Rust build stage
+FROM rust:1.86-slim-bullseye as rust-builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+  pkg-config \
+  libssl-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# Create a new empty shell project
+WORKDIR /usr/src/rustbot
+
+# Copy the Rust source code
+COPY rust .
+
+# Enable SQLx offline mode
+ENV SQLX_OFFLINE=true
+
+# Build the application
+RUN cargo build --release --bin web
+RUN cargo build --release --bin sync_historical_data
+
+# Elixir build stage
+FROM ${BUILDER_IMAGE} as elixir-builder
 
 # install build dependencies
 RUN apt-get update -y && apt-get install -y build-essential git \
@@ -26,10 +49,10 @@ RUN apt-get update -y && apt-get install -y build-essential git \
 
 # install nodejs LTS
 RUN apt-get update && apt-get install -y curl && \
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g npm@latest && \
-    apt-get clean && rm -f /var/lib/apt/lists/*_*
+  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+  apt-get install -y nodejs && \
+  npm install -g npm@latest && \
+  apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # prepare build dir
 WORKDIR /app
@@ -93,8 +116,12 @@ RUN chown nobody /app
 # set runner ENV
 ENV MIX_ENV="prod"
 
+# Copy the Rust binaries from the rust-builder stage
+COPY --from=rust-builder --chown=nobody:root /usr/src/rustbot/target/release/web /app/bin/rustbot
+COPY --from=rust-builder --chown=nobody:root /usr/src/rustbot/target/release/sync_historical_data /app/bin/sync_historical_data
+
 # Only copy the final release from the build stage
-COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/beam_bot ./
+COPY --from=elixir-builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/beam_bot ./
 
 USER nobody
 
