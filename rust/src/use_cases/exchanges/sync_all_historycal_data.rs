@@ -271,8 +271,7 @@ impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
         // Publish message when klines are saved
         let klines_message = serde_json::json!({
             "symbol": pair.symbol,
-            "interval": interval,
-            "klines": klines
+            "interval": interval
         });
         if let Err(e) = self
             .pub_sub
