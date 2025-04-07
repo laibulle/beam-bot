@@ -21,7 +21,6 @@ defmodule BeamBot.Exchanges.Domain.TradingPair do
           max_qty: Decimal.t() | nil,
           step_size: Decimal.t() | nil,
           min_notional: Decimal.t() | nil,
-          is_active: boolean(),
           status: String.t(),
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
