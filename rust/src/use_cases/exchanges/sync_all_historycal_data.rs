@@ -1,5 +1,6 @@
 use crate::domain::ports::binance_adapter::{BinanceAdapter, BinanceError};
 use crate::domain::ports::klines_repository::KlinesRepository;
+use crate::domain::ports::pub_sub::PubSub;
 use crate::domain::ports::trading_pair_repository::TradingPairRepository;
 use crate::infrastructure::adapters::rate_limiter::RateLimiter;
 use chrono::{Duration, TimeZone, Utc};
@@ -29,6 +30,7 @@ pub struct SyncAllHistoricalData<B: BinanceAdapter, K: KlinesRepository, T: Trad
     rate_limiter: Arc<RateLimiter>,
     intervals: Vec<IntervalConfig>,
     progress: SyncProgress,
+    pub_sub: Arc<dyn PubSub>,
 }
 
 impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
@@ -39,11 +41,13 @@ impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
         klines_repository: K,
         trading_pair_repository: T,
         requests_per_second: u64,
+        pub_sub: Arc<dyn PubSub>,
     ) -> Self {
         Self {
             binance_client,
             klines_repository,
             trading_pair_repository,
+            pub_sub,
             rate_limiter: Arc::new(RateLimiter::new(requests_per_second)),
             intervals: vec![
                 IntervalConfig {

@@ -14,6 +14,10 @@ pub struct Config {
     pub binance_api_secret: Option<String>,
     pub binance_requests_per_minute: u64,
     pub postgres_config: PostgresConfig,
+    pub nats_host: String,
+    pub nats_port: u16,
+    pub nats_user: String,
+    pub nats_password: String,
 }
 
 impl Config {
@@ -36,7 +40,21 @@ impl Config {
                 .parse()
                 .unwrap_or(1000), // 1000 requests per minute (below Binance's 1200 limit)
             postgres_config: PostgresConfig::from_url(&env::var("DATABASE_URL").unwrap()).unwrap(),
+            nats_host: env::var("NATS_HOST").unwrap_or_else(|_| "localhost".to_string()),
+            nats_port: env::var("NATS_PORT")
+                .unwrap_or_else(|_| "4222".to_string())
+                .parse()
+                .unwrap_or(4222),
+            nats_user: env::var("NATS_USER").unwrap_or_else(|_| "nats".to_string()),
+            nats_password: env::var("NATS_PASSWORD").unwrap_or_else(|_| "nats".to_string()),
         }
+    }
+
+    pub fn nats_url(&self) -> String {
+        format!(
+            "nats://{}:{}@{}:{}",
+            self.nats_user, self.nats_password, self.nats_host, self.nats_port
+        )
     }
 }
 

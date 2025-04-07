@@ -1,6 +1,7 @@
 use log::{error, info};
 use rustbot::infrastructure::adapters::binance_adapter::BinanceClient;
 use rustbot::infrastructure::adapters::postgres::trading_pair_repository_postgres::TradingPairRepositoryPostgres;
+use rustbot::infrastructure::adapters::pub_sub::pub_sub_nats_adapter::NatsPubSub;
 use rustbot::infrastructure::adapters::questdb::klines_repository_questdb::KlinesRepositoryQuestDb;
 use rustbot::infrastructure::config::binance_config::BinanceConfig;
 use rustbot::infrastructure::config::config::Config;
@@ -10,6 +11,7 @@ use rustbot::use_cases::exchanges::sync_trading_pairs::SyncTradingPairsUseCase;
 use sqlx::postgres::PgPoolOptions;
 use std::io::Write;
 use std::sync::atomic::Ordering;
+use std::sync::Arc;
 use tokio::time::{sleep, Duration};
 
 #[tokio::main]
@@ -22,6 +24,14 @@ async fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     let config = Config::new();
+
+    let nats_pubsub = match NatsPubSub::new(&config.nats_url()).await {
+        Ok(nats_pubsub) => nats_pubsub,
+        Err(e) => {
+            error!("Failed to connect to NATS: {:?}", e);
+            return;
+        }
+    };
 
     // Initialize dependencies
     let binance_client = BinanceClient::new(config.clone());
@@ -67,6 +77,7 @@ async fn main() {
         klines_repository,
         trading_pair_repository2,
         config.requests_per_minute(),
+        Arc::new(nats_pubsub),
     );
 
     // Get progress tracker
