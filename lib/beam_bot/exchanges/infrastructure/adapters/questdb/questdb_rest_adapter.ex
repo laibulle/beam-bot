@@ -56,23 +56,32 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
     do: "AND timestamp >= #{start_time} AND timestamp <= #{end_time}"
 
   defp parse_klines(dataset, _columns, interval) do
-    Enum.map(dataset, fn row ->
-      %Kline{
-        symbol: Enum.at(row, 0),
-        platform: "binance",
-        interval: interval,
-        timestamp: DateTime.from_unix!(div(Enum.at(row, 1), 1000), :second),
-        open: Decimal.new(Enum.at(row, 2)),
-        high: Decimal.new(Enum.at(row, 3)),
-        low: Decimal.new(Enum.at(row, 4)),
-        close: Decimal.new(Enum.at(row, 5)),
-        volume: Decimal.new(Enum.at(row, 6)),
-        quote_volume: Decimal.new(Enum.at(row, 7)),
-        trades_count: Enum.at(row, 8),
-        taker_buy_base_volume: Decimal.new(Enum.at(row, 9)),
-        taker_buy_quote_volume: Decimal.new(Enum.at(row, 10)),
-        ignore: Decimal.new("0")
-      }
+    Enum.map(dataset, fn [
+                           symbol,
+                           open,
+                           high,
+                           low,
+                           close,
+                           volume,
+                           quote_volume,
+                           taker_buy_base,
+                           taker_buy_quote,
+                           trades
+                         ] ->
+      [
+        symbol,
+        interval,
+        "binance",
+        open,
+        high,
+        low,
+        close,
+        volume,
+        quote_volume,
+        taker_buy_base,
+        taker_buy_quote,
+        trades
+      ]
     end)
   end
 end
