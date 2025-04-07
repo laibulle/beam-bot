@@ -163,7 +163,10 @@ impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
                                 pair.symbol,
                                 interval
                             );
-                            if let Err(e) = repository.save_klines(&pair.symbol, &klines).await {
+                            if let Err(e) = repository
+                                .save_klines(&pair.symbol, &interval, &klines)
+                                .await
+                            {
                                 error!(
                                     "Failed to save klines for {} ({}): {:?}",
                                     pair.symbol, interval, e

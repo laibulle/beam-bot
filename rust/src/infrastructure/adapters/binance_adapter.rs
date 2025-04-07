@@ -68,7 +68,7 @@ impl BinanceAdapter for BinanceClient {
 
                     let mut klines = Vec::new();
                     for kline in json {
-                        let kline = parse_kline(kline)?;
+                        let kline = parse_kline(kline, symbol, interval)?;
                         klines.push(kline);
                     }
 
@@ -191,7 +191,7 @@ impl BinanceAdapter for BinanceClient {
     }
 }
 
-fn parse_kline(value: Value) -> Result<Kline, BinanceError> {
+fn parse_kline(value: Value, symbol: &str, interval: &str) -> Result<Kline, BinanceError> {
     let arr = value
         .as_array()
         .ok_or_else(|| BinanceError::ParseError("Expected array".to_string()))?;
@@ -201,6 +201,9 @@ fn parse_kline(value: Value) -> Result<Kline, BinanceError> {
     }
 
     Ok(Kline {
+        platform: "binance".to_string(),
+        interval: interval.to_string(),
+        symbol: symbol.to_string(),
         open_time: arr[0].as_i64().unwrap_or(0),
         open: arr[1].as_str().unwrap_or("0").parse().unwrap_or(0.0),
         high: arr[2].as_str().unwrap_or("0").parse().unwrap_or(0.0),

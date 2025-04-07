@@ -4,6 +4,9 @@ use std::error::Error;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Kline {
+    pub platform: String,
+    pub interval: String,
+    pub symbol: String,
     pub open_time: i64,  // Unix timestamp in milliseconds
     pub close_time: i64, // Unix timestamp in milliseconds
     pub open: f64,

@@ -25,7 +25,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
 
     case BeamBot.QuestDB.query(query) do
       {:ok, %{"query" => _, "columns" => columns, "dataset" => dataset}} ->
-        klines = parse_klines(dataset, columns)
+        klines = parse_klines(dataset, columns, interval)
         {:ok, klines}
 
       {:error, reason} ->
@@ -34,9 +34,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
     end
   end
 
-  defp build_query(symbol, _interval, limit, start_time, end_time) do
+  defp build_query(symbol, interval, limit, start_time, end_time) do
     time_conditions = build_time_conditions(start_time, end_time)
-    table_name = "klines_#{String.downcase(symbol)}"
+    table_name = "klines_#{String.downcase(symbol)}_#{String.downcase(interval)}"
 
     """
     SELECT symbol, open, high, low, close, volume, quote_asset_volume,
@@ -55,12 +55,12 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
   defp build_time_conditions(start_time, end_time),
     do: "AND timestamp >= #{start_time} AND timestamp <= #{end_time}"
 
-  defp parse_klines(dataset, _columns) do
+  defp parse_klines(dataset, _columns, interval) do
     Enum.map(dataset, fn row ->
       %Kline{
         symbol: Enum.at(row, 0),
         platform: "binance",
-        interval: "1h",
+        interval: interval,
         timestamp: DateTime.from_unix!(div(Enum.at(row, 1), 1000), :second),
         open: Decimal.new(Enum.at(row, 2)),
         high: Decimal.new(Enum.at(row, 3)),

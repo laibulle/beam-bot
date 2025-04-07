@@ -25,6 +25,7 @@ pub trait KlinesRepository {
     fn save_klines(
         &self,
         symbol: &str,
+        interval: &str,
         klines: &[Kline],
     ) -> impl std::future::Future<Output = Result<(), KlinesRepositoryError>> + Send;
 }

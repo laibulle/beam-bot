@@ -21,6 +21,7 @@ impl KlinesRepository for KlinesRepositoryQuestDb {
     fn save_klines(
         &self,
         symbol: &str,
+        interval: &str,
         klines: &[Kline],
     ) -> impl std::future::Future<Output = Result<(), KlinesRepositoryError>> + Send {
         let symbol = symbol.to_string();
@@ -32,8 +33,9 @@ impl KlinesRepository for KlinesRepositoryQuestDb {
 
             for kline in klines {
                 let line = format!(
-                    "klines_{},symbol={} open={},high={},low={},close={},volume={},quote_asset_volume={},taker_buy_base_asset_volume={},taker_buy_quote_asset_volume={},number_of_trades={} {}000000\n",
+                    "klines_{}_{},symbol={} open={},high={},low={},close={},volume={},quote_asset_volume={},taker_buy_base_asset_volume={},taker_buy_quote_asset_volume={},number_of_trades={} {}000000\n",
                     symbol.to_lowercase(),
+                    interval.to_lowercase(),
                     symbol,
                     kline.open,
                     kline.high,
