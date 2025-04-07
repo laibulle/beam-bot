@@ -1,9 +1,13 @@
 use crate::domain::ports::trading_pair_repository::TradingPairRepository;
 use crate::domain::trading_pairs::trading_pair::TradingPair;
 use chrono::{NaiveDateTime, TimeZone, Utc};
+use num_traits::ToPrimitive;
+use rust_decimal::Decimal;
 use sqlx::postgres::PgPool;
 use sqlx::Row;
 use std::error::Error;
+use std::str::FromStr;
+
 pub struct TradingPairRepositoryPostgres {
     pool: PgPool,
 }
@@ -11,6 +15,14 @@ pub struct TradingPairRepositoryPostgres {
 impl TradingPairRepositoryPostgres {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
+    }
+
+    fn decimal_to_numeric(decimal: &Option<Decimal>) -> Option<f64> {
+        decimal.as_ref().map(|d| d.to_f64().unwrap_or(0.0))
+    }
+
+    fn numeric_to_decimal(numeric: Option<f64>) -> Option<Decimal> {
+        numeric.and_then(|n| Decimal::from_str(&n.to_string()).ok())
     }
 }
 
@@ -51,13 +63,13 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
         .bind(&trading_pair.exchange_id)
         .bind(&trading_pair.base_asset)
         .bind(&trading_pair.quote_asset)
-        .bind(&trading_pair.min_price)
-        .bind(&trading_pair.max_price)
-        .bind(&trading_pair.tick_size)
-        .bind(&trading_pair.min_qty)
-        .bind(&trading_pair.max_qty)
-        .bind(&trading_pair.step_size)
-        .bind(&trading_pair.min_notional)
+        .bind(Self::decimal_to_numeric(&trading_pair.min_price))
+        .bind(Self::decimal_to_numeric(&trading_pair.max_price))
+        .bind(Self::decimal_to_numeric(&trading_pair.tick_size))
+        .bind(Self::decimal_to_numeric(&trading_pair.min_qty))
+        .bind(Self::decimal_to_numeric(&trading_pair.max_qty))
+        .bind(Self::decimal_to_numeric(&trading_pair.step_size))
+        .bind(Self::decimal_to_numeric(&trading_pair.min_notional))
         .bind(trading_pair.is_active)
         .bind(&trading_pair.status)
         .bind(trading_pair.is_margin_trading)
@@ -105,13 +117,13 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 symbol: row.get("symbol"),
                 base_asset: row.get("base_asset"),
                 quote_asset: row.get("quote_asset"),
-                min_price: row.get("min_price"),
-                max_price: row.get("max_price"),
-                tick_size: row.get("tick_size"),
-                min_qty: row.get("min_qty"),
-                max_qty: row.get("max_qty"),
-                step_size: row.get("step_size"),
-                min_notional: row.get("min_notional"),
+                min_price: Self::numeric_to_decimal(row.get("min_price")),
+                max_price: Self::numeric_to_decimal(row.get("max_price")),
+                tick_size: Self::numeric_to_decimal(row.get("tick_size")),
+                min_qty: Self::numeric_to_decimal(row.get("min_qty")),
+                max_qty: Self::numeric_to_decimal(row.get("max_qty")),
+                step_size: Self::numeric_to_decimal(row.get("step_size")),
+                min_notional: Self::numeric_to_decimal(row.get("min_notional")),
                 is_active: row.get("is_active"),
                 status: row.get("status"),
                 is_margin_trading: row.get("is_margin_trading"),
@@ -148,13 +160,13 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 symbol: row.get("symbol"),
                 base_asset: row.get("base_asset"),
                 quote_asset: row.get("quote_asset"),
-                min_price: row.get("min_price"),
-                max_price: row.get("max_price"),
-                tick_size: row.get("tick_size"),
-                min_qty: row.get("min_qty"),
-                max_qty: row.get("max_qty"),
-                step_size: row.get("step_size"),
-                min_notional: row.get("min_notional"),
+                min_price: Self::numeric_to_decimal(row.get("min_price")),
+                max_price: Self::numeric_to_decimal(row.get("max_price")),
+                tick_size: Self::numeric_to_decimal(row.get("tick_size")),
+                min_qty: Self::numeric_to_decimal(row.get("min_qty")),
+                max_qty: Self::numeric_to_decimal(row.get("max_qty")),
+                step_size: Self::numeric_to_decimal(row.get("step_size")),
+                min_notional: Self::numeric_to_decimal(row.get("min_notional")),
                 is_active: row.get("is_active"),
                 status: row.get("status"),
                 is_margin_trading: row.get("is_margin_trading"),

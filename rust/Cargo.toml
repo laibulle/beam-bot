@@ -27,6 +27,8 @@ jsonwebtoken = "9.2"
 bcrypt = "0.15"
 tower-http = { version = "0.5", features = ["cors"] }
 async-trait = "0.1"
+rust_decimal = { version = "1.33", features = ["serde", "db-tokio-postgres"] }
+num-traits = "0.2"
 
 [[bin]]
 name = "dev"

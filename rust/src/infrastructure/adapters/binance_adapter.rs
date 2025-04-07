@@ -114,6 +114,13 @@ impl BinanceAdapter for BinanceClient {
                                 1,
                                 None,
                                 None,
+                                None,
+                                None,
+                                None,
+                                None,
+                                None,
+                                None,
+                                None,
                             )
                         })
                         .collect();
