@@ -85,3 +85,12 @@ import_config "di.exs"
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
+
+# NATS Configuration
+config :beam_bot, :nats,
+  connection_settings: %{
+    host: System.get_env("NATS_HOST", "localhost"),
+    port: String.to_integer(System.get_env("NATS_PORT", "4222")),
+    username: System.get_env("NATS_USERNAME", ""),
+    password: System.get_env("NATS_PASSWORD", "")
+  }

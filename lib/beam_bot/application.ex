@@ -23,7 +23,10 @@ defmodule BeamBot.Application do
          password: Application.get_env(:beam_bot, :questdb_password, "quest")
        ]},
       # Start to serve requests, typically the last entry
-      BeamBotWeb.Endpoint
+      BeamBotWeb.Endpoint,
+      # Start NATS listener
+      {BeamBot.Infrastructure.Adapters.Nats.NatsListenerGnat,
+       connection_settings: Application.get_env(:beam_bot, :nats)[:connection_settings]}
     ]
 
     prod_children = [

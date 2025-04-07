@@ -102,7 +102,7 @@ defmodule BeamBot.MixProject do
       {:redix, "~> 1.5"},
       {:dotenv, "~> 3.1.0", only: [:dev, :test]},
       {:excoveralls, "~> 0.18", only: :test},
-      {:gnat, "~> 1.10"}
+      {:gnat, "~> 1.7"}
     ]
   end
 
