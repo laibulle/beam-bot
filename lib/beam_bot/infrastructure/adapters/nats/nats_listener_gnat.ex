@@ -37,8 +37,7 @@ defmodule BeamBot.Infrastructure.Adapters.Nats.NatsListenerGnat do
     case Gnat.sub(state.connection_name, self(), subject) do
       {:ok, _subscription} ->
         Process.flag(:trap_exit, true)
-        spawn_link(fn -> handle_messages(callback) end)
-        {:reply, :ok, state}
+        {:reply, :ok, Map.put(state, :callback, callback)}
 
       error ->
         {:reply, error, state}
@@ -51,18 +50,18 @@ defmodule BeamBot.Infrastructure.Adapters.Nats.NatsListenerGnat do
     {:reply, result, state}
   end
 
-  defp handle_messages(callback) do
-    receive do
-      {:msg, %{body: body}} ->
-        case Jason.decode(body) do
-          {:ok, decoded} -> callback.(decoded)
-          {:error, _} -> :ok
-        end
-
-        handle_messages(callback)
-
-      {:EXIT, _pid, _reason} ->
-        :ok
+  @impl true
+  def handle_info({:msg, %{body: body} = _message}, %{callback: callback} = state) do
+    case Jason.decode(body) do
+      {:ok, decoded} -> callback.(%{body: decoded})
+      {:error, _} -> :ok
     end
+
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:EXIT, _pid, _reason}, state) do
+    {:noreply, state}
   end
 end
