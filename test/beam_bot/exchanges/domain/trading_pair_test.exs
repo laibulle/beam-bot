@@ -32,7 +32,8 @@ defmodule BeamBot.Exchanges.Domain.TradingPairTest do
                "max_qty" => "100",
                "step_size" => "0.001",
                "min_notional" => "10",
-               "is_active" => true
+               "is_active" => true,
+               "status" => nil
              }
     end
   end
