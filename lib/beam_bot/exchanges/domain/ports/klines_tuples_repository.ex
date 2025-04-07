@@ -6,6 +6,11 @@ defmodule BeamBot.Exchanges.Domain.Ports.KlinesTuplesRepository do
 
   @type kline_tuple :: list()
 
+  @callback get_klines_tuples(
+              symbol :: String.t(),
+              interval :: String.t(),
+              limit :: integer()
+            ) :: {:ok, [kline_tuple()]} | {:error, String.t()}
   @doc """
   Retrieves kline tuples for a given symbol and interval.
   Optionally filters by time range and limits the number of results.
