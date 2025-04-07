@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Use the clean architecture
+
+app/
+├── domain/
+│   └── ports/
+│       ├── sentiment_repository.rs
+│   └── sentiment.rs         # Pure domain entity
+├── use_cases/
+└── infrastructure/
+    └── adapters/
+        └── ecto/
+            ├── sentiment_repository_ecto.rs   # Concrete sentiment implementation
+    └── workers/

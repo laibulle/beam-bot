@@ -6,6 +6,8 @@
         "benvp.vscode-hex-pm-intellisense",
         "RoyalMist.vscode-eex-format",
         "ms-vscode.makefile-tools",
-        "ryanluker.vscode-coverage-gutters"
+        "ryanluker.vscode-coverage-gutters",
+        "rust-lang.rust-analyzer",
+        "ms-azuretools.vscode-docker"
     ]
 }

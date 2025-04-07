@@ -1,0 +1,46 @@
+[package]
+name = "rustbot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4.5"
+actix-cors = "0.7"
+actix-web-actors = "4.2"
+actix = "0.13"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rmp-serde = "1.1"  # MessagePack serialization
+tokio = { version = "1.36", features = ["full"] }
+env_logger = "0.11"
+log = "0.4"
+tokio-postgres = "0.7"
+dotenv = "0.15"
+rustls = "0.21"
+reqwest = { version = "0.11", features = ["json"] }
+chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"
+url = "2.5.4"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "migrate"] }
+clap = { version = "4.5", features = ["derive"] }
+jsonwebtoken = "9.2"
+bcrypt = "0.15"
+tower-http = { version = "0.5", features = ["cors"] }
+async-trait = "0.1"
+
+[[bin]]
+name = "dev"
+path = "src/bin/dev.rs"
+
+[[bin]]
+name = "sync_historical_data"
+path = "src/bin/sync_historical_data.rs"
+
+[[bin]]
+name = "web"
+path = "src/bin/web.rs"
+
+[profile.release]
+lto = true
+opt-level = 3
+codegen-units = 1
