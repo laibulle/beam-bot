@@ -35,16 +35,7 @@ impl Config {
                 .unwrap_or_else(|_| "1000".to_string())
                 .parse()
                 .unwrap_or(1000), // 1000 requests per minute (below Binance's 1200 limit)
-            postgres_config: PostgresConfig {
-                host: env::var("POSTGRES_HOST").unwrap_or_else(|_| "localhost".to_string()),
-                port: env::var("POSTGRES_PORT")
-                    .unwrap_or_else(|_| "5432".to_string())
-                    .parse()
-                    .unwrap_or(5432),
-                user: env::var("POSTGRES_USER").unwrap_or_else(|_| "postgres".to_string()),
-                password: env::var("POSTGRES_PASSWORD").unwrap_or_else(|_| "postgres".to_string()),
-                dbname: env::var("POSTGRES_DB").unwrap_or_else(|_| "rustbot".to_string()),
-            },
+            postgres_config: PostgresConfig::from_url(&env::var("DATABASE_URL").unwrap()).unwrap(),
         }
     }
 }
