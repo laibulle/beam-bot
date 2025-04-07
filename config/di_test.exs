@@ -9,4 +9,4 @@ config :beam_bot,
   platform_credentials_repository:
     BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryMock,
   klines_tuples_repository:
-    BeamBot.Exchanges.Infrastructure.Adapters.Pg.KlinesTuplesRepositoryPgMock
+    BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.KlinesTuplesRepositoryMock
