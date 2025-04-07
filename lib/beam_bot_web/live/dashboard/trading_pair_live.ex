@@ -336,8 +336,8 @@ defmodule BeamBotWeb.TradingPairLive do
           <div class="space-y-2">
             <div class="flex items-center space-x-2">
               <span class="font-medium text-gray-600">Status:</span>
-              <span class={"px-2 py-1 rounded-full text-xs font-medium #{if @trading_pair.is_active, do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800"}"}>
-                {if @trading_pair.is_active, do: "ACTIVE", else: "INACTIVE"}
+              <span class={"px-2 py-1 rounded-full text-xs font-medium #{if @trading_pair.status == "TRADING", do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800"}"}>
+                {if @trading_pair.status == "TRADING", do: "ACTIVE", else: "INACTIVE"}
               </span>
             </div>
             <div>

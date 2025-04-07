@@ -38,7 +38,8 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
         } = _params
       ) do
     # Get all active trading pairs
-    active_symbols = @trading_pairs_adapter.list_trading_pairs() |> Enum.filter(& &1.is_active)
+    active_symbols =
+      @trading_pairs_adapter.list_trading_pairs() |> Enum.filter(&(&1.status == "TRADING"))
 
     # Convert params to appropriate types
     decimal_amount = Decimal.new(investment_amount)
@@ -202,7 +203,9 @@ defmodule BeamBot.Strategies.UseCases.FindBestTradingPairSmallInvestorUseCase do
     Logger.debug("Starting streaming analysis with params: #{inspect(params)}")
 
     # Get all active trading pairs
-    active_symbols = @trading_pairs_adapter.list_trading_pairs() |> Enum.filter(& &1.is_active)
+    active_symbols =
+      @trading_pairs_adapter.list_trading_pairs() |> Enum.filter(&(&1.status == "TRADING"))
+
     Logger.debug("Found #{length(active_symbols)} active trading pairs")
 
     # Convert params to appropriate types

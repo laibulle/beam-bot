@@ -8,7 +8,7 @@ defmodule BeamBotWeb.TradingPairsLive do
   def mount(_params, _session, socket) do
     symbols =
       @trading_pairs_repository.list_trading_pairs()
-      |> Enum.filter(& &1.is_active)
+      |> Enum.filter(&(&1.status == "TRADING"))
 
     {:ok, assign(socket, symbols: symbols, search: "", loading: false)}
   end
@@ -60,8 +60,8 @@ defmodule BeamBotWeb.TradingPairsLive do
                 <div class="p-4">
                   <div class="flex justify-between items-center mb-2">
                     <h5 class="text-lg font-semibold">{symbol.symbol}</h5>
-                    <span class={"px-2 py-1 rounded-full text-xs font-medium #{if symbol.is_active, do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800"}"}>
-                      {if symbol.is_active, do: "ACTIVE", else: "INACTIVE"}
+                    <span class={"px-2 py-1 rounded-full text-xs font-medium #{if symbol.status == "TRADING", do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800"}"}>
+                      {if symbol.status == "TRADING", do: "ACTIVE", else: "INACTIVE"}
                     </span>
                   </div>
                   <div class="text-sm text-gray-600 mb-4 space-y-2">

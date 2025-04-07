@@ -40,7 +40,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
     # Get all active trading pairs
     trading_pairs =
       @trading_pairs_repository.list_trading_pairs()
-      |> Enum.filter(& &1.is_active)
+      |> Enum.filter(&(&1.status == "TRADING"))
 
     Logger.debug(
       "Starting Binance WebSocket supervisor with #{length(trading_pairs)} active trading pairs"
@@ -89,7 +89,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor do
   def get_connection_statuses do
     trading_pairs =
       @trading_pairs_repository.list_trading_pairs()
-      |> Enum.filter(& &1.is_active)
+      |> Enum.filter(&(&1.status == "TRADING"))
 
     Enum.map(trading_pairs, fn trading_pair ->
       BinanceWsAdapter.connection_status(trading_pair.symbol)

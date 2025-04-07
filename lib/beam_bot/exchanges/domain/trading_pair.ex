@@ -22,6 +22,7 @@ defmodule BeamBot.Exchanges.Domain.TradingPair do
           step_size: Decimal.t() | nil,
           min_notional: Decimal.t() | nil,
           is_active: boolean(),
+          status: String.t(),
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
         }
@@ -38,13 +39,15 @@ defmodule BeamBot.Exchanges.Domain.TradingPair do
              :max_qty,
              :step_size,
              :min_notional,
-             :is_active
+             :is_active,
+             :status
            ]}
   schema "trading_pairs" do
     belongs_to :exchange, Exchange
     field :symbol, :string
     field :base_asset, :string
     field :quote_asset, :string
+    field :status, :string
     field :min_price, :decimal
     field :max_price, :decimal
     field :tick_size, :decimal
@@ -72,13 +75,15 @@ defmodule BeamBot.Exchanges.Domain.TradingPair do
       :max_qty,
       :step_size,
       :min_notional,
-      :is_active
+      :is_active,
+      :status
     ])
     |> validate_required([
       :exchange_id,
       :symbol,
       :base_asset,
-      :quote_asset
+      :quote_asset,
+      :status
     ])
     |> foreign_key_constraint(:exchange_id)
   end
