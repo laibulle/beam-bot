@@ -28,7 +28,9 @@ defmodule BeamBot.Application do
       {BeamBot.Infrastructure.Adapters.Nats.NatsListenerGnat,
        connection_settings: Application.get_env(:beam_bot, :nats)[:connection_settings]},
       # Start Kline Saved Listener
-      BeamBot.Infrastructure.Workers.KlineSavedListener
+      BeamBot.Infrastructure.Workers.KlineSavedListener,
+      # Start Trading Pairs Updated Listener
+      BeamBot.Infrastructure.Workers.TradingPairsUpdatedListener
     ]
 
     prod_children = [
