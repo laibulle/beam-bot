@@ -66,8 +66,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncTradingPairsUseCase do
       min_qty: parse_decimal(qty_filter["minQty"]),
       max_qty: parse_decimal(qty_filter["maxQty"]),
       step_size: parse_decimal(qty_filter["stepSize"]),
-      min_notional: parse_decimal(notional_filter["minNotional"]),
-      is_active: symbol_data["status"] == "TRADING"
+      min_notional: parse_decimal(notional_filter["minNotional"])
     }
   end
 
