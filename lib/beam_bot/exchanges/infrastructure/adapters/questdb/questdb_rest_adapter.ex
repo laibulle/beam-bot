@@ -4,7 +4,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
   """
   require Logger
 
-  @impl BeamBot.Exchanges.Domain.Ports.KlinesTuplesRepository
+  @behaviour BeamBot.Exchanges.Domain.Ports.KlinesTuplesRepository
+
   @doc """
   Fetches kline data from QuestDB for a given symbol and interval.
 
