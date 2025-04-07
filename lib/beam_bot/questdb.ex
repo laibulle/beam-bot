@@ -27,15 +27,14 @@ defmodule BeamBot.QuestDB do
 
   @impl true
   def handle_call({:query, query}, _from, %{base_url: base_url, auth: auth} = state) do
+    encoded_query = URI.encode_query(%{query: query})
+
     response =
-      Req.get!("#{base_url}/query",
+      Req.get!("#{base_url}/exec?#{encoded_query}",
         headers: [
           {"Authorization", "Basic #{auth}"},
           {"Content-Type", "application/json"}
-        ],
-        params: %{
-          query: query
-        }
+        ]
       )
 
     case response.status do

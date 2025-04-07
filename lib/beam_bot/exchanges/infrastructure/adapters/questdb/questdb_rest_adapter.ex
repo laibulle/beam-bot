@@ -34,14 +34,15 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
     end
   end
 
-  defp build_query(symbol, interval, limit, start_time, end_time) do
+  defp build_query(symbol, _interval, limit, start_time, end_time) do
     time_conditions = build_time_conditions(start_time, end_time)
+    table_name = "klines_#{String.downcase(symbol)}"
 
     """
-    SELECT symbol, platform, interval, timestamp, open, high, low, close, volume,
-           quote_volume, trades_count, taker_buy_base_volume, taker_buy_quote_volume, ignore
-    FROM klines
-    WHERE symbol = '#{symbol}' AND interval = '#{interval}' #{time_conditions}
+    SELECT symbol, open, high, low, close, volume, quote_asset_volume,
+           taker_buy_base_asset_volume, taker_buy_quote_asset_volume, number_of_trades
+    FROM #{table_name}
+    WHERE symbol = '#{symbol}' #{time_conditions}
     ORDER BY timestamp DESC
     LIMIT #{limit}
     """
@@ -58,19 +59,19 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
     Enum.map(dataset, fn row ->
       %Kline{
         symbol: Enum.at(row, 0),
-        platform: Enum.at(row, 1),
-        interval: Enum.at(row, 2),
-        timestamp: DateTime.from_unix!(div(Enum.at(row, 3), 1000), :second),
-        open: Decimal.new(Enum.at(row, 4)),
-        high: Decimal.new(Enum.at(row, 5)),
-        low: Decimal.new(Enum.at(row, 6)),
-        close: Decimal.new(Enum.at(row, 7)),
-        volume: Decimal.new(Enum.at(row, 8)),
-        quote_volume: Decimal.new(Enum.at(row, 9)),
-        trades_count: Enum.at(row, 10),
-        taker_buy_base_volume: Decimal.new(Enum.at(row, 11)),
-        taker_buy_quote_volume: Decimal.new(Enum.at(row, 12)),
-        ignore: Decimal.new(Enum.at(row, 13))
+        platform: "binance",
+        interval: "1h",
+        timestamp: DateTime.from_unix!(div(Enum.at(row, 1), 1000), :second),
+        open: Decimal.new(Enum.at(row, 2)),
+        high: Decimal.new(Enum.at(row, 3)),
+        low: Decimal.new(Enum.at(row, 4)),
+        close: Decimal.new(Enum.at(row, 5)),
+        volume: Decimal.new(Enum.at(row, 6)),
+        quote_volume: Decimal.new(Enum.at(row, 7)),
+        trades_count: Enum.at(row, 8),
+        taker_buy_base_volume: Decimal.new(Enum.at(row, 9)),
+        taker_buy_quote_volume: Decimal.new(Enum.at(row, 10)),
+        ignore: Decimal.new("0")
       }
     end)
   end
