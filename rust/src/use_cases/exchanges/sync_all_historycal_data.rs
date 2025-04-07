@@ -6,6 +6,7 @@ use crate::infrastructure::adapters::rate_limiter::RateLimiter;
 use chrono::{Duration, TimeZone, Utc};
 use futures::future::join_all;
 use log::{debug, error};
+use serde_json;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
@@ -194,11 +195,26 @@ impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
                                     updated_pair.sync_start_time = Some(sync_start_time);
                                     updated_pair.sync_end_time = Some(sync_end_time);
                                 }
-                                if let Err(e) = trading_pair_repo.save(updated_pair).await {
+                                if let Err(e) = trading_pair_repo.save(updated_pair.clone()).await {
                                     error!(
                                         "Failed to update sync times for {} ({}): {:?}",
                                         pair.symbol, interval, e
                                     );
+                                } else {
+                                    // Publish message when trading pair is updated
+                                    if let Err(e) = self
+                                        .pub_sub
+                                        .publish(
+                                            "trading_pairs:updated",
+                                            &serde_json::to_vec(&updated_pair).unwrap_or_default(),
+                                        )
+                                        .await
+                                    {
+                                        error!(
+                                            "Failed to publish trading pair update for {}: {:?}",
+                                            pair.symbol, e
+                                        );
+                                    }
                                 }
                                 Ok(())
                             }
