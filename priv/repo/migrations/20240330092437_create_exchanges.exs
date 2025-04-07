@@ -38,8 +38,8 @@ defmodule BeamBot.Repo.Migrations.CreateExchanges do
       add :status, :string, null: false
       add :is_margin_trading, :boolean, default: false, null: false
       add :is_spot_trading, :boolean, default: false, null: false
-      add :sync_start_time, :integer, null: true
-      add :sync_end_time, :integer, null: true
+      add :sync_start_time, :utc_datetime_usec, null: true
+      add :sync_end_time, :utc_datetime_usec, null: true
 
       timestamps()
     end

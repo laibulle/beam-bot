@@ -1,6 +1,6 @@
 use crate::domain::ports::trading_pair_repository::TradingPairRepository;
 use crate::domain::trading_pairs::trading_pair::TradingPair;
-use chrono::Utc;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::postgres::PgPool;
 use sqlx::Row;
 use std::error::Error;
@@ -62,8 +62,8 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
         .bind(&trading_pair.status)
         .bind(trading_pair.is_margin_trading)
         .bind(trading_pair.is_spot_trading)
-        .bind(&trading_pair.sync_start_time)
-        .bind(&trading_pair.sync_end_time)
+        .bind(trading_pair.sync_start_time.map(|dt| dt.naive_utc()))
+        .bind(trading_pair.sync_end_time.map(|dt| dt.naive_utc()))
         .bind(now)
         .bind(now)
         .execute(&self.pool)
@@ -90,8 +90,7 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
             r#"
             SELECT id, symbol, exchange_id, base_asset, quote_asset, min_price, max_price,
                    tick_size, min_qty, max_qty, step_size, min_notional, is_active,
-                   status, is_margin_trading, is_spot_trading, sync_start_time, sync_end_time,
-                   inserted_at, updated_at
+                   status, is_margin_trading, is_spot_trading, sync_start_time, sync_end_time
             FROM trading_pairs
             WHERE symbol = $1
             "#,
@@ -118,8 +117,12 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 is_margin_trading: row.get("is_margin_trading"),
                 is_spot_trading: row.get("is_spot_trading"),
                 exchange_id: row.get("exchange_id"),
-                sync_start_time: row.get("sync_start_time"),
-                sync_end_time: row.get("sync_end_time"),
+                sync_start_time: row
+                    .get::<Option<NaiveDateTime>, _>("sync_start_time")
+                    .map(|ndt| DateTime::from_utc(ndt, Utc)),
+                sync_end_time: row
+                    .get::<Option<NaiveDateTime>, _>("sync_end_time")
+                    .map(|ndt| DateTime::from_utc(ndt, Utc)),
             }))
         } else {
             Ok(None)
@@ -157,8 +160,12 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 is_margin_trading: row.get("is_margin_trading"),
                 is_spot_trading: row.get("is_spot_trading"),
                 exchange_id: row.get("exchange_id"),
-                sync_start_time: row.get("sync_start_time"),
-                sync_end_time: row.get("sync_end_time"),
+                sync_start_time: row
+                    .get::<Option<NaiveDateTime>, _>("sync_start_time")
+                    .map(|ndt| DateTime::from_utc(ndt, Utc)),
+                sync_end_time: row
+                    .get::<Option<NaiveDateTime>, _>("sync_end_time")
+                    .map(|ndt| DateTime::from_utc(ndt, Utc)),
             })
             .collect();
 

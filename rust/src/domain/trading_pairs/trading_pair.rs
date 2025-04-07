@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -18,8 +19,8 @@ pub struct TradingPair {
     pub is_margin_trading: bool,
     pub is_spot_trading: bool,
     pub exchange_id: i64,
-    pub sync_start_time: Option<i64>,
-    pub sync_end_time: Option<i64>,
+    pub sync_start_time: Option<DateTime<Utc>>,
+    pub sync_end_time: Option<DateTime<Utc>>,
 }
 
 impl fmt::Display for TradingPair {
@@ -37,8 +38,8 @@ impl TradingPair {
         is_margin_trading: bool,
         is_spot_trading: bool,
         exchange_id: i64,
-        sync_start_time: Option<i64>,
-        sync_end_time: Option<i64>,
+        sync_start_time: Option<DateTime<Utc>>,
+        sync_end_time: Option<DateTime<Utc>>,
     ) -> Self {
         Self {
             id: None,

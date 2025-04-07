@@ -2,8 +2,7 @@ use crate::domain::ports::binance_adapter::{BinanceAdapter, BinanceError};
 use crate::domain::ports::klines_repository::KlinesRepository;
 use crate::domain::ports::trading_pair_repository::TradingPairRepository;
 use crate::infrastructure::adapters::rate_limiter::RateLimiter;
-
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, TimeZone, Utc};
 use futures::future::join_all;
 use log::{debug, error};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -117,9 +116,8 @@ impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
                         *current_interval = interval.clone();
                     }
 
-                    let sync_end_time = Utc::now().timestamp_millis();
-                    let mut sync_start_time =
-                        sync_end_time - interval_config.duration.num_milliseconds();
+                    let sync_end_time = Utc::now();
+                    let mut sync_start_time = sync_end_time - interval_config.duration;
 
                     // Check if we have a previous sync and adjust sync_start_time if needed
                     if let Ok(Some(latest_pair)) =
@@ -152,8 +150,8 @@ impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
                         .get_klines(
                             &pair.symbol,
                             &interval,
-                            Some(sync_start_time),
-                            Some(sync_end_time),
+                            Some(sync_start_time.timestamp_millis()),
+                            Some(sync_end_time.timestamp_millis()),
                             None,
                         )
                         .await
@@ -178,7 +176,9 @@ impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
                                 // Update trading pair sync times
                                 let mut updated_pair = pair.clone();
                                 if let Some(last_kline) = klines.last() {
-                                    updated_pair.sync_end_time = Some(last_kline.close_time);
+                                    updated_pair.sync_end_time = Some(
+                                        Utc.timestamp_millis_opt(last_kline.close_time).unwrap(),
+                                    );
                                     if updated_pair.sync_start_time.is_none() {
                                         updated_pair.sync_start_time = Some(sync_start_time);
                                     }
