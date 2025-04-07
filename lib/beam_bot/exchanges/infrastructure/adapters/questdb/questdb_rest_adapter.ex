@@ -54,7 +54,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
   defp build_time_conditions(start_time, end_time),
     do: "AND timestamp >= #{start_time} AND timestamp <= #{end_time}"
 
-  defp parse_klines(dataset, columns) do
+  defp parse_klines(dataset, _columns) do
     Enum.map(dataset, fn row ->
       %Kline{
         symbol: Enum.at(row, 0),
