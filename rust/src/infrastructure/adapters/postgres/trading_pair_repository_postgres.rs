@@ -1,7 +1,7 @@
 use crate::domain::ports::trading_pair_repository::TradingPairRepository;
 use crate::domain::trading_pairs::trading_pair::TradingPair;
 use chrono::{NaiveDateTime, TimeZone, Utc};
-use log::{debug, error, info};
+use log::{debug, error};
 use rust_decimal::prelude::*;
 use sqlx::postgres::PgPool;
 use sqlx::Row;
@@ -127,9 +127,11 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
         debug!("Finding trading pair by symbol: {}", symbol);
         let row = sqlx::query(
             r#"
-            SELECT id, symbol, exchange_id, base_asset, quote_asset, min_price, max_price,
-                   tick_size, min_qty, max_qty, step_size, min_notional, is_active,
-                   status, is_margin_trading, is_spot_trading, sync_start_time, sync_end_time
+            SELECT id, symbol, exchange_id, base_asset, quote_asset, 
+                   min_price::text, max_price::text, tick_size::text, 
+                   min_qty::text, max_qty::text, step_size::text, 
+                   min_notional::text, is_active, status, is_margin_trading, 
+                   is_spot_trading, sync_start_time, sync_end_time
             FROM trading_pairs
             WHERE symbol = $1
             "#,
@@ -178,9 +180,11 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
         debug!("Fetching all trading pairs");
         let rows = sqlx::query(
             r#"
-            SELECT id, symbol, exchange_id, base_asset, quote_asset, min_price, max_price,
-                   tick_size, min_qty, max_qty, step_size, min_notional, is_active,
-                   status, is_margin_trading, is_spot_trading, sync_start_time, sync_end_time
+            SELECT id, symbol, exchange_id, base_asset, quote_asset, 
+                   min_price::text, max_price::text, tick_size::text, 
+                   min_qty::text, max_qty::text, step_size::text, 
+                   min_notional::text, is_active, status, is_margin_trading, 
+                   is_spot_trading, sync_start_time, sync_end_time
             FROM trading_pairs
             "#,
         )

@@ -3,6 +3,7 @@ use crate::{
     domain::trading_pairs::trading_pair::TradingPair,
     infrastructure::config::binance_config::BinanceConfig,
 };
+use log;
 use reqwest::Client;
 use rust_decimal::Decimal;
 use serde_json::Value;
@@ -147,8 +148,26 @@ impl BinanceAdapter for BinanceClient {
                             let min_notional = filters
                                 .iter()
                                 .find(|f| f["filterType"] == "MIN_NOTIONAL")
-                                .and_then(|f| f["minNotional"].as_str())
-                                .and_then(|s| Decimal::from_str(s).ok());
+                                .and_then(|f| {
+                                    log::debug!("Found MIN_NOTIONAL filter: {:?}", f);
+                                    // Try to get minNotional as a string first
+                                    if let Some(s) = f["minNotional"].as_str() {
+                                        log::debug!("Found minNotional as string: {}", s);
+                                        return Decimal::from_str(s).ok();
+                                    }
+                                    // If not a string, try to get it as a number
+                                    if let Some(n) = f["minNotional"].as_f64() {
+                                        log::debug!("Found minNotional as number: {}", n);
+                                        return Decimal::from_str(&n.to_string()).ok();
+                                    }
+                                    // If neither works, try to get notional value
+                                    if let Some(n) = f["notional"].as_f64() {
+                                        log::debug!("Found notional as number: {}", n);
+                                        return Decimal::from_str(&n.to_string()).ok();
+                                    }
+                                    log::debug!("Could not parse minNotional from filter");
+                                    None
+                                });
 
                             TradingPair::new(
                                 symbol["symbol"].as_str().unwrap().to_string(),
