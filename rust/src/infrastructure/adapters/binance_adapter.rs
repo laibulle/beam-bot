@@ -4,7 +4,9 @@ use crate::{
     infrastructure::config::binance_config::BinanceConfig,
 };
 use reqwest::Client;
+use rust_decimal::Decimal;
 use serde_json::Value;
+use std::str::FromStr;
 
 pub struct BinanceClient {
     client: Client,
@@ -102,8 +104,52 @@ impl BinanceAdapter for BinanceClient {
                     })?;
 
                     let trading_pairs: Vec<TradingPair> = symbols
-                        .iter()
+                        .into_iter()
                         .map(|symbol| {
+                            let filters = symbol["filters"].as_array().unwrap_or(&vec![]).clone();
+
+                            let min_price = filters
+                                .iter()
+                                .find(|f| f["filterType"] == "PRICE_FILTER")
+                                .and_then(|f| f["minPrice"].as_str())
+                                .and_then(|s| Decimal::from_str(s).ok());
+
+                            let max_price = filters
+                                .iter()
+                                .find(|f| f["filterType"] == "PRICE_FILTER")
+                                .and_then(|f| f["maxPrice"].as_str())
+                                .and_then(|s| Decimal::from_str(s).ok());
+
+                            let tick_size = filters
+                                .iter()
+                                .find(|f| f["filterType"] == "PRICE_FILTER")
+                                .and_then(|f| f["tickSize"].as_str())
+                                .and_then(|s| Decimal::from_str(s).ok());
+
+                            let min_qty = filters
+                                .iter()
+                                .find(|f| f["filterType"] == "LOT_SIZE")
+                                .and_then(|f| f["minQty"].as_str())
+                                .and_then(|s| Decimal::from_str(s).ok());
+
+                            let max_qty = filters
+                                .iter()
+                                .find(|f| f["filterType"] == "LOT_SIZE")
+                                .and_then(|f| f["maxQty"].as_str())
+                                .and_then(|s| Decimal::from_str(s).ok());
+
+                            let step_size = filters
+                                .iter()
+                                .find(|f| f["filterType"] == "LOT_SIZE")
+                                .and_then(|f| f["stepSize"].as_str())
+                                .and_then(|s| Decimal::from_str(s).ok());
+
+                            let min_notional = filters
+                                .iter()
+                                .find(|f| f["filterType"] == "MIN_NOTIONAL")
+                                .and_then(|f| f["minNotional"].as_str())
+                                .and_then(|s| Decimal::from_str(s).ok());
+
                             TradingPair::new(
                                 symbol["symbol"].as_str().unwrap().to_string(),
                                 symbol["baseAsset"].as_str().unwrap().to_string(),
@@ -114,13 +160,13 @@ impl BinanceAdapter for BinanceClient {
                                 1,
                                 None,
                                 None,
-                                None,
-                                None,
-                                None,
-                                None,
-                                None,
-                                None,
-                                None,
+                                min_price,
+                                max_price,
+                                tick_size,
+                                min_qty,
+                                max_qty,
+                                step_size,
+                                min_notional,
                             )
                         })
                         .collect();
