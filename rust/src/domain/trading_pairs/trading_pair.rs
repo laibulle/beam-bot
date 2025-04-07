@@ -3,9 +3,18 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct TradingPair {
+    pub id: Option<i64>,
     pub symbol: String,
     pub base_asset: String,
     pub quote_asset: String,
+    pub min_price: Option<f64>,
+    pub max_price: Option<f64>,
+    pub tick_size: Option<f64>,
+    pub min_qty: Option<f64>,
+    pub max_qty: Option<f64>,
+    pub step_size: Option<f64>,
+    pub min_notional: Option<f64>,
+    pub is_active: bool,
     pub status: String,
     pub is_margin_trading: bool,
     pub is_spot_trading: bool,
@@ -36,9 +45,18 @@ impl TradingPair {
     ) -> Self {
         let now = Utc::now();
         Self {
+            id: None,
             symbol,
             base_asset,
             quote_asset,
+            min_price: None,
+            max_price: None,
+            tick_size: None,
+            min_qty: None,
+            max_qty: None,
+            step_size: None,
+            min_notional: None,
+            is_active: true,
             status,
             is_margin_trading,
             is_spot_trading,

@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::{debug, error, info};
 use rustbot::infrastructure::adapters::binance_adapter::BinanceClient;
 use rustbot::infrastructure::adapters::postgres::trading_pair_repository_postgres::TradingPairRepositoryPostgres;
 use rustbot::infrastructure::adapters::questdb::klines_repository_questdb::KlinesRepositoryQuestDb;
