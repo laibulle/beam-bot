@@ -14,6 +14,14 @@ defmodule BeamBot.Application do
       {Phoenix.PubSub, name: BeamBot.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: BeamBot.Finch},
+      # Start QuestDB client
+      {BeamBot.QuestDB,
+       [
+         host: Application.get_env(:beam_bot, :questdb_host, "localhost"),
+         port: Application.get_env(:beam_bot, :questdb_port, 9000),
+         username: Application.get_env(:beam_bot, :questdb_username, "admin"),
+         password: Application.get_env(:beam_bot, :questdb_password, "quest")
+       ]},
       # Start to serve requests, typically the last entry
       BeamBotWeb.Endpoint
     ]
@@ -24,13 +32,13 @@ defmodule BeamBot.Application do
       # Start the Telegram messages sync worker
       # BeamBot.Socials.Workers.TelegramMessagesSyncWorker,
       # Start the Registry for WebSocket connections
-      {Registry, keys: :unique, name: BeamBot.Registry},
+      {Registry, keys: :unique, name: BeamBot.Registry}
       # Start the Binance WebSocket supervisor
-      BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor,
+      # BeamBot.Exchanges.Infrastructure.Workers.BinanceWsSupervisor,
       # Start the Binance user data WebSocket supervisor
       # BeamBot.Exchanges.Infrastructure.Workers.BinanceUserWsSupervisor,
       # Start the strategy supervisor
-      BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor
+      # BeamBot.Strategies.Infrastructure.Supervisors.StrategySupervisor
     ]
 
     test_children = [

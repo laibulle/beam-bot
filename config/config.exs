@@ -17,7 +17,12 @@ config :beam_bot,
   generators: [timestamp_type: :utc_datetime],
   telegram_bot_token: "7366626666:AAGgnLf1jlbNRxRXfK-48Yn9BXGBdwRoJYk",
   simulation_results_repository:
-    BeamBot.Strategies.Infrastructure.Adapters.Ecto.SimulationResultsRepositoryEcto
+    BeamBot.Strategies.Infrastructure.Adapters.Ecto.SimulationResultsRepositoryEcto,
+  # QuestDB configuration
+  questdb_host: "localhost",
+  questdb_port: 9000,
+  questdb_username: "admin",
+  questdb_password: "quest"
 
 config :beam_bot, :basic_auth, username: "admin", password: "admin123"
 
