@@ -17,7 +17,7 @@ impl TradingPairRepositoryPostgres {
 #[async_trait::async_trait]
 impl TradingPairRepository for TradingPairRepositoryPostgres {
     async fn save(&self, trading_pair: TradingPair) -> Result<(), Box<dyn Error + Send + Sync>> {
-        println!("trading_pair: {:?}", trading_pair);
+        let now = Utc::now().naive_utc();
         sqlx::query(
             r#"
             INSERT INTO trading_pairs (
@@ -43,6 +43,7 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 is_spot_trading = EXCLUDED.is_spot_trading,
                 sync_start_time = EXCLUDED.sync_start_time,
                 sync_end_time = EXCLUDED.sync_end_time,
+                inserted_at = EXCLUDED.inserted_at,
                 updated_at = CURRENT_TIMESTAMP
             "#,
         )
@@ -63,8 +64,8 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
         .bind(trading_pair.is_spot_trading)
         .bind(&trading_pair.sync_start_time)
         .bind(&trading_pair.sync_end_time)
-        .bind(Utc::now())
-        .bind(Utc::now())
+        .bind(now)
+        .bind(now)
         .execute(&self.pool)
         .await?;
 
@@ -119,8 +120,6 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 exchange_id: row.get("exchange_id"),
                 sync_start_time: row.get("sync_start_time"),
                 sync_end_time: row.get("sync_end_time"),
-                inserted_at: row.get("inserted_at"),
-                updated_at: row.get("updated_at"),
             }))
         } else {
             Ok(None)
@@ -132,8 +131,7 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
             r#"
             SELECT id, symbol, exchange_id, base_asset, quote_asset, min_price, max_price,
                    tick_size, min_qty, max_qty, step_size, min_notional, is_active,
-                   status, is_margin_trading, is_spot_trading, sync_start_time, sync_end_time,
-                   inserted_at, updated_at
+                   status, is_margin_trading, is_spot_trading, sync_start_time, sync_end_time
             FROM trading_pairs
             "#,
         )
@@ -161,8 +159,6 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 exchange_id: row.get("exchange_id"),
                 sync_start_time: row.get("sync_start_time"),
                 sync_end_time: row.get("sync_end_time"),
-                inserted_at: row.get("inserted_at"),
-                updated_at: row.get("updated_at"),
             })
             .collect();
 
