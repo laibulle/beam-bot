@@ -1,6 +1,6 @@
 use crate::domain::ports::trading_pair_repository::TradingPairRepository;
 use crate::domain::trading_pairs::trading_pair::TradingPair;
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{NaiveDateTime, TimeZone, Utc};
 use sqlx::postgres::PgPool;
 use sqlx::Row;
 use std::error::Error;
