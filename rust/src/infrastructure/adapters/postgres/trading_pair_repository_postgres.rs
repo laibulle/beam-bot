@@ -1,6 +1,6 @@
 use crate::domain::ports::trading_pair_repository::TradingPairRepository;
 use crate::domain::trading_pairs::trading_pair::TradingPair;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use sqlx::postgres::PgPool;
 use sqlx::Row;
 use std::error::Error;
@@ -119,10 +119,10 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 exchange_id: row.get("exchange_id"),
                 sync_start_time: row
                     .get::<Option<NaiveDateTime>, _>("sync_start_time")
-                    .map(|ndt| DateTime::from_utc(ndt, Utc)),
+                    .map(|ndt| Utc.from_utc_datetime(&ndt)),
                 sync_end_time: row
                     .get::<Option<NaiveDateTime>, _>("sync_end_time")
-                    .map(|ndt| DateTime::from_utc(ndt, Utc)),
+                    .map(|ndt| Utc.from_utc_datetime(&ndt)),
             }))
         } else {
             Ok(None)
@@ -162,10 +162,10 @@ impl TradingPairRepository for TradingPairRepositoryPostgres {
                 exchange_id: row.get("exchange_id"),
                 sync_start_time: row
                     .get::<Option<NaiveDateTime>, _>("sync_start_time")
-                    .map(|ndt| DateTime::from_utc(ndt, Utc)),
+                    .map(|ndt| Utc.from_utc_datetime(&ndt)),
                 sync_end_time: row
                     .get::<Option<NaiveDateTime>, _>("sync_end_time")
-                    .map(|ndt| DateTime::from_utc(ndt, Utc)),
+                    .map(|ndt| Utc.from_utc_datetime(&ndt)),
             })
             .collect();
 

@@ -2,7 +2,7 @@ use crate::domain::ports::binance_adapter::{BinanceAdapter, BinanceError};
 use crate::domain::ports::klines_repository::KlinesRepository;
 use crate::domain::ports::trading_pair_repository::TradingPairRepository;
 use crate::infrastructure::adapters::rate_limiter::RateLimiter;
-use chrono::{DateTime, Duration, TimeZone, Utc};
+use chrono::{Duration, TimeZone, Utc};
 use futures::future::join_all;
 use log::{debug, error};
 use std::sync::atomic::{AtomicUsize, Ordering};
