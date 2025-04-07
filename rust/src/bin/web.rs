@@ -98,7 +98,7 @@ async fn hello() -> HttpResponse {
 #[actix_web::main]
 async fn main() {
     // Load environment variables
-    if let Err(e) = dotenv::dotenv() {
+    if let Err(e) = dotenv::dotenv().or_else(|_| dotenv::from_filename("../.env")) {
         info!("Failed to load .env file: {:?}", e);
     }
 

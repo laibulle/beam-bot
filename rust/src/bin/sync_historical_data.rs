@@ -15,7 +15,7 @@ use tokio::time::{sleep, Duration};
 #[tokio::main]
 async fn main() {
     // Try to load environment variables from .env file, but don't fail if it doesn't exist
-    if let Err(e) = dotenv::dotenv() {
+    if let Err(e) = dotenv::dotenv().or_else(|_| dotenv::from_filename("../.env")) {
         info!("Failed to load .env file: {:?}", e);
     }
 
