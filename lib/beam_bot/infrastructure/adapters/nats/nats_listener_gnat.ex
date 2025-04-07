@@ -6,6 +6,7 @@ defmodule BeamBot.Infrastructure.Adapters.Nats.NatsListenerGnat do
 
   use GenServer
 
+  @impl true
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
