@@ -17,12 +17,4 @@ defmodule BeamBot.Exchanges.Domain.Ports.KlinesTuplesRepository do
               start_time :: DateTime.t() | nil,
               end_time :: DateTime.t() | nil
             ) :: {:ok, [kline_tuple()]} | {:error, String.t()}
-
-  @doc """
-  Retrieves the latest kline tuple for a given symbol and interval.
-  """
-  @callback get_latest_kline_tuple(
-              symbol :: String.t(),
-              interval :: String.t()
-            ) :: {:ok, kline_tuple() | nil} | {:error, String.t()}
 end
