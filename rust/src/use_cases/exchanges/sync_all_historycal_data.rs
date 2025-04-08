@@ -276,7 +276,7 @@ impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
         if let Err(e) = self
             .pub_sub
             .publish(
-                "klines:saved",
+                "klines:initialized",
                 &serde_json::to_vec(&klines_message).unwrap_or_default(),
             )
             .await
@@ -311,7 +311,7 @@ impl<B: BinanceAdapter, K: KlinesRepository, T: TradingPairRepository>
             if let Err(e) = self
                 .pub_sub
                 .publish(
-                    "trading_pairs:updated",
+                    "trading_pairs:initialized",
                     &serde_json::to_vec(&updated_pair).unwrap_or_default(),
                 )
                 .await

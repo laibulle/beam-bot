@@ -15,7 +15,7 @@ defmodule BeamBot.Infrastructure.Workers.KlineSavedListener do
   @impl true
   def init(_) do
     # Subscribe to kline:saved events
-    case NatsListenerGnat.subscribe("klines:saved", &handle_nats_message/1) do
+    case NatsListenerGnat.subscribe("klines:initialized", &handle_nats_message/1) do
       :ok -> {:ok, %{}}
       error -> {:stop, error}
     end

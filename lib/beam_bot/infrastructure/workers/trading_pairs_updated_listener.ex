@@ -15,7 +15,7 @@ defmodule BeamBot.Infrastructure.Workers.TradingPairsUpdatedListener do
   @impl true
   def init(_) do
     # Subscribe to trading_pairs:updated events
-    case NatsListenerGnat.subscribe("trading_pairs:updated", &handle_nats_message/1) do
+    case NatsListenerGnat.subscribe("trading_pairs:initialized", &handle_nats_message/1) do
       :ok -> {:ok, %{}}
       error -> {:stop, error}
     end
