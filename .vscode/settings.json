@@ -4,5 +4,8 @@
     ],
     "coverage-gutters.showGutterCoverage": true,
     "coverage-gutters.showLineCoverage": true,
-    "coverage-gutters.showRulerCoverage": true
+    "coverage-gutters.showRulerCoverage": true,
+    "coverage-gutters.manualCoverageFilePaths": [
+        "rust/lcov.info"
+    ]
 }

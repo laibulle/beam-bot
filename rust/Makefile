@@ -4,4 +4,7 @@ test:
 coverage:
 	cargo llvm-cov --html
 
-.PHONY: test test-coverage
+coverage-lcov:
+	cargo llvm-cov --lcov --output-path lcov.info
+
+.PHONY: test test-coverage coverage coverage-lcov
