@@ -35,7 +35,7 @@ defmodule BeamBot.Application do
 
     prod_children = [
       # Start the trading pairs sync worker
-      # BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
+      BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
       # Start the Binance rate limiter
       BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter,
       # Start the Registry for WebSocket connections

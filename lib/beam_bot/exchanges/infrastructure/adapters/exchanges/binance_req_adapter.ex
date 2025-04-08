@@ -40,7 +40,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       {:ok, %{symbols: [%{baseAsset: "BTC", quoteAsset: "USDT", symbol: "BTCUSDT", baseAssetPrecision: 8, quotePrecision: 8, orderTypes: ["LIMIT", "MARKET"]}}
   """
   def get_exchange_info do
-    request("/api/v3/exchangeInfo")
+    request("/api/v3/exchangeInfo", %{}, %{weight: 20})
   end
 
   @doc """
@@ -54,7 +54,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   def get_ticker_price(symbol) do
     params = %{symbol: symbol}
 
-    request("/api/v3/ticker/price", params)
+    request("/api/v3/ticker/price", params, %{weight: 2})
   end
 
   @doc """
@@ -210,7 +210,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
     |> Map.put(:endTime, end_time)
   end
 
-  defp request(endpoint, params \\ %{}, options \\ %{}) do
+  defp request(endpoint, params, options) do
     url = @base_url <> endpoint
 
     is_rate_limit_check = Map.get(options, :is_rate_limit_check, false)
