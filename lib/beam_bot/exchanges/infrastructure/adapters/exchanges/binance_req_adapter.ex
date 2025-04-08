@@ -13,6 +13,23 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
 
   @base_url Application.compile_env(:beam_bot, :binance_base_url, "https://api.binance.com")
 
+  @i_1m_interval_ms 1 * 60 * 1000
+  @i_3m_interval_ms 3 * 60 * 1000
+  @i_5m_interval_ms 5 * 60 * 1000
+  @i_15m_interval_ms 15 * 60 * 1000
+  @i_30m_interval_ms 30 * 60 * 1000
+  @i_1h_interval_ms 1 * 60 * 60 * 1000
+  @i_2h_interval_ms 2 * 60 * 60 * 1000
+  @i_4h_interval_ms 4 * 60 * 60 * 1000
+  @i_6h_interval_ms 6 * 60 * 60 * 1000
+  @i_8h_interval_ms 8 * 60 * 60 * 1000
+  @i_12h_interval_ms 12 * 60 * 60 * 1000
+  @i_1d_interval_ms 1 * 24 * 60 * 60 * 1000
+  @i_3d_interval_ms 3 * 24 * 60 * 60 * 1000
+  @i_1w_interval_ms 7 * 24 * 60 * 60 * 1000
+  # Using 30 days for a month approximation
+  @i_1month_interval_ms 30 * 24 * 60 * 60 * 1000
+
   @doc """
   Creates a new BinanceReqAdapter struct.
 
@@ -226,6 +243,88 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   defp handle_response(%Req.Response{status: status, body: body}, false) do
     Logger.error("Request failed with status #{status}: #{inspect(body)}")
     {:error, %{status: status, body: body}}
+  end
+
+  @doc """
+  Computes the approximate number of klines for a given interval between two timestamps.
+
+  Note: This calculation provides the number of kline intervals starting between
+  `from` and `to` (inclusive). Timestamps are expected in milliseconds.
+
+  ## Examples
+
+      iex> from = 1_678_886_400_000 # 2023-03-15 12:00:00 UTC
+      iex> to = 1_678_890_000_000   # 2023-03-15 13:00:00 UTC
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.compute_klines_limits("1h", from, to)
+      2
+
+      iex> from = 1_678_886_400_000 # 2023-03-15 12:00:00 UTC
+      iex> to = 1_678_886_400_000   # 2023-03-15 12:00:00 UTC
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.compute_klines_limits("1h", from, to)
+      1
+
+      iex> from = 1_678_886_400_000 # 2023-03-15 12:00:00 UTC
+      iex> to = 1_678_886_399_999   # One millisecond before 12:00:00 UTC
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.compute_klines_limits("1h", from, to)
+      0
+  """
+
+  def compute_klines_limits("1m", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_1m_interval_ms, from, to)
+
+  def compute_klines_limits("3m", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_3m_interval_ms, from, to)
+
+  def compute_klines_limits("5m", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_5m_interval_ms, from, to)
+
+  def compute_klines_limits("15m", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_15m_interval_ms, from, to)
+
+  def compute_klines_limits("30m", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_30m_interval_ms, from, to)
+
+  # Hourly intervals
+  def compute_klines_limits("1h", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_1h_interval_ms, from, to)
+
+  def compute_klines_limits("2h", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_2h_interval_ms, from, to)
+
+  def compute_klines_limits("4h", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_4h_interval_ms, from, to)
+
+  def compute_klines_limits("6h", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_6h_interval_ms, from, to)
+
+  def compute_klines_limits("8h", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_8h_interval_ms, from, to)
+
+  def compute_klines_limits("12h", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_12h_interval_ms, from, to)
+
+  # Daily, weekly, monthly intervals
+  def compute_klines_limits("1d", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_1d_interval_ms, from, to)
+
+  def compute_klines_limits("3d", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_3d_interval_ms, from, to)
+
+  def compute_klines_limits("1w", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_1w_interval_ms, from, to)
+
+  def compute_klines_limits("1M", from, to),
+    do: compute_klines_limits_from_interval_in_ms(@i_1month_interval_ms, from, to)
+
+  defp compute_klines_limits_from_interval_in_ms(interval_ms, from, to) do
+    diff_ms = to - from
+    limit = div(diff_ms, interval_ms) + 1
+
+    if limit > 5000 do
+      {:error, "Limit is greater than 5000"}
+    else
+      {:ok, limit}
+    end
   end
 
   defp sign_params(params) do
