@@ -36,8 +36,8 @@ defmodule BeamBot.Application do
     prod_children = [
       # Start the trading pairs sync worker
       BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
-      # Start the Telegram messages sync worker
-      # BeamBot.Socials.Workers.TelegramMessagesSyncWorker,
+      # Start the Binance rate limiter
+      BeamBot.Exchanges.Infrastructure.Workers.BinanceRateLimiter,
       # Start the Registry for WebSocket connections
       {Registry, keys: :unique, name: BeamBot.Registry}
       # Start the Binance WebSocket supervisor

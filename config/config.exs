@@ -22,7 +22,15 @@ config :beam_bot,
   questdb_host: "localhost",
   questdb_port: 9000,
   questdb_username: "admin",
-  questdb_password: "quest"
+  questdb_password: "quest",
+  # Rate limiter configuration
+  binance_rate_limiter: [
+    # 1 minute in milliseconds
+    window_size: 60_000,
+    # 1 second
+    cleanup_interval: 1_000,
+    default_weight_per_minute: 1200
+  ]
 
 config :beam_bot, :basic_auth, username: "admin", password: "admin123"
 

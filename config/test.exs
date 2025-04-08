@@ -43,4 +43,13 @@ config :phoenix, :plug_init_mode, :runtime
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
 
+# Test-specific rate limiter configuration
+config :beam_bot, :binance_rate_limiter,
+  # 5 seconds in milliseconds
+  window_size: 5_000,
+  # 50 milliseconds
+  cleanup_interval: 50,
+  # 50 requests per minute
+  default_weight_per_minute: 50
+
 import_config "di_test.exs"
