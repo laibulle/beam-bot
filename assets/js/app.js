@@ -70,6 +70,24 @@ let liveSocket = new LiveSocket("/live", Socket, {
               c: Number(d.c)
             };
           });
+
+          // Calculate optimal precision based on data range
+          const calculatePrecision = (data) => {
+            const values = data.flatMap(d => [d.o, d.h, d.l, d.c]);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const range = max - min;
+            
+            if (range < 0.0001) return 8;
+            if (range < 0.001) return 6;
+            if (range < 0.01) return 4;
+            if (range < 0.1) return 3;
+            if (range < 1) return 2;
+            if (range < 10) return 1;
+            return 0;
+          };
+
+          const precision = calculatePrecision(candlesticks);
           
           if (this.chart) {
             this.chart.destroy();
@@ -172,7 +190,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
                 y: {
                   position: 'right',
                   ticks: {
-                    callback: value => Number(value).toFixed(8)
+                    callback: value => Number(value).toFixed(precision)
                   }
                 }
               },
