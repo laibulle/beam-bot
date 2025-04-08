@@ -3,6 +3,9 @@ description:
 globs: 
 alwaysApply: true
 ---
+The rust project path is at rust/
+The tests are written inside rust tests folder
+
 Use the clean architecture
 
 app/
