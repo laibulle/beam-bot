@@ -31,7 +31,7 @@ config :beam_bot,
 
 config :beam_bot,
   max_best_trading_pairs_small_investor_concurrency: 10,
-  sync_all_historical_data_for_platform_concurrent_pairs: 10
+  sync_all_historical_data_for_platform_concurrent_pairs: 1
 
 # Configure your database
 config :beam_bot, BeamBot.Repo,
