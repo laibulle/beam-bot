@@ -60,10 +60,8 @@ let liveSocket = new LiveSocket("/live", Socket, {
           const data = JSON.parse(this.el.dataset.chartData);
 
           // Process the data for the chart
-          console.log('Raw data:', data); // Debug log
           const candlesticks = data.map(d => {
             const timestamp = new Date(d.x).getTime();
-            console.log('Processing point:', { timestamp, ...d }); // Debug log
             return {
               x: timestamp,
               o: Number(d.o),
