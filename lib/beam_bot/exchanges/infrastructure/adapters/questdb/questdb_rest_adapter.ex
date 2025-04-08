@@ -39,12 +39,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
     table_name = "klines_#{String.downcase(symbol)}_#{String.downcase(interval)}"
 
     """
-    SELECT open, high, low, close, volume, quote_asset_volume,
-           taker_buy_base_asset_volume, taker_buy_quote_asset_volume, number_of_trades, timestamp
-    FROM #{table_name}
-    #{if time_conditions != "", do: "WHERE #{time_conditions}"}
-    ORDER BY timestamp DESC
-    LIMIT #{limit}
+    SELECT open, high, low, close, volume, quote_asset_volume, taker_buy_base_asset_volume, taker_buy_quote_asset_volume, number_of_trades, timestamp
+    FROM #{table_name} #{if time_conditions != "", do: "WHERE #{time_conditions}"}
+    ORDER BY timestamp DESC LIMIT #{limit}
     """
   end
 
@@ -64,7 +61,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
     - klines: A list of kline tuples
 
   ## Examples
-      iex> BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter.save_klines_tuples("BTCUSDT", "1h", [[
+      iex>
+      lines = [[
       1_499_040_000_000,
       "0.01634790",
       "0.80000000",
@@ -77,7 +75,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
       "1756.87402397",
       "28.46694368",
       "17928899.62484339"
-    ]])
+    ]]
+    BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter.save_klines_tuples("BTCUSDT", "1h", lines)
     {:ok, "1}
   """
   @impl true
@@ -99,7 +98,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
                                 taker_buy_quote,
                                 ignore
                               ] ->
-      "#{table_name} open=#{open},high=#{high},low=#{low},close=#{close},volume=#{volume},quote_asset_volume=#{quote_volume},taker_buy_base_asset_volume=#{taker_buy_base},taker_buy_quote_asset_volume=#{taker_buy_quote},number_of_trades=#{trades},timestamp=#{open_time},close_time=#{close_time},ignore=#{ignore}"
+      "#{table_name} open=#{open},high=#{high},low=#{low},close=#{close},volume=#{volume},quote_asset_volume=#{quote_volume},taker_buy_base_asset_volume=#{taker_buy_base},taker_buy_quote_asset_volume=#{taker_buy_quote},number_of_trades=#{trades},close_time=#{close_time},ignore=#{ignore} #{open_time}000000"
     end)
     |> BeamBot.InfluxTCPClient.send_line()
     |> case do

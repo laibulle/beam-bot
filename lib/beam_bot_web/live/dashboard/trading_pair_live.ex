@@ -842,18 +842,15 @@ defmodule BeamBotWeb.TradingPairLive do
 
   defp transform_klines_for_chart(klines) do
     Enum.map(klines, fn [
-                          _symbol,
-                          _interval,
-                          "binance",
                           open,
                           high,
                           low,
                           close,
-                          _volume,
                           _quote_volume,
+                          _trades,
                           _taker_buy_base,
                           _taker_buy_quote,
-                          _trades,
+                          _ignore,
                           timestamp
                         ] ->
       %{
