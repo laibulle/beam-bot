@@ -22,4 +22,10 @@ defmodule BeamBot.Exchanges.Domain.Ports.KlinesTuplesRepository do
               start_time :: DateTime.t() | nil,
               end_time :: DateTime.t() | nil
             ) :: {:ok, [kline_tuple()]} | {:error, String.t()}
+
+  @callback save_klines_tuples(
+              symbol :: String.t(),
+              interval :: String.t(),
+              klines :: [kline_tuple()]
+            ) :: {:ok, [kline_tuple()]} | {:error, String.t()}
 end

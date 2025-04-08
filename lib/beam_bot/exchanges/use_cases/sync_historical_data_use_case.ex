@@ -8,6 +8,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataForSymbolUseCase do
 
   @binance_req_adapter Application.compile_env(:beam_bot, :binance_req_adapter)
   @klines_adapter Application.compile_env(:beam_bot, :klines_repository)
+  @klines_tuples_adapter Application.compile_env(:beam_bot, :klines_tuples_repository)
 
   @doc """
   Syncs historical klines data for a trading pair from Binance to Redis.
@@ -35,41 +36,6 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataForSymbolUseCase do
 
     Logger.debug("Fetched #{length(res)} klines for #{symbol} in #{interval} interval")
 
-    klines =
-      Enum.map(res, fn [
-                         timestamp,
-                         open,
-                         high,
-                         low,
-                         close,
-                         volume,
-                         _close_time,
-                         quote_volume,
-                         trades_count,
-                         taker_buy_base_volume,
-                         taker_buy_quote_volume,
-                         ignored
-                       ] ->
-        datetime = DateTime.from_unix!(div(timestamp, 1000), :second)
-
-        %BeamBot.Exchanges.Domain.Kline{
-          symbol: symbol,
-          platform: "binance",
-          interval: interval,
-          timestamp: datetime,
-          open: Decimal.new(open),
-          high: Decimal.new(high),
-          low: Decimal.new(low),
-          close: Decimal.new(close),
-          volume: Decimal.new(volume),
-          quote_volume: Decimal.new(quote_volume),
-          trades_count: trades_count,
-          taker_buy_base_volume: Decimal.new(taker_buy_base_volume),
-          taker_buy_quote_volume: Decimal.new(taker_buy_quote_volume),
-          ignore: Decimal.new(ignored)
-        }
-      end)
-
-    @klines_adapter.store_klines(klines)
+    @klines_tuples_adapter.save_klines_tuples(symbol, interval, res)
   end
 end

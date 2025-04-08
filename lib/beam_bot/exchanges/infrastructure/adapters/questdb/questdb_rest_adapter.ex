@@ -87,4 +87,58 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
       ]
     end)
   end
+
+  @doc """
+  Saves kline tuples to QuestDB using the REST API.
+
+  ## Parameters
+    - symbol: The trading pair symbol (e.g., "BTCUSDT")
+    - interval: The interval between candlesticks (e.g., "1h", "4h", "1d")
+    - klines: A list of kline tuples
+
+  ## Examples
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter.save_klines_tuples("BTCUSDT", "1h", [[
+      1_499_040_000_000,
+      "0.01634790",
+      "0.80000000",
+      "0.01575800",
+      "0.01577100",
+      "148976.11427815",
+      1_499_644_799_999,
+      "2434.19055334",
+      308,
+      "1756.87402397",
+      "28.46694368",
+      "17928899.62484339"
+    ]])
+    {:ok, "Klines saved successfully"}
+  """
+  @impl true
+  def save_klines_tuples(symbol, interval, klines) do
+    klines
+    |> Enum.map_join("\n", fn [
+                                open_time,
+                                open,
+                                high,
+                                low,
+                                close,
+                                volume,
+                                close_time,
+                                quote_volume,
+                                trades,
+                                taker_buy_base,
+                                taker_buy_quote,
+                                ignore
+                              ] ->
+      "klines_#{symbol}_#{interval}, open=#{open}, high=#{high}, low=#{low}, close=#{close}, volume=#{volume}, quote_asset_volume=#{quote_volume}, taker_buy_base_asset_volume=#{taker_buy_base}, taker_buy_quote_asset_volume=#{taker_buy_quote}, number_of_trades=#{trades}, timestamp=#{open_time}, close_time=#{close_time}, ignore=#{ignore}"
+    end)
+    |> BeamBot.InfluxTCPClient.send_line()
+    |> case do
+      :ok ->
+        {:ok, length(klines)}
+
+      {:error, reason} ->
+        {:error, "Failed to save klines: #{inspect(reason)}"}
+    end
+  end
 end
