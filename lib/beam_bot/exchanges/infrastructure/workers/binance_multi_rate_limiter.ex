@@ -78,7 +78,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter do
 
   ## Examples
 
-      iex> BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter.get_rate_limits()
+      iex>
+      BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.get_rate_limits()
+      BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter.get_rate_limits()
       %{
         weight: %{current: 100, limit: 6000, interval: "1 minute"},
         orders: %{
@@ -98,25 +100,18 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter do
 
   ## Examples
 
-      iex> compute_weight(5)
+      iex> compute_klines_weight_from_limit(5)
       1
-      iex> compute_weight(500)
-      5
-      iex> compute_weight(5000)
-      50
+      iex> compute_klines_weight_from_limit(500)
+      2
+      iex> compute_klines_weight_from_limit(5000)
+      10
 
   """
-  def compute_weight(limit) when limit in 1..100, do: 1
-  def compute_weight(limit) when limit in 101..500, do: 5
-  def compute_weight(limit) when limit in 501..1000, do: 10
-  def compute_weight(limit) when limit in 1001..5000, do: 50
-
-  def compute_weight(_),
-    do:
-      raise(
-        ArgumentError,
-        "Invalid limit value. Allowed values are between 1 and 5000"
-      )
+  def compute_klines_weight_from_limit(limit) when limit in 1..100, do: 1
+  def compute_klines_weight_from_limit(limit) when limit in 101..500, do: 2
+  def compute_klines_weight_from_limit(limit) when limit in 501..1000, do: 5
+  def compute_klines_weight_from_limit(limit) when limit in 1001..5000, do: 10
 
   @impl true
   def init(_opts) do

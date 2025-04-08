@@ -80,7 +80,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       }
       |> maybe_add_time_range(start_time, end_time)
 
-    request("/api/v3/klines", params)
+    weight = BinanceMultiRateLimiter.compute_klines_weight_from_limit(limit)
+
+    request("/api/v3/klines", params, %{weight: weight})
   end
 
   @doc """
@@ -182,12 +184,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
     url = @base_url <> endpoint
 
     is_rate_limit_check = Map.get(options, :is_rate_limit_check, false)
-
-    weight =
-      case Map.has_key?(options, :weight) do
-        true -> Map.get(options, :weight)
-        false -> Map.get(params, :limit, 1) |> BinanceMultiRateLimiter.compute_weight()
-      end
+    weight = Map.get(options, :weight)
 
     headers =
       if Map.has_key?(options, :api_key) do
