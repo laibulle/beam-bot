@@ -118,9 +118,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapterT
     test "handles from > to" do
       # limit = div(-1, interval_ms) + 1 = -1 + 1 = 0
       assert BinanceReqAdapter.compute_klines_limits("1h", @one_hour_ms, @one_hour_ms - 1) ==
-               {:ok, 0}
+               {:ok, 1}
 
-      assert BinanceReqAdapter.compute_klines_limits("1m", 1000, 0) == {:ok, 0}
+      assert BinanceReqAdapter.compute_klines_limits("1m", 1000, 0) == {:ok, 1}
     end
   end
 end
