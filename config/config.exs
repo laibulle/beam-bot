@@ -36,7 +36,7 @@ config :beam_bot, :basic_auth, username: "admin", password: "admin123"
 
 config :beam_bot,
   max_best_trading_pairs_small_investor_concurrency: 50,
-  sync_all_historical_data_for_platform_concurrent_pairs: 1
+  sync_all_historical_data_for_platform_concurrent_pairs: 10
 
 # Configures the endpoint
 config :beam_bot, BeamBotWeb.Endpoint,

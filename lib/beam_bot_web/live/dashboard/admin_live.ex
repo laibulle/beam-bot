@@ -45,25 +45,19 @@ defmodule BeamBotWeb.AdminLive do
       case progress.status do
         :started ->
           %{
-            total_pairs: progress.total_pairs,
-            total_intervals: progress.total_intervals,
             total_tasks: progress.total_tasks,
             percentage: 0
           }
 
         :processing_chunk ->
-          # Calculate percentage based on completed chunks
-          chunk_percentage = (progress.chunk_index - 1) / progress.total_chunks * 100
-
           %{
             chunk_index: progress.chunk_index,
             total_chunks: progress.total_chunks,
-            current_pairs: progress.current_pairs,
-            percentage: chunk_percentage
+            current_tasks: progress.current_tasks,
+            percentage: (progress.chunk_index - 1) / progress.total_chunks * 100
           }
 
         :chunk_completed ->
-          # Calculate percentage based on completed tasks
           %{
             completed_tasks: progress.completed_tasks,
             successful_tasks: progress.successful_tasks,
@@ -129,9 +123,9 @@ defmodule BeamBotWeb.AdminLive do
                 <div class="mt-2 text-sm text-gray-600">
                   <%= case @sync_progress.status do %>
                     <% :started -> %>
-                      Initializing sync for {@sync_stats.total_pairs} pairs across {@sync_stats.total_intervals} intervals
+                      Initializing sync for {@sync_stats.total_tasks} tasks
                     <% :processing_chunk -> %>
-                      Processing chunk {@sync_stats.chunk_index} of {@sync_stats.total_chunks} ({@sync_stats.current_pairs} pairs)
+                      Processing chunk {@sync_stats.chunk_index} of {@sync_stats.total_chunks}
                     <% :chunk_completed -> %>
                       Progress: {Float.round(@sync_stats.percentage, 1)}%
                       ({@sync_stats.completed_tasks} tasks completed) <br />

@@ -28,19 +28,39 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
       :ok
   """
   def sync_all_historical_data_for_platform(_platform, progress_pid) do
-    # Get all symbols for the platform
-    symbols = @trading_pairs_adapter.list_trading_pairs()
-    total_pairs = length(symbols)
-    total_intervals = map_size(@intervals)
-    total_tasks = total_pairs * total_intervals
+    all_work_items = create_work_items()
+    total_tasks = length(all_work_items)
+    total_chunks = ceil(total_tasks / @max_concurrency)
 
+    send_initial_progress(progress_pid, total_tasks)
+
+    all_work_items
+    |> Enum.chunk_every(@max_concurrency)
+    |> Enum.with_index(1)
+    |> Enum.each(fn {work_chunk, chunk_index} ->
+      process_work_chunk(work_chunk, chunk_index, total_chunks, total_tasks, progress_pid)
+    end)
+
+    send_completion_progress(progress_pid, total_tasks)
+    Logger.debug("Completed syncing historical data for all trading pairs")
+    :ok
+  end
+
+  defp create_work_items do
+    @trading_pairs_adapter.list_trading_pairs()
+    |> Enum.flat_map(fn trading_pair ->
+      Enum.map(@intervals, fn {interval, days} ->
+        {trading_pair, interval, days}
+      end)
+    end)
+  end
+
+  defp send_initial_progress(progress_pid, total_tasks) do
     send(
       progress_pid,
       {:sync_progress,
        %{
          status: :started,
-         total_pairs: total_pairs,
-         total_intervals: total_intervals,
          total_tasks: total_tasks,
          completed_tasks: 0,
          successful_tasks: 0,
@@ -48,112 +68,9 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
          percentage: 0
        }}
     )
+  end
 
-    # Process trading pairs in chunks of 4 (4 pairs * 5 intervals = 20 parallel tasks)
-    symbols
-    |> Enum.chunk_every(@max_concurrency)
-    |> Enum.with_index(1)
-    |> Enum.each(fn {pairs_chunk, chunk_index} ->
-      send(
-        progress_pid,
-        {:sync_progress,
-         %{
-           status: :processing_chunk,
-           chunk_index: chunk_index,
-           total_chunks: ceil(total_pairs / 4),
-           current_pairs: length(pairs_chunk)
-         }}
-      )
-
-      # Create tasks for this chunk
-      tasks =
-        for trading_pair <- pairs_chunk,
-            {interval, days} <- @intervals do
-          Task.async(fn ->
-            Logger.debug("Starting sync for #{trading_pair.symbol} with interval #{interval}")
-            start_time = DateTime.utc_now()
-
-            try do
-              Logger.debug(
-                "Calling sync_historical_data for #{trading_pair.symbol} with interval #{interval}"
-              )
-
-              {:ok, _} =
-                SyncHistoricalDataForSymbolUseCase.sync_historical_data(
-                  trading_pair.symbol,
-                  interval,
-                  DateTime.utc_now(),
-                  DateTime.add(DateTime.utc_now(), -days * 24 * 60 * 60, :second)
-                )
-
-              end_time = DateTime.utc_now()
-              duration = DateTime.diff(end_time, start_time, :second)
-
-              Logger.debug(
-                "Successfully synced #{trading_pair.symbol} with interval #{interval} in #{duration} seconds"
-              )
-
-              {:ok, {trading_pair.symbol, interval}}
-            rescue
-              e ->
-                Logger.error(
-                  "Failed to sync #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(__STACKTRACE__)}"
-                )
-
-                {:error, {trading_pair.symbol, interval, e}}
-            catch
-              kind, e ->
-                Logger.error(
-                  "Caught #{kind} while syncing #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(__STACKTRACE__)}"
-                )
-
-                {:error, {trading_pair.symbol, interval, {kind, e}}}
-            end
-          end)
-        end
-
-      # Wait for all tasks in this chunk to complete before moving to the next chunk
-      results =
-        tasks
-        |> Enum.map(&Task.await(&1, :infinity))
-
-      # Process results for this chunk
-      successes =
-        Enum.count(results, fn
-          {:ok, _} -> true
-          _ -> false
-        end)
-
-      failures =
-        Enum.count(results, fn
-          {:error, _} -> true
-          _ -> false
-        end)
-
-      completed = successes + failures
-      percentage = completed / total_tasks * 100
-
-      send(
-        progress_pid,
-        {:sync_progress,
-         %{
-           status: :chunk_completed,
-           chunk_index: chunk_index,
-           total_chunks: ceil(total_pairs / 4),
-           completed_tasks: completed,
-           successful_tasks: successes,
-           failed_tasks: failures,
-           percentage: percentage
-         }}
-      )
-
-      if failures > 0 do
-        Logger.warning(
-          "Some tasks in chunk #{chunk_index} failed. Check the logs above for details."
-        )
-      end
-    end)
-
+  defp send_completion_progress(progress_pid, total_tasks) do
     send(
       progress_pid,
       {:sync_progress,
@@ -165,8 +82,129 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
          percentage: 100
        }}
     )
+  end
 
-    Logger.debug("Completed syncing historical data for all trading pairs")
-    :ok
+  defp process_work_chunk(work_chunk, chunk_index, total_chunks, total_tasks, progress_pid) do
+    send_chunk_start_progress(progress_pid, chunk_index, total_chunks, work_chunk)
+
+    tasks = Enum.map(work_chunk, &create_sync_task/1)
+    results = tasks |> Enum.map(&Task.await(&1, :infinity))
+
+    {successes, failures} = count_results(results)
+    completed_tasks = chunk_index * @max_concurrency
+    percentage = min(completed_tasks / total_tasks * 100, 100)
+
+    send_chunk_completion_progress(
+      progress_pid,
+      chunk_index,
+      total_chunks,
+      completed_tasks,
+      successes,
+      failures,
+      percentage
+    )
+
+    if failures > 0 do
+      Logger.warning(
+        "Some tasks in chunk #{chunk_index} failed. Check the logs above for details."
+      )
+    end
+  end
+
+  defp send_chunk_start_progress(progress_pid, chunk_index, total_chunks, work_chunk) do
+    send(
+      progress_pid,
+      {:sync_progress,
+       %{
+         status: :processing_chunk,
+         chunk_index: chunk_index,
+         total_chunks: total_chunks,
+         current_tasks: length(work_chunk)
+       }}
+    )
+  end
+
+  defp send_chunk_completion_progress(
+         progress_pid,
+         chunk_index,
+         total_chunks,
+         completed_tasks,
+         successes,
+         failures,
+         percentage
+       ) do
+    send(
+      progress_pid,
+      {:sync_progress,
+       %{
+         status: :chunk_completed,
+         chunk_index: chunk_index,
+         total_chunks: total_chunks,
+         completed_tasks: completed_tasks,
+         successful_tasks: successes,
+         failed_tasks: failures,
+         percentage: percentage
+       }}
+    )
+  end
+
+  defp create_sync_task({trading_pair, interval, days}) do
+    Task.async(fn ->
+      Logger.debug("Starting sync for #{trading_pair.symbol} with interval #{interval}")
+      start_time = DateTime.utc_now()
+
+      try do
+        Logger.debug(
+          "Calling sync_historical_data for #{trading_pair.symbol} with interval #{interval}"
+        )
+
+        {:ok, _} =
+          SyncHistoricalDataForSymbolUseCase.sync_historical_data(
+            trading_pair.symbol,
+            interval,
+            DateTime.utc_now(),
+            DateTime.add(DateTime.utc_now(), -days * 24 * 60 * 60, :second)
+          )
+
+        end_time = DateTime.utc_now()
+        duration = DateTime.diff(end_time, start_time, :second)
+
+        Logger.debug(
+          "Successfully synced #{trading_pair.symbol} with interval #{interval} in #{duration} seconds"
+        )
+
+        {:ok, {trading_pair.symbol, interval}}
+      rescue
+        e ->
+          Logger.error(
+            "Failed to sync #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(__STACKTRACE__)}"
+          )
+
+          {:error, {trading_pair.symbol, interval, e}}
+      catch
+        kind, e ->
+          Logger.error(
+            "Caught #{kind} while syncing #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(__STACKTRACE__)}"
+          )
+
+          {:error, {trading_pair.symbol, interval, {kind, e}}}
+      end
+    end)
+  end
+
+  defp count_results(results) do
+    successes =
+      Enum.count(results, fn
+        {:ok, _} -> true
+        _ -> false
+      end)
+
+    failures =
+      Enum.count(results, fn
+        {:error, _} -> true
+        _ -> false
+      end)
+
+    {successes, failures}
   end
 end
