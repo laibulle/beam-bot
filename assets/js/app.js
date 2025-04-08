@@ -120,10 +120,10 @@ let liveSocket = new LiveSocket("/live", Socket, {
                       label: (ctx) => {
                         const point = ctx.raw;
                         return [
-                          `Open: ${Number(point.o).toFixed(8)}`,
-                          `High: ${Number(point.h).toFixed(8)}`,
-                          `Low: ${Number(point.l).toFixed(8)}`,
-                          `Close: ${Number(point.c).toFixed(8)}`
+                          `Open: ${Number(point.o).toFixed(precision)}`,
+                          `High: ${Number(point.h).toFixed(precision)}`,
+                          `Low: ${Number(point.l).toFixed(precision)}`,
+                          `Close: ${Number(point.c).toFixed(precision)}`
                         ];
                       }
                     }
