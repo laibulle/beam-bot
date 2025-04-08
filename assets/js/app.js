@@ -26,10 +26,11 @@ import topbar from "../vendor/topbar"
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-luxon';
 import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
-import zoomPlugin from 'chartjs-plugin-zoom';
+// import zoomPlugin from 'chartjs-plugin-zoom'; // Comment out import
 
 // Register the candlestick elements and zoom plugin
-Chart.register(CandlestickController, CandlestickElement, zoomPlugin);
+// Chart.register(CandlestickController, CandlestickElement, zoomPlugin); // Comment out zoom registration
+Chart.register(CandlestickController, CandlestickElement); // Register only candlestick
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
@@ -64,10 +65,10 @@ let liveSocket = new LiveSocket("/live", Socket, {
             const timestamp = new Date(d.x).getTime();
             return {
               x: timestamp,
-              o: Number(d.o),
-              h: Number(d.h),
-              l: Number(d.l),
-              c: Number(d.c)
+              o: d.o,
+              h: d.h,
+              l: d.l,
+              c: d.c
             };
           });
 
@@ -88,7 +89,8 @@ let liveSocket = new LiveSocket("/live", Socket, {
           };
 
           const precision = calculatePrecision(candlesticks);
-          
+          //const precision = 2;
+
           if (this.chart) {
             this.chart.destroy();
           }
@@ -104,7 +106,6 @@ let liveSocket = new LiveSocket("/live", Socket, {
                   up: '#98d8c6', // Surf green
                   down: '#ffd1dc', // Shell pink,
                   unchanged: 'rgba(143, 143, 143, 1)'
-
                 }
               }]
             },
@@ -151,21 +152,21 @@ let liveSocket = new LiveSocket("/live", Socket, {
                     }
                   }
                 },
-                zoom: {
-                  pan: {
-                    enabled: true,
-                    mode: 'x'
-                  },
-                  zoom: {
-                    wheel: {
-                      enabled: true,
-                    },
-                    pinch: {
-                      enabled: true
-                    },
-                    mode: 'x'
-                  }
-                }
+                // zoom: { // Comment out zoom configuration section
+                //   pan: {
+                //     enabled: true,
+                //     mode: 'x'
+                //   },
+                //   zoom: {
+                //     wheel: {
+                //       enabled: true,
+                //     },
+                //     pinch: {
+                //       enabled: true
+                //     },
+                //     mode: 'x'
+                //   }
+                // }
               },
               scales: {
                 x: {
