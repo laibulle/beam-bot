@@ -81,9 +81,12 @@ let liveSocket = new LiveSocket("/live", Socket, {
               datasets: [{
                 label: 'OHLC',
                 data: candlesticks,
+                borderColor: 'rgba(143, 143, 143, 0.5)',
                 color: {
-                  up: '#22c55e',
-                  down: '#ef4444',
+                  up: '#98d8c6', // Surf green
+                  down: '#ffd1dc', // Shell pink,
+                  unchanged: 'rgba(143, 143, 143, 1)'
+
                 }
               }]
             },
