@@ -46,6 +46,32 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceRateLimiter do
     }
   end
 
+  @doc """
+  Computes the weight for a given limit value based on Binance's order book depth rules.
+  Returns the corresponding weight value.
+
+  ## Examples
+
+      iex> compute_weight(5)
+      1
+      iex> compute_weight(500)
+      5
+      iex> compute_weight(5000)
+      50
+
+  """
+  def compute_weight(limit) when limit in [5, 10, 20, 50, 100], do: 1
+  def compute_weight(500), do: 5
+  def compute_weight(1000), do: 10
+  def compute_weight(5000), do: 50
+
+  def compute_weight(_),
+    do:
+      raise(
+        ArgumentError,
+        "Invalid limit value. Allowed values are: 5, 10, 20, 50, 100, 500, 1000, 5000"
+      )
+
   @impl true
   def init(_opts) do
     # Schedule the first cleanup

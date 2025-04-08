@@ -4,6 +4,31 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceRateLimiterTest do
 
   @moduletag :capture_log
 
+  describe "compute_weight/1" do
+    test "returns correct weight for small limits" do
+      assert BinanceRateLimiter.compute_weight(5) == 1
+      assert BinanceRateLimiter.compute_weight(10) == 1
+      assert BinanceRateLimiter.compute_weight(20) == 1
+      assert BinanceRateLimiter.compute_weight(50) == 1
+      assert BinanceRateLimiter.compute_weight(100) == 1
+    end
+
+    test "returns correct weight for medium limits" do
+      assert BinanceRateLimiter.compute_weight(500) == 5
+      assert BinanceRateLimiter.compute_weight(1000) == 10
+    end
+
+    test "returns correct weight for large limit" do
+      assert BinanceRateLimiter.compute_weight(5000) == 50
+    end
+
+    test "raises error for invalid limit values" do
+      assert_raise ArgumentError, fn -> BinanceRateLimiter.compute_weight(0) end
+      assert_raise ArgumentError, fn -> BinanceRateLimiter.compute_weight(200) end
+      assert_raise ArgumentError, fn -> BinanceRateLimiter.compute_weight(6000) end
+    end
+  end
+
   setup do
     # Get the current configuration
     config = BinanceRateLimiter.get_config()
