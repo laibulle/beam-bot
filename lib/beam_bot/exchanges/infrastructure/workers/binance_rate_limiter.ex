@@ -7,12 +7,11 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceRateLimiter do
   require Logger
 
   # Get configuration values with defaults
-  @window_size Application.compile_env(:beam_bot, :binance_rate_limiter)[:window_size] || 60_000
-  @cleanup_interval Application.compile_env(:beam_bot, :binance_rate_limiter)[:cleanup_interval] ||
-                      1_000
-  @default_weight_per_minute Application.compile_env(:beam_bot, :binance_rate_limiter)[
+  @window_size Application.compile_env!(:beam_bot, :binance_rate_limiter)[:window_size]
+  @cleanup_interval Application.compile_env!(:beam_bot, :binance_rate_limiter)[:cleanup_interval]
+  @default_weight_per_minute Application.compile_env!(:beam_bot, :binance_rate_limiter)[
                                :default_weight_per_minute
-                             ] || 1200
+                             ]
 
   def start_link(opts \\ []) do
     name = Keyword.get(opts, :name, __MODULE__)
