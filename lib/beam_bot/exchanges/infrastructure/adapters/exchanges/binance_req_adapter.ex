@@ -8,6 +8,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   require Logger
 
   alias BeamBot.Exchanges.Domain.PlatformCredentials
+  alias BeamBot.Exchanges.Infrastructure.Workers.BinanceRateLimiter
   alias Decimal
 
   @base_url Application.compile_env(:beam_bot, :binance_base_url, "https://api.binance.com")
@@ -167,6 +168,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
 
   defp request(endpoint, params \\ %{}, api_key \\ nil) do
     url = @base_url <> endpoint
+    weight = Map.get(params, :limit, 1) |> BinanceRateLimiter.compute_weight()
 
     headers =
       if api_key do
@@ -175,8 +177,17 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
         []
       end
 
-    Req.get!(url, params: params, headers: headers)
-    |> handle_response()
+    case BinanceRateLimiter.check_rate_limit(weight) do
+      {:error, wait_time} ->
+        Process.sleep(wait_time)
+        request(endpoint, params, api_key)
+
+      :ok ->
+        BinanceRateLimiter.record_request(weight)
+
+        Req.get!(url, params: params, headers: headers)
+        |> handle_response()
+    end
   end
 
   defp handle_response(%Req.Response{status: status, body: body}) when status in 200..299 do

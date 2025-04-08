@@ -59,16 +59,16 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceRateLimiter do
       50
 
   """
-  def compute_weight(limit) when limit in [5, 10, 20, 50, 100], do: 1
-  def compute_weight(500), do: 5
-  def compute_weight(1000), do: 10
-  def compute_weight(5000), do: 50
+  def compute_weight(limit) when limit in 1..100, do: 1
+  def compute_weight(limit) when limit in 101..500, do: 5
+  def compute_weight(limit) when limit in 501..1000, do: 10
+  def compute_weight(limit) when limit in 1001..5000, do: 50
 
   def compute_weight(_),
     do:
       raise(
         ArgumentError,
-        "Invalid limit value. Allowed values are: 5, 10, 20, 50, 100, 500, 1000, 5000"
+        "Invalid limit value. Allowed values are between 5 and 5000"
       )
 
   @impl true
