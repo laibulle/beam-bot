@@ -72,7 +72,6 @@ let liveSocket = new LiveSocket("/live", Socket, {
               c: Number(d.c)
             };
           });
-          console.log('Processed candlesticks:', candlesticks); // Debug log
           
           if (this.chart) {
             this.chart.destroy();
