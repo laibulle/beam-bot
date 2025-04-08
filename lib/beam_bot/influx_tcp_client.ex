@@ -3,7 +3,7 @@ defmodule BeamBot.InfluxTCPClient do
   Sends Influx Line Protocol data to QuestDB via TCP.
   """
 
-  @host 'localhost'
+  @host ~c"localhost"
   @port 9009
 
   @doc """
