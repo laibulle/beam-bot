@@ -7,7 +7,6 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataForSymbolUseCase do
   require Logger
 
   @binance_req_adapter Application.compile_env(:beam_bot, :binance_req_adapter)
-  @klines_adapter Application.compile_env(:beam_bot, :klines_repository)
   @klines_tuples_adapter Application.compile_env(:beam_bot, :klines_tuples_repository)
 
   @doc """

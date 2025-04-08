@@ -25,9 +25,8 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
     query = build_query(symbol, interval, limit, start_time, end_time)
 
     case BeamBot.QuestDB.query(query) do
-      {:ok, %{"query" => _, "columns" => columns, "dataset" => dataset}} ->
-        klines = parse_klines(dataset, columns, interval)
-        {:ok, klines}
+      {:ok, %{"query" => _, "columns" => _columns, "dataset" => dataset}} ->
+        {:ok, dataset}
 
       {:error, reason} ->
         Logger.error("Failed to fetch klines: #{inspect(reason)}")
@@ -40,53 +39,21 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
     table_name = "klines_#{String.downcase(symbol)}_#{String.downcase(interval)}"
 
     """
-    SELECT symbol, open, high, low, close, volume, quote_asset_volume,
+    SELECT open, high, low, close, volume, quote_asset_volume,
            taker_buy_base_asset_volume, taker_buy_quote_asset_volume, number_of_trades, timestamp
     FROM #{table_name}
-    WHERE symbol = '#{symbol}' #{time_conditions}
+    #{if time_conditions != "", do: "WHERE #{time_conditions}"}
     ORDER BY timestamp DESC
     LIMIT #{limit}
     """
   end
 
   defp build_time_conditions(nil, nil), do: ""
-  defp build_time_conditions(start_time, nil), do: "AND timestamp >= #{start_time}"
-  defp build_time_conditions(nil, end_time), do: "AND timestamp <= #{end_time}"
+  defp build_time_conditions(start_time, nil), do: "timestamp >= #{start_time}"
+  defp build_time_conditions(nil, end_time), do: "timestamp <= #{end_time}"
 
   defp build_time_conditions(start_time, end_time),
-    do: "AND timestamp >= #{start_time} AND timestamp <= #{end_time}"
-
-  defp parse_klines(dataset, _columns, interval) do
-    Enum.map(dataset, fn [
-                           symbol,
-                           open,
-                           high,
-                           low,
-                           close,
-                           volume,
-                           quote_volume,
-                           taker_buy_base,
-                           taker_buy_quote,
-                           trades,
-                           timestamp
-                         ] ->
-      [
-        symbol,
-        interval,
-        "binance",
-        open,
-        high,
-        low,
-        close,
-        volume,
-        quote_volume,
-        taker_buy_base,
-        taker_buy_quote,
-        trades,
-        timestamp
-      ]
-    end)
-  end
+    do: "timestamp >= #{start_time} AND timestamp <= #{end_time}"
 
   @doc """
   Saves kline tuples to QuestDB using the REST API.
@@ -111,10 +78,12 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
       "28.46694368",
       "17928899.62484339"
     ]])
-    {:ok, "Klines saved successfully"}
+    {:ok, "1}
   """
   @impl true
   def save_klines_tuples(symbol, interval, klines) do
+    table_name = "klines_#{String.downcase(symbol)}_#{String.downcase(interval)}"
+
     klines
     |> Enum.map_join("\n", fn [
                                 open_time,
@@ -130,7 +99,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
                                 taker_buy_quote,
                                 ignore
                               ] ->
-      "klines_#{symbol}_#{interval}, open=#{open}, high=#{high}, low=#{low}, close=#{close}, volume=#{volume}, quote_asset_volume=#{quote_volume}, taker_buy_base_asset_volume=#{taker_buy_base}, taker_buy_quote_asset_volume=#{taker_buy_quote}, number_of_trades=#{trades}, timestamp=#{open_time}, close_time=#{close_time}, ignore=#{ignore}"
+      "#{table_name} open=#{open},high=#{high},low=#{low},close=#{close},volume=#{volume},quote_asset_volume=#{quote_volume},taker_buy_base_asset_volume=#{taker_buy_base},taker_buy_quote_asset_volume=#{taker_buy_quote},number_of_trades=#{trades},timestamp=#{open_time},close_time=#{close_time},ignore=#{ignore}"
     end)
     |> BeamBot.InfluxTCPClient.send_line()
     |> case do
