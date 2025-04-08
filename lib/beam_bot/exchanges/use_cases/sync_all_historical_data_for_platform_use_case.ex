@@ -186,13 +186,12 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
       catch
         kind, e ->
           # Capture stacktrace for catch
-          stacktrace = System.stacktrace()
+          stacktrace = __STACKTRACE__
 
           Logger.error(
             "Caught #{kind} while syncing #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(stacktrace)}"
           )
 
-          # Include stacktrace in error tuple if helpful
           {:error, {trading_pair.symbol, interval, {kind, e, stacktrace}}}
       end
     end)
