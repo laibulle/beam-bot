@@ -68,7 +68,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceRateLimiter do
     do:
       raise(
         ArgumentError,
-        "Invalid limit value. Allowed values are between 5 and 5000"
+        "Invalid limit value. Allowed values are between 1 and 5000"
       )
 
   @impl true

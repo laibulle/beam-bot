@@ -8,7 +8,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   require Logger
 
   alias BeamBot.Exchanges.Domain.PlatformCredentials
-  alias BeamBot.Exchanges.Infrastructure.Workers.BinanceRateLimiter
+  alias BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter
   alias Decimal
 
   @base_url Application.compile_env(:beam_bot, :binance_base_url, "https://api.binance.com")
@@ -81,6 +81,20 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       |> maybe_add_time_range(start_time, end_time)
 
     request("/api/v3/klines", params)
+  end
+
+  @doc """
+  Fetches the rate limits for the exchange.
+
+  ## Examples
+
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.get_rate_limits()
+      {:ok, %{rateLimits: [%{rateLimitType: "REQUEST_WEIGHT", interval: "MINUTE", limit: 6000, current: 0, consumed: 0, remaining: 6000, updateTime: 1717776000000}]}}
+  """
+  def get_rate_limits do
+    {:ok, res} = request("/api/v3/exchangeInfo", %{}, nil, false)
+    rate_limits = Map.get(res, "rateLimits")
+    {:ok, rate_limits}
   end
 
   @doc """
@@ -166,9 +180,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
     |> Map.put(:endTime, end_time)
   end
 
-  defp request(endpoint, params \\ %{}, api_key \\ nil) do
+  defp request(endpoint, params \\ %{}, api_key \\ nil, is_rate_limit_check \\ true) do
     url = @base_url <> endpoint
-    weight = Map.get(params, :limit, 1) |> BinanceRateLimiter.compute_weight()
+    weight = Map.get(params, :limit, 1) |> BinanceMultiRateLimiter.compute_weight()
 
     headers =
       if api_key do
@@ -177,13 +191,18 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
         []
       end
 
-    case BinanceRateLimiter.check_rate_limit(weight) do
-      {:error, wait_time} ->
-        Process.sleep(wait_time)
-        request(endpoint, params, api_key)
+    case {BinanceMultiRateLimiter.check_weight_limit(weight), is_rate_limit_check} do
+      {_, false} ->
+        Req.get!(url, params: params, headers: headers)
+        |> handle_response()
 
-      :ok ->
-        BinanceRateLimiter.record_request(weight)
+      {{:error, wait_time}, _} ->
+        Logger.info("Rate limit exceeded. Sleeping for #{wait_time}ms")
+        Process.sleep(wait_time)
+        request(endpoint, params, api_key, is_rate_limit_check)
+
+      {:ok, _} ->
+        BinanceMultiRateLimiter.record_weight_request(weight)
 
         Req.get!(url, params: params, headers: headers)
         |> handle_response()

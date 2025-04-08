@@ -37,7 +37,7 @@ defmodule BeamBot.Application do
       # Start the trading pairs sync worker
       BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
       # Start the Binance rate limiter
-      BeamBot.Exchanges.Infrastructure.Workers.BinanceRateLimiter,
+      BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter,
       # Start the Registry for WebSocket connections
       {Registry, keys: :unique, name: BeamBot.Registry}
       # Start the Binance WebSocket supervisor
