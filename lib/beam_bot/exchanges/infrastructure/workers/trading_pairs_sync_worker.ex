@@ -7,7 +7,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker do
 
   alias BeamBot.Exchanges.UseCases.SyncTradingPairsUseCase
 
-  @sync_interval :timer.minutes(5)
+  @sync_interval :timer.minutes(60)
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
