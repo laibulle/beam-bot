@@ -1,11 +1,21 @@
-defmodule BeamBot.Domain.SyncHistory do
+defmodule BeamBot.Exchanges.Domain.SyncHistory do
   @moduledoc """
   Schema for storing sync history for a symbol and exchange.
   """
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias BeamBot.Exchanges.Exchange
+  alias BeamBot.Exchanges.Domain.Exchange
+
+  @type t :: %__MODULE__{
+          interval: String.t(),
+          symbol: String.t(),
+          first_point_date: DateTime.t(),
+          last_point_date: DateTime.t(),
+          from: DateTime.t(),
+          to: DateTime.t(),
+          exchange_id: number()
+        }
 
   schema "sync_histories" do
     field :interval, :string
