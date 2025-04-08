@@ -88,7 +88,20 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_klines("BTCUSDT", "1h")
       {:ok, [[timestamp, open, high, low, close, volume, ...], ...]}
   """
-  def get_klines(symbol, interval, limit \\ 500, start_time \\ nil, end_time \\ nil) do
+  def get_klines(symbol, interval, limit \\ nil, start_time \\ nil, end_time \\ nil) do
+    {:ok, limit} =
+      case %{limit: limit, start_time: start_time, end_time: end_time} do
+        %{limit: limit} when not is_nil(limit) ->
+          {:ok, limit}
+
+        %{start_time: start_time, end_time: end_time}
+        when not is_nil(start_time) and not is_nil(end_time) ->
+          compute_klines_limits(interval, start_time, end_time)
+
+        %{limit: limit} when is_nil(limit) ->
+          {:ok, 500}
+      end
+
     params =
       %{
         symbol: symbol,

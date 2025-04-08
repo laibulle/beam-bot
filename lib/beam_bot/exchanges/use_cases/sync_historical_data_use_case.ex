@@ -31,7 +31,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataForSymbolUseCase do
     end_timestamp = DateTime.to_unix(to, :millisecond)
 
     {:ok, res} =
-      @binance_req_adapter.get_klines(symbol, interval, 1000, start_timestamp, end_timestamp)
+      @binance_req_adapter.get_klines(symbol, interval, nil, start_timestamp, end_timestamp)
 
     Logger.debug("Fetched #{length(res)} klines for #{symbol} in #{interval} interval")
 
