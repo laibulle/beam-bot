@@ -53,7 +53,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
     signed_params =
       sign_params(%{timestamp: :os.system_time(:millisecond), api_secret: api_secret})
 
-    request("/api/v3/account", signed_params, api_key)
+    request("/api/v3/account", signed_params, %{api_key: api_key, weight: 20})
   end
 
   @doc """
@@ -92,9 +92,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       {:ok, %{rateLimits: [%{rateLimitType: "REQUEST_WEIGHT", interval: "MINUTE", limit: 6000, current: 0, consumed: 0, remaining: 6000, updateTime: 1717776000000}]}}
   """
   def get_rate_limits do
-    {:ok, res} = request("/api/v3/exchangeInfo", %{}, nil, false)
-    rate_limits = Map.get(res, "rateLimits")
-    {:ok, rate_limits}
+    request("/api/v3/ping", %{}, %{is_rate_limit_check: true, weight: 1})
   end
 
   @doc """
@@ -159,7 +157,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
       |> Map.put(:api_secret, api_secret)
 
     signed_params = sign_params(params)
-    request("/api/v3/order", signed_params, api_key)
+    request("/api/v3/order", signed_params, %{api_key: api_key})
   end
 
   defp maybe_add_limit_params(params, "LIMIT", price) when not is_nil(price) do
@@ -180,40 +178,55 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
     |> Map.put(:endTime, end_time)
   end
 
-  defp request(endpoint, params \\ %{}, api_key \\ nil, is_rate_limit_check \\ true) do
+  defp request(endpoint, params \\ %{}, options \\ %{}) do
     url = @base_url <> endpoint
-    weight = Map.get(params, :limit, 1) |> BinanceMultiRateLimiter.compute_weight()
+
+    is_rate_limit_check = Map.get(options, :is_rate_limit_check, false)
+
+    weight =
+      case Map.has_key?(options, :weight) do
+        true -> Map.get(options, :weight)
+        false -> Map.get(params, :limit, 1) |> BinanceMultiRateLimiter.compute_weight()
+      end
 
     headers =
-      if api_key do
-        ["X-MBX-APIKEY": api_key]
+      if Map.has_key?(options, :api_key) do
+        ["X-MBX-APIKEY": options.api_key]
       else
         []
       end
 
     case {BinanceMultiRateLimiter.check_weight_limit(weight), is_rate_limit_check} do
-      {_, false} ->
+      {_, true} ->
         Req.get!(url, params: params, headers: headers)
-        |> handle_response()
+        |> handle_response(true)
 
       {{:error, wait_time}, _} ->
         Logger.info("Rate limit exceeded. Sleeping for #{wait_time}ms")
         Process.sleep(wait_time)
-        request(endpoint, params, api_key, is_rate_limit_check)
+        request(endpoint, params, options)
 
       {:ok, _} ->
-        BinanceMultiRateLimiter.record_weight_request(weight)
-
         Req.get!(url, params: params, headers: headers)
-        |> handle_response()
+        |> handle_response(false)
     end
   end
 
-  defp handle_response(%Req.Response{status: status, body: body}) when status in 200..299 do
+  defp handle_response(
+         %Req.Response{status: _status, body: _body, headers: headers},
+         true
+       ) do
+    {:ok,
+     headers
+     |> Enum.filter(fn {key, _} -> key |> String.starts_with?("x-mbx-") end)}
+  end
+
+  defp handle_response(%Req.Response{status: status, body: body}, false)
+       when status in 200..299 do
     {:ok, body}
   end
 
-  defp handle_response(%Req.Response{status: status, body: body}) do
+  defp handle_response(%Req.Response{status: status, body: body}, false) do
     Logger.error("Request failed with status #{status}: #{inspect(body)}")
     {:error, %{status: status, body: body}}
   end

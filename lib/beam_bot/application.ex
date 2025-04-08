@@ -23,19 +23,19 @@ defmodule BeamBot.Application do
          password: Application.get_env(:beam_bot, :questdb_password, "quest")
        ]},
       # Start to serve requests, typically the last entry
-      BeamBotWeb.Endpoint,
+      BeamBotWeb.Endpoint
       # Start NATS listener
-      {BeamBot.Infrastructure.Adapters.Nats.NatsListenerGnat,
-       connection_settings: Application.get_env(:beam_bot, :nats)[:connection_settings]},
+      # {BeamBot.Infrastructure.Adapters.Nats.NatsListenerGnat,
+      # connection_settings: Application.get_env(:beam_bot, :nats)[:connection_settings]},
       # Start Kline Saved Listener
-      BeamBot.Infrastructure.Workers.KlineSavedListener,
+      # BeamBot.Infrastructure.Workers.KlineSavedListener,
       # Start Trading Pairs Updated Listener
-      BeamBot.Infrastructure.Workers.TradingPairsUpdatedListener
+      # BeamBot.Infrastructure.Workers.TradingPairsUpdatedListener
     ]
 
     prod_children = [
       # Start the trading pairs sync worker
-      BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
+      # BeamBot.Exchanges.Infrastructure.Workers.TradingPairsSyncWorker,
       # Start the Binance rate limiter
       BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter,
       # Start the Registry for WebSocket connections

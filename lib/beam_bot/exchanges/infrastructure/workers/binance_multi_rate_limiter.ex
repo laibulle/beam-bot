@@ -73,6 +73,26 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter do
   end
 
   @doc """
+  Gets the current state of all rate limits.
+  Returns a map containing the current counts and their limits.
+
+  ## Examples
+
+      iex> BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter.get_rate_limits()
+      %{
+        weight: %{current: 100, limit: 6000, interval: "1 minute"},
+        orders: %{
+          per_second: %{current: 10, limit: 100, interval: "1 second"},
+          per_day: %{current: 1000, limit: 200000, interval: "1 day"}
+        },
+        raw_requests: %{current: 50, limit: 61000, interval: "5 minutes"}
+      }
+  """
+  def get_rate_limits do
+    GenServer.call(__MODULE__, :get_rate_limits)
+  end
+
+  @doc """
   Computes the weight for a given limit value based on Binance's order book depth rules.
   Returns the corresponding weight value.
 
@@ -203,6 +223,36 @@ defmodule BeamBot.Exchanges.Infrastructure.Workers.BinanceMultiRateLimiter do
       wait_time = state.current_5min_start + @five_min_interval - now
       {:reply, {:error, wait_time}, state}
     end
+  end
+
+  @impl true
+  def handle_call(:get_rate_limits, _from, state) do
+    response = %{
+      weight: %{
+        current: state.current_minute_weight,
+        limit: @weight_limit_per_minute,
+        interval: "1 minute"
+      },
+      orders: %{
+        per_second: %{
+          current: state.current_second_orders,
+          limit: @orders_per_second,
+          interval: "1 second"
+        },
+        per_day: %{
+          current: state.current_day_orders,
+          limit: @orders_per_day,
+          interval: "1 day"
+        }
+      },
+      raw_requests: %{
+        current: state.current_5min_requests,
+        limit: @raw_requests_per_5min,
+        interval: "5 minutes"
+      }
+    }
+
+    {:reply, response, state}
   end
 
   @impl true
