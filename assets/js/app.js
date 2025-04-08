@@ -24,12 +24,12 @@ import topbar from "../vendor/topbar"
 
 // Import Chart.js and plugins
 import Chart from 'chart.js/auto';
-import { DateTime } from 'luxon';
 import 'chartjs-adapter-luxon';
 import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
+import zoomPlugin from 'chartjs-plugin-zoom';
 
-// Register the candlestick elements
-Chart.register(CandlestickController, CandlestickElement);
+// Register the candlestick elements and zoom plugin
+Chart.register(CandlestickController, CandlestickElement, zoomPlugin);
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
@@ -60,13 +60,19 @@ let liveSocket = new LiveSocket("/live", Socket, {
           const data = JSON.parse(this.el.dataset.chartData);
 
           // Process the data for the chart
-          const candlesticks = data.map(d => ({
-            x: new Date(d.x).getTime(), // Convert to milliseconds timestamp
-            o: parseFloat(d.o), // open
-            h: parseFloat(d.h), // high
-            l: parseFloat(d.l), // low
-            c: parseFloat(d.c)  // close
-          }));
+          console.log('Raw data:', data); // Debug log
+          const candlesticks = data.map(d => {
+            const timestamp = new Date(d.x).getTime();
+            console.log('Processing point:', { timestamp, ...d }); // Debug log
+            return {
+              x: timestamp,
+              o: Number(d.o),
+              h: Number(d.h),
+              l: Number(d.l),
+              c: Number(d.c)
+            };
+          });
+          console.log('Processed candlesticks:', candlesticks); // Debug log
           
           if (this.chart) {
             this.chart.destroy();
@@ -88,8 +94,24 @@ let liveSocket = new LiveSocket("/live", Socket, {
               responsive: true,
               maintainAspectRatio: false,
               animation: false,
-              parsing: false,
               normalized: true,
+              datasets: {
+                candlestick: {
+                  tooltip: {
+                    callbacks: {
+                      label: (ctx) => {
+                        const point = ctx.raw;
+                        return [
+                          `Open: ${Number(point.o).toFixed(8)}`,
+                          `High: ${Number(point.h).toFixed(8)}`,
+                          `Low: ${Number(point.l).toFixed(8)}`,
+                          `Close: ${Number(point.c).toFixed(8)}`
+                        ];
+                      }
+                    }
+                  }
+                }
+              },
               plugins: {
                 legend: {
                   display: false
@@ -97,6 +119,34 @@ let liveSocket = new LiveSocket("/live", Socket, {
                 title: {
                   display: true,
                   text: 'Price History'
+                },
+                tooltip: {
+                  enabled: true,
+                  mode: 'point',
+                  intersect: true,
+                  callbacks: {
+                    title: (items) => {
+                      if (!items.length) return '';
+                      const item = items[0];
+                      const date = new Date(item.raw.x);
+                      return date.toLocaleString();
+                    }
+                  }
+                },
+                zoom: {
+                  pan: {
+                    enabled: true,
+                    mode: 'x'
+                  },
+                  zoom: {
+                    wheel: {
+                      enabled: true,
+                    },
+                    pinch: {
+                      enabled: true
+                    },
+                    mode: 'x'
+                  }
                 }
               },
               scales: {
@@ -105,7 +155,13 @@ let liveSocket = new LiveSocket("/live", Socket, {
                   time: {
                     unit: 'day',
                     displayFormats: {
-                      day: 'MMM d'
+                      millisecond: 'HH:mm:ss.SSS',
+                      second: 'HH:mm:ss',
+                      minute: 'HH:mm',
+                      hour: 'HH:mm',
+                      day: 'MMM d',
+                      week: 'MMM d',
+                      month: 'MMM yyyy'
                     }
                   },
                   ticks: {
@@ -115,8 +171,14 @@ let liveSocket = new LiveSocket("/live", Socket, {
                 },
                 y: {
                   position: 'right',
-                  beginAtZero: false
+                  ticks: {
+                    callback: value => Number(value).toFixed(8)
+                  }
                 }
+              },
+              interaction: {
+                mode: 'point',
+                intersect: true
               }
             }
           });

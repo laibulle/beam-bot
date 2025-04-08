@@ -416,7 +416,7 @@ defmodule BeamBotWeb.TradingPairLive do
 
       <div class="mt-8">
         <h6 class="text-lg font-semibold mb-4">Price Chart</h6>
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-lg shadow p-6 h-[600px]">
           <canvas
             id="priceChart"
             phx-hook="PriceChart"
