@@ -30,18 +30,44 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
   def sync_all_historical_data_for_platform(_platform, progress_pid) do
     all_work_items = create_work_items()
     total_tasks = length(all_work_items)
-    total_chunks = ceil(total_tasks / @max_concurrency)
 
     send_initial_progress(progress_pid, total_tasks)
 
-    all_work_items
-    |> Enum.chunk_every(@max_concurrency)
-    |> Enum.with_index(1)
-    |> Enum.each(fn {work_chunk, chunk_index} ->
-      process_work_chunk(work_chunk, chunk_index, total_chunks, total_tasks, progress_pid)
-    end)
+    initial_acc = %{
+      completed_tasks: 0,
+      successful_tasks: 0,
+      failed_tasks: 0
+    }
 
-    send_completion_progress(progress_pid, total_tasks)
+    final_acc =
+      all_work_items
+      |> Enum.chunk_every(@max_concurrency)
+      |> Enum.reduce(initial_acc, fn work_chunk, acc ->
+        {chunk_successes, chunk_failures} = process_work_chunk(work_chunk)
+
+        new_completed = acc.completed_tasks + length(work_chunk)
+        new_successes = acc.successful_tasks + chunk_successes
+        new_failures = acc.failed_tasks + chunk_failures
+        percentage = calculate_percentage(new_completed, total_tasks)
+
+        send_progress_update(
+          progress_pid,
+          :in_progress,
+          total_tasks,
+          new_completed,
+          new_successes,
+          new_failures,
+          percentage
+        )
+
+        %{
+          completed_tasks: new_completed,
+          successful_tasks: new_successes,
+          failed_tasks: new_failures
+        }
+      end)
+
+    send_completion_progress(progress_pid, total_tasks, final_acc)
     Logger.debug("Completed syncing historical data for all trading pairs")
     :ok
   end
@@ -56,96 +82,72 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
   end
 
   defp send_initial_progress(progress_pid, total_tasks) do
-    send(
+    send_progress_update(progress_pid, :started, total_tasks, 0, 0, 0, 0)
+  end
+
+  defp send_completion_progress(progress_pid, total_tasks, final_acc) do
+    send_progress_update(
       progress_pid,
-      {:sync_progress,
-       %{
-         status: :started,
-         total_tasks: total_tasks,
-         completed_tasks: 0,
-         successful_tasks: 0,
-         failed_tasks: 0,
-         percentage: 0
-       }}
+      :completed,
+      total_tasks,
+      # Assuming completion means all were attempted
+      total_tasks,
+      final_acc.successful_tasks,
+      final_acc.failed_tasks,
+      100
     )
   end
 
-  defp send_completion_progress(progress_pid, total_tasks) do
-    send(
-      progress_pid,
-      {:sync_progress,
-       %{
-         status: :completed,
-         total_tasks: total_tasks,
-         successful_tasks: total_tasks,
-         failed_tasks: 0,
-         percentage: 100
-       }}
-    )
-  end
-
-  defp process_work_chunk(work_chunk, chunk_index, total_chunks, total_tasks, progress_pid) do
-    send_chunk_start_progress(progress_pid, chunk_index, total_chunks, work_chunk)
-
-    tasks = Enum.map(work_chunk, &create_sync_task/1)
-    results = tasks |> Enum.map(&Task.await(&1, :infinity))
-
-    {successes, failures} = count_results(results)
-    completed_tasks = chunk_index * @max_concurrency
-    percentage = min(completed_tasks / total_tasks * 100, 100)
-
-    send_chunk_completion_progress(
-      progress_pid,
-      chunk_index,
-      total_chunks,
-      completed_tasks,
-      successes,
-      failures,
-      percentage
-    )
-
-    if failures > 0 do
-      Logger.warning(
-        "Some tasks in chunk #{chunk_index} failed. Check the logs above for details."
-      )
-    end
-  end
-
-  defp send_chunk_start_progress(progress_pid, chunk_index, total_chunks, work_chunk) do
-    send(
-      progress_pid,
-      {:sync_progress,
-       %{
-         status: :processing_chunk,
-         chunk_index: chunk_index,
-         total_chunks: total_chunks,
-         current_tasks: length(work_chunk)
-       }}
-    )
-  end
-
-  defp send_chunk_completion_progress(
+  defp send_progress_update(
          progress_pid,
-         chunk_index,
-         total_chunks,
+         status,
+         total_tasks,
          completed_tasks,
-         successes,
-         failures,
+         successful_tasks,
+         failed_tasks,
          percentage
        ) do
     send(
       progress_pid,
       {:sync_progress,
        %{
-         status: :chunk_completed,
-         chunk_index: chunk_index,
-         total_chunks: total_chunks,
+         status: status,
+         total_tasks: total_tasks,
          completed_tasks: completed_tasks,
-         successful_tasks: successes,
-         failed_tasks: failures,
+         successful_tasks: successful_tasks,
+         failed_tasks: failed_tasks,
          percentage: percentage
        }}
     )
+  end
+
+  defp process_work_chunk(work_chunk) do
+    tasks = Enum.map(work_chunk, &create_sync_task/1)
+    results = tasks |> Enum.map(&Task.await(&1, :infinity))
+
+    {successes, failures} = count_results(results)
+
+    if failures > 0 do
+      # Log failures immediately within the chunk processing if needed
+      failed_details =
+        Enum.filter(results, fn
+          {:error, _} -> true
+          _ -> false
+        end)
+        |> Enum.map(fn {:error, {symbol, interval, reason}} ->
+          "#{symbol} (#{interval}): #{inspect(reason)}"
+        end)
+
+      Logger.warning(
+        "#{failures} task(s) failed in the current chunk: #{Enum.join(failed_details, ", ")}"
+      )
+    end
+
+    {successes, failures}
+  end
+
+  defp calculate_percentage(completed, total) do
+    if total == 0, do: 100, else: min(Float.round(completed / total * 100, 1), 100.0)
   end
 
   defp create_sync_task({trading_pair, interval, days}) do
@@ -183,11 +185,15 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
           {:error, {trading_pair.symbol, interval, e}}
       catch
         kind, e ->
+          # Capture stacktrace for catch
+          stacktrace = System.stacktrace()
+
           Logger.error(
-            "Caught #{kind} while syncing #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(__STACKTRACE__)}"
+            "Caught #{kind} while syncing #{trading_pair.symbol} with interval #{interval}: #{inspect(e)}\n#{Exception.format_stacktrace(stacktrace)}"
           )
 
-          {:error, {trading_pair.symbol, interval, {kind, e}}}
+          # Include stacktrace in error tuple if helpful
+          {:error, {trading_pair.symbol, interval, {kind, e, stacktrace}}}
       end
     end)
   end

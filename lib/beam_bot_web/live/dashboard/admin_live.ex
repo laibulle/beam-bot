@@ -12,8 +12,7 @@ defmodule BeamBotWeb.AdminLive do
      socket
      |> assign(
        sync_in_progress: false,
-       sync_progress: nil,
-       sync_stats: nil
+       sync_progress: nil
      )}
   end
 
@@ -34,50 +33,23 @@ defmodule BeamBotWeb.AdminLive do
       {:noreply,
        assign(socket,
          sync_in_progress: true,
-         sync_progress: %{status: :initializing},
+         sync_progress: %{
+           status: :initializing,
+           total_tasks: 0,
+           completed_tasks: 0,
+           successful_tasks: 0,
+           failed_tasks: 0,
+           percentage: 0.0
+         },
          sync_stats: nil
        )}
     end
   end
 
   def handle_info({:sync_progress, progress}, socket) do
-    stats =
-      case progress.status do
-        :started ->
-          %{
-            total_tasks: progress.total_tasks,
-            percentage: 0
-          }
-
-        :processing_chunk ->
-          %{
-            chunk_index: progress.chunk_index,
-            total_chunks: progress.total_chunks,
-            current_tasks: progress.current_tasks,
-            percentage: (progress.chunk_index - 1) / progress.total_chunks * 100
-          }
-
-        :chunk_completed ->
-          %{
-            completed_tasks: progress.completed_tasks,
-            successful_tasks: progress.successful_tasks,
-            failed_tasks: progress.failed_tasks,
-            percentage: progress.percentage
-          }
-
-        :completed ->
-          %{
-            total_tasks: progress.total_tasks,
-            successful_tasks: progress.successful_tasks,
-            failed_tasks: progress.failed_tasks,
-            percentage: 100
-          }
-      end
-
     {:noreply,
      assign(socket,
        sync_progress: progress,
-       sync_stats: stats,
        sync_in_progress: progress.status != :completed
      )}
   end
@@ -110,12 +82,12 @@ defmodule BeamBotWeb.AdminLive do
               {if @sync_in_progress, do: "Syncing...", else: "Sync Historical Data"}
             </button>
 
-            <%= if not is_nil(@sync_stats) do %>
+            <%= if not is_nil(@sync_progress) and @sync_progress.status != :initializing do %>
               <div class="mt-4">
                 <div class="w-full bg-gray-200 rounded-full h-2.5">
                   <div
                     class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                    style={"width: #{@sync_stats.percentage}%"}
+                    style={"width: #{@sync_progress.percentage}%"}
                   >
                   </div>
                 </div>
@@ -123,15 +95,13 @@ defmodule BeamBotWeb.AdminLive do
                 <div class="mt-2 text-sm text-gray-600">
                   <%= case @sync_progress.status do %>
                     <% :started -> %>
-                      Initializing sync for {@sync_stats.total_tasks} tasks
-                    <% :processing_chunk -> %>
-                      Processing chunk {@sync_stats.chunk_index} of {@sync_stats.total_chunks}
-                    <% :chunk_completed -> %>
-                      Progress: {Float.round(@sync_stats.percentage, 1)}%
-                      ({@sync_stats.completed_tasks} tasks completed) <br />
-                      Successful: {@sync_stats.successful_tasks} | Failed: {@sync_stats.failed_tasks}
+                      Starting sync for {@sync_progress.total_tasks} tasks...
+                    <% :in_progress -> %>
+                      Progress: {Float.round(@sync_progress.percentage, 1)}%
+                      ({@sync_progress.completed_tasks}/{@sync_progress.total_tasks} tasks) <br />
+                      Successful: {@sync_progress.successful_tasks} | Failed: {@sync_progress.failed_tasks}
                     <% :completed -> %>
-                      Sync completed! {@sync_stats.successful_tasks} tasks successful, {@sync_stats.failed_tasks} failed
+                      Sync completed! {@sync_progress.successful_tasks}/{@sync_progress.total_tasks} tasks successful, {@sync_progress.failed_tasks} failed.
                   <% end %>
                 </div>
               </div>
