@@ -9,4 +9,6 @@ config :beam_bot,
   exchanges_repository: BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryEcto,
   platform_credentials_repository:
     BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEcto,
-  klines_tuples_repository: BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter
+  klines_tuples_repository: BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter,
+  sync_history_repository:
+    BeamBot.Exchanges.Infrastructure.Adapters.Ecto.SyncHistoryRepositoryEcto

@@ -23,3 +23,7 @@ defmock(BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsReposi
 defmock(BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.KlinesTuplesRepositoryMock,
   for: BeamBot.Exchanges.Domain.Ports.KlinesTuplesRepository
 )
+
+defmock(BeamBot.Exchanges.Infrastructure.Adapters.Ecto.SyncHistoryRepositoryMock,
+  for: BeamBot.Exchanges.Domain.Ports.SyncHistoryRepository
+)
