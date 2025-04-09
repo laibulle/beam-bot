@@ -111,7 +111,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
                                 taker_buy_quote,
                                 ignore
                               ] ->
-      "#{table_name} open=#{open},high=#{high},low=#{low},close=#{close},volume=#{volume},quote_asset_volume=#{quote_volume},taker_buy_base_asset_volume=#{taker_buy_base},taker_buy_quote_asset_volume=#{taker_buy_quote},number_of_trades=#{trades},close_time=#{close_time},ignore=#{ignore} #{open_time}000000"
+      "#{table_name} open=#{open},high=#{high},low=#{low},close=#{close},volume=#{volume},quote_asset_volume=#{quote_volume},taker_buy_base_asset_volume=#{taker_buy_base},taker_buy_quote_asset_volume=#{taker_buy_quote},number_of_trades=#{trades}i,close_time=#{close_time}i,ignore=#{ignore} #{open_time}000000"
     end)
     |> BeamBot.InfluxTCPClient.send_line()
     |> case do

@@ -37,9 +37,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapterTe
                   0.015758,
                   0.015771,
                   148_976.11427815,
-                  1_499_644_799_999.0,
+                  1_499_644_799_999,
                   2434.19055334,
-                  308.0,
+                  308,
                   1756.87402397,
                   28.46694368,
                   "2017-07-03T00:00:00.000000Z"
