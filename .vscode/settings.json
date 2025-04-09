@@ -9,7 +9,9 @@
         "rust/lcov.info"
     ],
     "files.exclude": {
-        "**/rust": true
+        "**/rust": true,
+        "_build": true,
+        ".elixir_ls": true
     },
     "search.exclude": {
         "**/rust": true
