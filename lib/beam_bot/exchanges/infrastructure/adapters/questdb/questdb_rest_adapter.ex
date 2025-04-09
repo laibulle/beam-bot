@@ -34,12 +34,25 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
     end
   end
 
+  def drop_tuples(symbol, interval) do
+    table_name = "klines_#{String.downcase(symbol)}_#{String.downcase(interval)}"
+    query = "DROP TABLE #{table_name}"
+
+    case BeamBot.QuestDB.query(query) do
+      {:ok, %{"ddl" => "OK"}} ->
+        :ok
+
+      {:error, reason} ->
+        {:error, "Failed to drop tuples: #{inspect(reason)}"}
+    end
+  end
+
   defp build_query(symbol, interval, limit, start_time, end_time) do
     time_conditions = build_time_conditions(start_time, end_time)
     table_name = "klines_#{String.downcase(symbol)}_#{String.downcase(interval)}"
 
     """
-    SELECT open, high, low, close, volume, quote_asset_volume, taker_buy_base_asset_volume, taker_buy_quote_asset_volume, number_of_trades, timestamp
+    SELECT open, high, low, close, volume, close_time, quote_asset_volume, number_of_trades, taker_buy_base_asset_volume, taker_buy_quote_asset_volume,  timestamp
     FROM #{table_name} #{if time_conditions != "", do: "WHERE #{time_conditions}"}
     ORDER BY timestamp DESC LIMIT #{limit}
     """
