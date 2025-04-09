@@ -2,7 +2,7 @@ defmodule BeamBot.Repo.Migrations.CreateSyncHistories do
   use Ecto.Migration
 
   def change do
-    create table(:sync_histories, primary_key: false) do
+    create table(:sync_histories) do
       add :interval, :string, null: false
       add :symbol, :string, null: false
       add :first_point_date, :utc_datetime, null: false

@@ -164,6 +164,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncAllHistoricalDataForPlatformUseCase do
 
         {:ok, _} =
           SyncHistoricalDataForSymbolUseCase.sync_historical_data(
+            trading_pair.exchange_id,
             trading_pair.symbol,
             interval,
             DateTime.utc_now(),
