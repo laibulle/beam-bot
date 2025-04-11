@@ -8,7 +8,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
 
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
 
-  @klines_repository Application.compile_env!(:beam_bot, :klines_repository)
+  @klines_tuples_repository Application.compile_env!(:beam_bot, :klines_tuples_repository)
   @strategy_repository Application.compile_env!(:beam_bot, :strategy_repository)
   @binance_req_adapter Application.compile_env!(:beam_bot, :binance_req_adapter)
   @exchanges_repository Application.compile_env!(:beam_bot, :exchanges_repository)
@@ -280,7 +280,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
 
     # Fetch historical data for the simulation period
     # Use a larger limit to ensure we have enough data for the simulation period
-    @klines_repository.get_klines(
+    @klines_tuples_repository.get_klines_tuples(
       strategy.trading_pair,
       strategy.timeframe,
       1000,
