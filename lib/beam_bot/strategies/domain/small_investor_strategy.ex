@@ -10,7 +10,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
   require Logger
   alias BeamBot.Strategies.Domain.Indicators
 
-  @klines_repository Application.compile_env(:beam_bot, :klines_repository)
+  @klines_tuples_repository Application.compile_env(:beam_bot, :klines_tuples_repository)
 
   @type t :: %__MODULE__{
           trading_pair: String.t(),
@@ -144,7 +144,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
   defp fetch_market_data(strategy) do
     # Fetch historical candlestick data
     limit = max(strategy.ma_long_period * 3, 100)
-    @klines_repository.get_klines(strategy.trading_pair, strategy.timeframe, limit)
+    @klines_tuples_repository.get_klines_tuples(strategy.trading_pair, strategy.timeframe, limit)
   end
 
   defp calculate_indicators(klines, strategy) do
