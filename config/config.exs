@@ -9,7 +9,6 @@ import Config
 
 config :beam_bot,
   ecto_repos: [BeamBot.Repo],
-  klines_repository: BeamBot.Exchanges.Infrastructure.Adapters.Pg.KlinesRepositoryPg,
   trading_pairs_repository:
     BeamBot.Exchanges.Infrastructure.Adapters.Ecto.TradingPairsRepositoryEcto,
   strategy_repository: BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto,

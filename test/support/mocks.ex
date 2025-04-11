@@ -4,10 +4,6 @@ defmock(BeamBot.Exchanges.Infrastructure.Adapters.Ecto.TradingPairsRepositoryMoc
   for: BeamBot.Exchanges.Domain.Ports.TradingPairsRepository
 )
 
-defmock(BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryMock,
-  for: BeamBot.Exchanges.Domain.Ports.KlinesRepository
-)
-
 defmock(BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryMock,
   for: BeamBot.Exchanges.Domain.Ports.ExchangesRepository
 )
