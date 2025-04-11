@@ -72,7 +72,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     end)
 
     # Set up mock expectations for KlinesTuplesRepositoryMock
-    expect(KlinesTuplesRepositoryMock, :get_klines, fn _symbol, _interval, _limit ->
+    expect(KlinesTuplesRepositoryMock, :get_klines_tuples, fn _symbol, _interval, _limit ->
       {:ok, klines_data}
     end)
 
@@ -155,11 +155,11 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
         end)
 
       # Override the mock for simulation with 5 arguments
-      expect(KlinesTuplesRepositoryMock, :get_klines, fn _trading_pair,
-                                                         _timeframe,
-                                                         _limit,
-                                                         _start_date,
-                                                         _end_date ->
+      expect(KlinesTuplesRepositoryMock, :get_klines_tuples, fn _trading_pair,
+                                                                _timeframe,
+                                                                _limit,
+                                                                _start_date,
+                                                                _end_date ->
         {:ok, simulation_klines}
       end)
 
@@ -180,11 +180,11 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
       start_date = DateTime.add(end_date, -3600, :second)
 
       # Override the mock to return empty klines
-      expect(KlinesTuplesRepositoryMock, :get_klines, fn _trading_pair,
-                                                         _timeframe,
-                                                         _limit,
-                                                         _start_date,
-                                                         _end_time ->
+      expect(KlinesTuplesRepositoryMock, :get_klines_tuples, fn _trading_pair,
+                                                                _timeframe,
+                                                                _limit,
+                                                                _start_date,
+                                                                _end_time ->
         {:ok, []}
       end)
 

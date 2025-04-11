@@ -61,7 +61,9 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
     test "returns error when market data fetch fails" do
       strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1)
 
-      expect(KlinesTuplesRepositoryMock, :get_klines, fn _trading_pair, _timeframe, _limit ->
+      expect(KlinesTuplesRepositoryMock, :get_klines_tuples, fn _trading_pair,
+                                                                _timeframe,
+                                                                _limit ->
         {:error, "Failed to fetch market data"}
       end)
 
@@ -72,7 +74,9 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
     test "returns error when not enough data points" do
       strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1)
 
-      expect(KlinesTuplesRepositoryMock, :get_klines, fn _trading_pair, _timeframe, _limit ->
+      expect(KlinesTuplesRepositoryMock, :get_klines_tuples, fn _trading_pair,
+                                                                _timeframe,
+                                                                _limit ->
         # Return empty list to trigger insufficient data error
         {:ok, []}
       end)
