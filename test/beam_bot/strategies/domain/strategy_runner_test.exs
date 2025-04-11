@@ -6,9 +6,9 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
 
   alias BeamBot.Accounts
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryMock
-  alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryMock
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryMock
   alias BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapterMock
+  alias BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.KlinesTuplesRepositoryMock
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
   alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner
   alias Ecto.Adapters.SQL.Sandbox
@@ -71,8 +71,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
       {:ok, %{api_key: "test_api_key", api_secret: "test_api_secret"}}
     end)
 
-    # Set up mock expectations for KlinesRepositoryMock
-    expect(KlinesRepositoryMock, :get_klines, fn _symbol, _interval, _limit ->
+    # Set up mock expectations for KlinesTuplesRepositoryMock
+    expect(KlinesTuplesRepositoryMock, :get_klines, fn _symbol, _interval, _limit ->
       {:ok, klines_data}
     end)
 
@@ -92,7 +92,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     Sandbox.allow(BeamBot.Repo, self(), pid)
 
     # Allow the GenServer process to use the mocks
-    allow(KlinesRepositoryMock, self(), pid)
+    allow(KlinesTuplesRepositoryMock, self(), pid)
     allow(BinanceReqAdapterMock, self(), pid)
 
     {:ok, strategy: strategy, pid: pid, user: user}
@@ -121,7 +121,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
 
       # Allow the new process to use the mocks
       Sandbox.allow(BeamBot.Repo, self(), invalid_pid)
-      allow(KlinesRepositoryMock, self(), invalid_pid)
+      allow(KlinesTuplesRepositoryMock, self(), invalid_pid)
 
       assert {:error, _reason} = SmallInvestorStrategyRunner.run_once(invalid_pid)
     end
@@ -155,11 +155,11 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
         end)
 
       # Override the mock for simulation with 5 arguments
-      expect(KlinesRepositoryMock, :get_klines, fn _trading_pair,
-                                                   _timeframe,
-                                                   _limit,
-                                                   _start_date,
-                                                   _end_date ->
+      expect(KlinesTuplesRepositoryMock, :get_klines, fn _trading_pair,
+                                                         _timeframe,
+                                                         _limit,
+                                                         _start_date,
+                                                         _end_date ->
         {:ok, simulation_klines}
       end)
 
@@ -180,11 +180,11 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
       start_date = DateTime.add(end_date, -3600, :second)
 
       # Override the mock to return empty klines
-      expect(KlinesRepositoryMock, :get_klines, fn _trading_pair,
-                                                   _timeframe,
-                                                   _limit,
-                                                   _start_date,
-                                                   _end_time ->
+      expect(KlinesTuplesRepositoryMock, :get_klines, fn _trading_pair,
+                                                         _timeframe,
+                                                         _limit,
+                                                         _start_date,
+                                                         _end_time ->
         {:ok, []}
       end)
 

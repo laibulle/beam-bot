@@ -1,7 +1,7 @@
 defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
   use ExUnit.Case
   import Mox
-  alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.KlinesRepositoryMock
+  alias BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.KlinesTuplesRepositoryMock
   alias BeamBot.Strategies.Domain.MidCapsStrategy
 
   # Make sure mocks are verified when the test exits
@@ -73,7 +73,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
             }
           ]
 
-      KlinesRepositoryMock
+      KlinesTuplesRepositoryMock
       |> expect(:get_klines, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
 
       assert {:ok, result} = MidCapsStrategy.analyze_market(strategy)
@@ -104,7 +104,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
             }
           ]
 
-      KlinesRepositoryMock
+      KlinesTuplesRepositoryMock
       |> expect(:get_klines, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
 
       assert {:ok, result} = MidCapsStrategy.analyze_market(strategy)
@@ -135,7 +135,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
             }
           ]
 
-      KlinesRepositoryMock
+      KlinesTuplesRepositoryMock
       |> expect(:get_klines, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
 
       assert {:ok, result} = MidCapsStrategy.analyze_market(strategy)
@@ -155,7 +155,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
         }
       ]
 
-      KlinesRepositoryMock
+      KlinesTuplesRepositoryMock
       |> expect(:get_klines, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
 
       assert {:error, "Not enough data points for indicator calculation"} =
