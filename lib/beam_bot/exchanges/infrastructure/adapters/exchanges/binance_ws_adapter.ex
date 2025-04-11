@@ -279,7 +279,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   end
 
   defp handle_aggregate_trade(data) do
-    trade = AggregateTrade.from_binance(data)
+    _trade = AggregateTrade.from_binance(data)
     # store_and_broadcast_trade(trade)
   end
 
