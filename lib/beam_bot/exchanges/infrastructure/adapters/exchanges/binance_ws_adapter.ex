@@ -7,9 +7,9 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   use WebSockex
   require Logger
 
-  alias BeamBot.Exchanges.Domain.{Kline, MarkPriceUpdate, Trade.AggregateTrade}
+  alias BeamBot.Exchanges.Domain.{MarkPriceUpdate, Trade.AggregateTrade}
 
-  @klines_repository Application.compile_env(:beam_bot, :klines_repository)
+  @klines_tuples_repository Application.compile_env(:beam_bot, :klines_tuples_repository)
 
   @base_url "wss://fstream.binance.com"
   # 5 seconds for reconnection, but faster for initial connection
@@ -280,30 +280,30 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
 
   defp handle_aggregate_trade(data) do
     trade = AggregateTrade.from_binance(data)
-    store_and_broadcast_trade(trade)
+    # store_and_broadcast_trade(trade)
   end
 
-  defp store_and_broadcast_trade(trade) do
-    with {:ok, _} <- @klines_repository.store_klines([trade]),
-         :ok <- broadcast_trade(trade) do
-      :ok
-    else
-      {:error, error} ->
-        Logger.error("Failed to store/broadcast trade for #{trade.symbol}: #{inspect(error)}")
-        :error
-    end
-  end
+  # defp store_and_broadcast_trade(trade) do
+  #   with {:ok, _} <- @klines_repository.store_klines([trade]),
+  #        :ok <- broadcast_trade(trade) do
+  #     :ok
+  #   else
+  #     {:error, error} ->
+  #       Logger.error("Failed to store/broadcast trade for #{trade.symbol}: #{inspect(error)}")
+  #       :error
+  #   end
+  # end
 
-  defp broadcast_trade(trade) do
-    case Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:aggTrade:#{trade.symbol}", trade) do
-      :ok ->
-        :ok
+  # defp broadcast_trade(trade) do
+  #   case Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:aggTrade:#{trade.symbol}", trade) do
+  #     :ok ->
+  #       :ok
 
-      {:error, reason} = error ->
-        Logger.error("Failed to broadcast trade for #{trade.symbol}: #{inspect(reason)}")
-        error
-    end
-  end
+  #     {:error, reason} = error ->
+  #       Logger.error("Failed to broadcast trade for #{trade.symbol}: #{inspect(reason)}")
+  #       error
+  #   end
+  # end
 
   defp handle_mark_price(data) do
     mark_price = MarkPriceUpdate.from_binance(data)
@@ -329,48 +329,48 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.BinanceWsAdapter do
   end
 
   defp handle_kline(data) do
-    kline = create_kline_from_binance(data)
-    store_and_broadcast_kline(kline)
+    store_and_broadcast_kline(data)
   end
 
-  defp store_and_broadcast_kline(kline) do
-    with {:ok, _} <- @klines_repository.store_klines([kline]),
-         :ok <- broadcast_kline(kline) do
+  defp store_and_broadcast_kline(data) do
+    kline = create_kline_from_binance(data)
+
+    with {:ok, _} <-
+           @klines_tuples_repository.save_klines_tuples(data["s"], data["i"], [kline]),
+         :ok <- broadcast_kline(data["s"], data["i"], kline) do
       :ok
     else
       {:error, error} ->
-        Logger.error("Failed to store/broadcast kline for #{kline.symbol}: #{inspect(error)}")
+        Logger.error("Failed to store/broadcast kline for #{data["s"]}: #{inspect(error)}")
         :error
     end
   end
 
-  defp broadcast_kline(kline) do
-    case Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:kline:#{kline.symbol}", kline) do
+  defp broadcast_kline(symbol, interval, kline) do
+    case Phoenix.PubSub.broadcast(BeamBot.PubSub, "binance:kline:#{symbol}:#{interval}", kline) do
       :ok ->
         :ok
 
       {:error, reason} = error ->
-        Logger.error("Failed to broadcast kline for #{kline.symbol}: #{inspect(reason)}")
+        Logger.error("Failed to broadcast kline for #{symbol}: #{inspect(reason)}")
         error
     end
   end
 
-  defp create_kline_from_binance(%{"k" => kline_data, "s" => symbol}) do
-    %Kline{
-      symbol: symbol,
-      platform: "binance",
-      interval: kline_data["i"],
-      timestamp: DateTime.from_unix!(div(kline_data["t"], 1000), :second),
-      open: Decimal.new(kline_data["o"]),
-      high: Decimal.new(kline_data["h"]),
-      low: Decimal.new(kline_data["l"]),
-      close: Decimal.new(kline_data["c"]),
-      volume: Decimal.new(kline_data["v"]),
-      quote_volume: Decimal.new(kline_data["q"]),
-      trades_count: kline_data["n"],
-      taker_buy_base_volume: Decimal.new(kline_data["V"]),
-      taker_buy_quote_volume: Decimal.new(kline_data["Q"]),
-      ignore: Decimal.new(kline_data["B"])
-    }
+  defp create_kline_from_binance(%{"k" => kline_data}) do
+    [
+      kline_data["t"],
+      kline_data["o"],
+      kline_data["h"],
+      kline_data["l"],
+      kline_data["c"],
+      kline_data["v"],
+      kline_data["T"],
+      kline_data["q"],
+      kline_data["n"],
+      kline_data["V"],
+      kline_data["Q"],
+      kline_data["B"]
+    ]
   end
 end
