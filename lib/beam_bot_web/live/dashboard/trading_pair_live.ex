@@ -846,6 +846,7 @@ defmodule BeamBotWeb.TradingPairLive do
                           high,
                           low,
                           close,
+                          _close_time,
                           _quote_volume,
                           _trades,
                           _taker_buy_base,
