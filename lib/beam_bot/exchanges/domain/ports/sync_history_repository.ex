@@ -18,4 +18,6 @@ defmodule BeamBot.Exchanges.Domain.Ports.SyncHistoryRepository do
   Inserts a new sync history record.
   """
   @callback insert(attrs :: map()) :: {:ok, SyncHistory.t()} | {:error, Ecto.Changeset.t()}
+
+  @callback upsert(attrs :: map()) :: {:ok, SyncHistory.t()} | {:error, Ecto.Changeset.t()}
 end

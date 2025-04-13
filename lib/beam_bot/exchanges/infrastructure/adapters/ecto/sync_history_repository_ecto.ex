@@ -30,4 +30,23 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.SyncHistoryRepositoryEc
     |> SyncHistory.changeset(attrs)
     |> Repo.insert()
   end
+
+  @impl true
+  def upsert(attrs) do
+    get_most_recent(
+      attrs.exchange_id,
+      attrs.symbol,
+      attrs.interval
+    )
+    |> case do
+      {:ok, sync_history} ->
+        changeset = SyncHistory.changeset(sync_history, attrs)
+        Repo.update(changeset)
+
+      {:error, :not_found} ->
+        %SyncHistory{}
+        |> SyncHistory.changeset(attrs)
+        |> Repo.insert()
+    end
+  end
 end

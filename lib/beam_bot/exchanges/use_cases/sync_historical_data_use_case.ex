@@ -58,7 +58,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncHistoricalDataForSymbolUseCase do
         [first_point_date, _, _, _, _, _, _, _, _, _, _, _] = List.first(res)
 
         {:ok, _sync_history} =
-          @sync_history_repository.insert(%{
+          @sync_history_repository.upsert(%{
             exchange_id: exchange_id,
             symbol: symbol,
             interval: interval,
