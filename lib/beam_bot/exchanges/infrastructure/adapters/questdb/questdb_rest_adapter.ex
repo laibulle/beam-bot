@@ -52,18 +52,18 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
     table_name = "klines_#{String.downcase(symbol)}_#{String.downcase(interval)}"
 
     """
-    SELECT open, high, low, close, volume, close_time, quote_asset_volume, number_of_trades, taker_buy_base_asset_volume, taker_buy_quote_asset_volume,  timestamp
+    SELECT open, high, low, close, volume, close_time, quote_asset_volume, number_of_trades, taker_buy_base_asset_volume, taker_buy_quote_asset_volume, timestamp
     FROM #{table_name} #{if time_conditions != "", do: "WHERE #{time_conditions}"}
     ORDER BY timestamp DESC LIMIT #{limit}
     """
   end
 
   defp build_time_conditions(nil, nil), do: ""
-  defp build_time_conditions(start_time, nil), do: "timestamp >= #{start_time}"
-  defp build_time_conditions(nil, end_time), do: "timestamp <= #{end_time}"
+  defp build_time_conditions(start_time, nil), do: "timestamp >= '#{start_time}'"
+  defp build_time_conditions(nil, end_time), do: "timestamp <= '#{end_time}'"
 
   defp build_time_conditions(start_time, end_time),
-    do: "timestamp >= #{start_time} AND timestamp <= #{end_time}"
+    do: "timestamp >= '#{start_time}' AND timestamp <= '#{end_time}'"
 
   @doc """
   Saves kline tuples to QuestDB using the REST API.
