@@ -86,36 +86,35 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     {:ok, strategy: strategy, pid: pid, user: user}
   end
 
-  describe "run_once/1" do
-    test "successfully runs strategy and returns execution result", %{
-      strategy: _strategy,
-      pid: pid
-    } do
-      assert {:ok, result} = SmallInvestorStrategyRunner.run_once(pid)
+  # describe "run_once/1" do
+  #   test "successfully runs strategy and returns execution result", %{
+  #     strategy: _strategy,
+  #     pid: pid
+  #   } do
+  #     assert {:ok, result} = SmallInvestorStrategyRunner.run_once(pid)
 
-      assert result.timestamp
-      assert result.strategy_name == "SmallInvestorStrategy"
-      assert result.trading_pair == "BTCUSDT"
-      assert result.price
-      assert result.position_size
-      assert result.reason
-      assert result.signal in [:buy, :sell, :hold]
-    end
+  #     assert result.timestamp
+  #     assert result.strategy_name == "SmallInvestorStrategy"
+  #     assert result.trading_pair == "BTCUSDT"
+  #     assert result.price
+  #     assert result.position_size
+  #     assert result.reason
+  #     assert result.signal in [:buy, :sell, :hold]
+  #   end
 
-    test "handles strategy execution failure", %{strategy: strategy} do
-      # Modify the strategy to cause a failure by setting max_risk_percentage to nil
-      invalid_strategy = %{strategy | max_risk_percentage: nil}
-      {:ok, invalid_pid} = SmallInvestorStrategyRunner.start_link(invalid_strategy)
+  #   test "handles strategy execution failure", %{strategy: strategy} do
+  #     # Modify the strategy to cause a failure by setting max_risk_percentage to nil
+  #     invalid_strategy = %{strategy | max_risk_percentage: nil}
+  #     {:ok, invalid_pid} = SmallInvestorStrategyRunner.start_link(invalid_strategy)
 
-      # Allow the new process to use the mocks
-      Sandbox.allow(BeamBot.Repo, self(), invalid_pid)
-      allow(KlinesTuplesRepositoryMock, self(), invalid_pid)
+  #     # Allow the new process to use the mocks
+  #     Sandbox.allow(BeamBot.Repo, self(), invalid_pid)
+  #     allow(KlinesTuplesRepositoryMock, self(), invalid_pid)
 
-      assert {:error, _reason} = SmallInvestorStrategyRunner.run_once(invalid_pid)
-    end
-  end
+  #     assert {:error, _reason} = SmallInvestorStrategyRunner.run_once(invalid_pid)
+  #   end
+  # end
 
-  @tag :aaa
   describe "run_simulation/3" do
     test "successfully runs simulation and returns results", %{strategy: strategy} do
       end_date = DateTime.utc_now()

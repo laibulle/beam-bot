@@ -56,7 +56,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
 
       # Mock klines with high volume and volatility
       klines =
-        Enum.map(1..60, fn i ->
+        Enum.map(1..60, fn _i ->
           %BeamBot.Exchanges.Domain.Kline{
             close: Decimal.new("50000"),
             volume: Decimal.new("2000000")
@@ -87,7 +87,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
 
       # Mock klines with low volume and volatility
       klines =
-        Enum.map(1..60, fn i ->
+        Enum.map(1..60, fn _i ->
           %BeamBot.Exchanges.Domain.Kline{
             close: Decimal.new("50000"),
             volume: Decimal.new("500000")
@@ -118,7 +118,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
 
       # Mock klines with mixed signals
       klines =
-        Enum.map(1..60, fn i ->
+        Enum.map(1..60, fn _i ->
           %BeamBot.Exchanges.Domain.Kline{
             close: Decimal.new("50000"),
             volume: Decimal.new("2000000")

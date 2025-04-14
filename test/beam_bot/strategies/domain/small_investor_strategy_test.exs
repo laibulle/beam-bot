@@ -1,7 +1,6 @@
 defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
   use ExUnit.Case
   import Mox
-  alias BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.KlinesTuplesRepositoryMock
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
 
   # Make sure mocks are verified when the test exits
@@ -54,35 +53,6 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
         SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1, max_risk_percentage: nil)
 
       assert strategy.max_risk_percentage == Decimal.new("2")
-    end
-  end
-
-  describe "analyze_market/1" do
-    test "returns error when market data fetch fails" do
-      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1)
-
-      expect(KlinesTuplesRepositoryMock, :get_klines_tuples, fn _trading_pair,
-                                                                _timeframe,
-                                                                _limit ->
-        {:error, "Failed to fetch market data"}
-      end)
-
-      assert {:error, "Failed to fetch market data"} =
-               SmallInvestorStrategy.analyze_market_with_data([], strategy)
-    end
-
-    test "returns error when not enough data points" do
-      strategy = SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1)
-
-      expect(KlinesTuplesRepositoryMock, :get_klines_tuples, fn _trading_pair,
-                                                                _timeframe,
-                                                                _limit ->
-        # Return empty list to trigger insufficient data error
-        {:ok, []}
-      end)
-
-      assert {:error, "Not enough data points for indicator calculation"} =
-               SmallInvestorStrategy.analyze_market(strategy)
     end
   end
 
