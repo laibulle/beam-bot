@@ -122,25 +122,11 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
 
       # Generate enough klines data for simulation
       simulation_klines =
-        Enum.map(1..60, fn i ->
-          timestamp = DateTime.add(start_date, i * 3600, :second)
-          base_price = Decimal.new("50000.0")
-          price_variation = Decimal.new(i) |> Decimal.div(Decimal.new("1000"))
-
-          {
-            timestamp,
-            Decimal.add(base_price, price_variation),
-            Decimal.add(base_price, Decimal.add(price_variation, Decimal.new("1000"))),
-            Decimal.sub(base_price, Decimal.add(price_variation, Decimal.new("1000"))),
-            Decimal.add(base_price, price_variation),
-            Decimal.new("100.0"),
-            Decimal.new("5050000.0"),
-            1000,
-            Decimal.new("50.0"),
-            Decimal.new("2525000.0"),
-            Decimal.new("0")
-          }
-        end)
+        KlinesData.generate_klines_data(%InputSettings{
+          interval: "1h",
+          start_time: DateTime.utc_now() |> DateTime.add(-3600 * 60, :second),
+          end_time: DateTime.utc_now()
+        })
 
       # Override the mock for simulation with 5 arguments
       expect(KlinesTuplesRepositoryMock, :get_klines_tuples, fn _trading_pair,
