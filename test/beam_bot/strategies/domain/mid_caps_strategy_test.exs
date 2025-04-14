@@ -1,7 +1,6 @@
 defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
   use ExUnit.Case
   import Mox
-  alias BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.KlinesTuplesRepositoryMock
   alias BeamBot.Strategies.Domain.MidCapsStrategy
 
   # Make sure mocks are verified when the test exits
@@ -50,7 +49,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
     end
   end
 
-  describe "analyze_market/1" do
+  describe "analyze_market_with_data/2" do
     test "generates buy signal when volume and volatility are above thresholds" do
       strategy = MidCapsStrategy.new("BTCUSDT", Decimal.new("500"), 1)
 
@@ -73,10 +72,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
             }
           ]
 
-      KlinesTuplesRepositoryMock
-      |> expect(:get_klines_tuples, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
-
-      assert {:ok, result} = MidCapsStrategy.analyze_market(strategy)
+      assert {:ok, result} = MidCapsStrategy.analyze_market_with_data(klines, strategy)
       assert result.signal == :buy
       assert result.price == 51_000.0
       assert is_struct(result.max_risk_amount, Decimal)
@@ -104,10 +100,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
             }
           ]
 
-      KlinesTuplesRepositoryMock
-      |> expect(:get_klines_tuples, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
-
-      assert {:ok, result} = MidCapsStrategy.analyze_market(strategy)
+      assert {:ok, result} = MidCapsStrategy.analyze_market_with_data(klines, strategy)
       assert result.signal == :hold
       assert result.price == 50_100.0
       assert is_struct(result.max_risk_amount, Decimal)
@@ -135,10 +128,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
             }
           ]
 
-      KlinesTuplesRepositoryMock
-      |> expect(:get_klines_tuples, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
-
-      assert {:ok, result} = MidCapsStrategy.analyze_market(strategy)
+      assert {:ok, result} = MidCapsStrategy.analyze_market_with_data(klines, strategy)
       assert result.signal == :sell
       assert result.price == 50_100.0
       assert is_struct(result.max_risk_amount, Decimal)
@@ -155,11 +145,8 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
         }
       ]
 
-      KlinesTuplesRepositoryMock
-      |> expect(:get_klines_tuples, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
-
       assert {:error, ":not_enough_data"} =
-               MidCapsStrategy.analyze_market(strategy)
+               MidCapsStrategy.analyze_market_with_data(klines, strategy)
     end
   end
 end

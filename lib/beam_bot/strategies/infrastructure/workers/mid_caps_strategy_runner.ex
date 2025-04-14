@@ -122,8 +122,10 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.MidCapsStrategyRunner do
   defp execute_strategy(strategy, exchange_credentials) do
     %MidCapsStrategy{} = strategy
 
+    data = []
+
     with {:ok, saved_strategy} <- save_strategy(strategy),
-         {:ok, result} <- MidCapsStrategy.analyze_market(strategy),
+         {:ok, result} <- MidCapsStrategy.analyze_market_with_data(data, strategy),
          {:ok, order_id} <- place_order(result, strategy, exchange_credentials) do
       execution_result = %{
         timestamp: DateTime.utc_now(),

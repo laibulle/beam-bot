@@ -10,8 +10,6 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategy do
   require Logger
   alias BeamBot.Strategies.Domain.Indicators
 
-  @klines_tuples_repository Application.compile_env(:beam_bot, :klines_tuples_repository)
-
   @type t :: %__MODULE__{
           trading_pair: String.t(),
           investment_amount: Decimal.t(),
@@ -98,22 +96,6 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategy do
   end
 
   @doc """
-  Analyzes market data and generates buy/sell signals based on strategy parameters.
-
-  Returns a map with signal type and additional information.
-  """
-  def analyze_market(strategy) do
-    with {:ok, klines} <- fetch_market_data(strategy),
-         {:ok, indicators} <- calculate_indicators(klines, strategy) do
-      generate_signals(indicators, strategy)
-    else
-      {:error, reason} ->
-        Logger.error("Failed to analyze market: #{inspect(reason)}")
-        {:error, reason}
-    end
-  end
-
-  @doc """
   Analyzes market data using provided historical data instead of fetching it.
   This is used primarily for backtesting and simulation.
   """
@@ -122,14 +104,6 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategy do
       {:ok, indicators} -> generate_signals(indicators, strategy)
       {:error, reason} -> {:error, reason}
     end
-  end
-
-  # Private functions
-
-  defp fetch_market_data(strategy) do
-    # Fetch historical candlestick data
-    limit = max(strategy.ma_long_period * 3, 100)
-    @klines_tuples_repository.get_klines_tuples(strategy.trading_pair, strategy.timeframe, limit)
   end
 
   defp calculate_indicators(klines, strategy) do
