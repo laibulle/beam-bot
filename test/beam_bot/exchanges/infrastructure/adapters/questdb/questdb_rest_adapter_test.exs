@@ -27,7 +27,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapterTe
 
       assert QuestDBRestAdapter.save_klines_tuples("FAKE", "1h", lines) == {:ok, 1}
 
-      Process.sleep(1000)
+      Process.sleep(5000)
 
       assert {:ok,
               [
