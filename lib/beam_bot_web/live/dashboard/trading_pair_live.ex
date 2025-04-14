@@ -18,6 +18,8 @@ defmodule BeamBotWeb.TradingPairLive do
 
   @impl true
   def mount(%{"symbol" => symbol}, _session, socket) do
+    default_interval = "1h"
+
     _ =
       if connected?(socket) do
         # Schedule periodic refresh of strategy status
@@ -26,7 +28,7 @@ defmodule BeamBotWeb.TradingPairLive do
 
     {:ok, trading_pair} = @trading_pairs_repository.get_trading_pair_by_symbol(symbol)
 
-    {:ok, data} = @klines_tuples_repository.get_klines_tuples(symbol, "1h", 500)
+    {:ok, data} = @klines_tuples_repository.get_klines_tuples(symbol, default_interval, 500)
 
     # Get strategy status if it exists
     strategy_status = get_strategy_status()
@@ -38,7 +40,7 @@ defmodule BeamBotWeb.TradingPairLive do
     # Default simulation settings
     simulation_settings = %{
       investment_amount: "5",
-      timeframe: "1h",
+      timeframe: default_interval,
       rsi_oversold: "30",
       rsi_overbought: "70",
       days: "30"
@@ -47,6 +49,7 @@ defmodule BeamBotWeb.TradingPairLive do
     {:ok,
      socket
      |> assign(data: data)
+     |> assign(interval: default_interval)
      |> assign(trading_pair: trading_pair)
      |> assign(strategy_status: strategy_status)
      |> assign(strategy_message: nil)
@@ -302,6 +305,19 @@ defmodule BeamBotWeb.TradingPairLive do
     end
   end
 
+  @impl true
+  def handle_event("change_interval", %{"interval" => interval}, socket) do
+    symbol = socket.assigns.trading_pair.symbol
+
+    # Fetch data for the selected interval
+    {:ok, data} = @klines_tuples_repository.get_klines_tuples(symbol, interval, 500)
+
+    {:noreply,
+     socket
+     |> assign(data: data)
+     |> assign(interval: interval)}
+  end
+
   # Helper function to get strategy status
   defp get_strategy_status do
     if pid = Process.get(:strategy_runner_pid) do
@@ -332,85 +348,17 @@ defmodule BeamBotWeb.TradingPairLive do
     >
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h6 class="text-lg font-semibold mb-3">Basic Information</h6>
-          <div class="space-y-2">
-            <div class="flex items-center space-x-2">
-              <span class="font-medium text-gray-600">Status:</span>
-              <span class={"px-2 py-1 rounded-full text-xs font-medium #{if @trading_pair.status == "TRADING", do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800"}"}>
-                {if @trading_pair.status == "TRADING", do: "ACTIVE", else: "INACTIVE"}
-              </span>
-            </div>
-            <div>
-              <span class="font-medium text-gray-600">Base Asset:</span>
-              <span class="ml-2">{@trading_pair.base_asset}</span>
-            </div>
-            <div>
-              <span class="font-medium text-gray-600">Quote Asset:</span>
-              <span class="ml-2">{@trading_pair.quote_asset}</span>
-            </div>
-          </div>
-        </div>
-        <div>
-          <h6 class="text-lg font-semibold mb-3">Trading Rules</h6>
-          <div class="space-y-4">
-            <div class="bg-gray-50 p-3 rounded-lg">
-              <div class="font-medium text-gray-700 mb-2">Price Limits</div>
-              <div class="space-y-1">
-                <div class="text-sm text-gray-600">
-                  <span class="font-medium">Min Price:</span> {:erlang.float_to_binary(
-                    Decimal.to_float(@trading_pair.min_price),
-                    decimals: 4
-                  )}
-                </div>
-                <div class="text-sm text-gray-600">
-                  <span class="font-medium">Max Price:</span> {:erlang.float_to_binary(
-                    Decimal.to_float(@trading_pair.max_price),
-                    decimals: 2
-                  )}
-                </div>
-                <div class="text-sm text-gray-600">
-                  <span class="font-medium">Tick Size:</span> {:erlang.float_to_binary(
-                    Decimal.to_float(@trading_pair.tick_size),
-                    decimals: 4
-                  )}
-                </div>
-              </div>
-            </div>
-            <div class="bg-gray-50 p-3 rounded-lg">
-              <div class="font-medium text-gray-700 mb-2">Quantity Limits</div>
-              <div class="space-y-1">
-                <div class="text-sm text-gray-600">
-                  <span class="font-medium">Min Quantity:</span> {:erlang.float_to_binary(
-                    Decimal.to_float(@trading_pair.min_qty),
-                    decimals: 4
-                  )}
-                </div>
-                <div class="text-sm text-gray-600">
-                  <span class="font-medium">Max Quantity:</span> {:erlang.float_to_binary(
-                    Decimal.to_float(@trading_pair.max_qty),
-                    decimals: 2
-                  )}
-                </div>
-                <div class="text-sm text-gray-600">
-                  <span class="font-medium">Step Size:</span> {:erlang.float_to_binary(
-                    Decimal.to_float(@trading_pair.step_size),
-                    decimals: 4
-                  )}
-                </div>
-              </div>
-            </div>
-            <div class="bg-gray-50 p-3 rounded-lg">
-              <div class="font-medium text-gray-700 mb-2">Other Rules</div>
-              <div class="space-y-1">
-                <div class="text-sm text-gray-600">
-                  <span class="font-medium">Min Notional:</span> {:erlang.float_to_binary(
-                    Decimal.to_float(@trading_pair.min_notional),
-                    decimals: 2
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <h6 class="text-lg font-semibold mb-3">Select Interval</h6>
+          <form phx-change="change_interval">
+            <select
+              name="interval"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              <option value="1m" selected={@interval == "1m"}>1 Minute</option>
+              <option value="1h" selected={@interval == "1h"}>1 Hour</option>
+              <option value="1M" selected={@interval == "1M"}>1 Month</option>
+            </select>
+          </form>
         </div>
       </div>
 
