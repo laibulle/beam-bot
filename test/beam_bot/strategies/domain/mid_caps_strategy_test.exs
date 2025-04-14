@@ -96,7 +96,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
 
       assert {:ok, result} = MidCapsStrategy.analyze_market_with_data(klines, strategy)
       assert result.signal == :hold
-      # assert result.price == 50_100.0
+      assert result.price == 0.021671
       assert is_struct(result.max_risk_amount, Decimal)
     end
 
