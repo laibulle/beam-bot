@@ -150,7 +150,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
          latest_price: List.last(closing_prices)
        }}
     else
-      {:error, "Not enough data points for indicator calculation"}
+      {:error, ":not_enough_data"}
     end
   end
 

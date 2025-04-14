@@ -169,7 +169,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategy do
          latest_volume: List.last(volumes)
        }}
     else
-      {:error, "Not enough data points for indicator calculation"}
+      {:error, ":not_enough_data"}
     end
   end
 

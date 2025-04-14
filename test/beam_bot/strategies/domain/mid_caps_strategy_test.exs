@@ -158,7 +158,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
       KlinesTuplesRepositoryMock
       |> expect(:get_klines_tuples, fn "BTCUSDT", "1h", _limit -> {:ok, klines} end)
 
-      assert {:error, "Not enough data points for indicator calculation"} =
+      assert {:error, ":not_enough_data"} =
                MidCapsStrategy.analyze_market(strategy)
     end
   end
