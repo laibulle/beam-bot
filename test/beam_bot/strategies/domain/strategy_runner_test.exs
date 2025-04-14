@@ -115,6 +115,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
     end
   end
 
+  @tag :aaa
   describe "run_simulation/3" do
     test "successfully runs simulation and returns results", %{strategy: strategy} do
       end_date = DateTime.utc_now()

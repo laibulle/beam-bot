@@ -306,35 +306,33 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
       holdings: Decimal.new("0"),
       trades: [],
       current_position: :none,
-      previous_klines: []
+      klines: []
     }
 
     # Run simulation through each kline
     final_state =
       Enum.reduce(klines, initial_state, fn kline, state ->
-        process_kline(kline, state, strategy)
+        [_open, _high, _low, current_price, _, open_time | _rest] = kline
+        klines_for_analysis = state.klines ++ [kline]
+
+        klines_for_analysis =
+          if length(klines_for_analysis) > strategy.ma_long_period * 3 do
+            Enum.drop(klines, -1)
+          else
+            klines
+          end
+
+        # Analyze market at this point
+        case SmallInvestorStrategy.analyze_market_with_data(klines_for_analysis, strategy) do
+          {:ok, analysis} ->
+            execute_simulation_trade(state, analysis, current_price, open_time, strategy)
+
+          {:error, _reason} ->
+            state |> Map.put(:klines, klines_for_analysis)
+        end
       end)
 
     {:ok, final_state}
-  end
-
-  defp process_kline(kline, state, strategy) do
-    current_price = kline.close
-
-    # Keep a sliding window of previous klines for indicator calculation
-    previous_klines =
-      Enum.take([kline | state.previous_klines], max(strategy.ma_long_period * 3, 100))
-
-    # Analyze market at this point
-    case SmallInvestorStrategy.analyze_market_with_data(previous_klines, strategy) do
-      {:ok, analysis} ->
-        state
-        |> execute_simulation_trade(analysis, current_price, kline.timestamp, strategy)
-        |> Map.put(:previous_klines, previous_klines)
-
-      {:error, _reason} ->
-        %{state | previous_klines: previous_klines}
-    end
   end
 
   defp build_simulation_results(strategy, final_state, []) do
