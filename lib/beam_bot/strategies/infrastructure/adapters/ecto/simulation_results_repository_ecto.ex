@@ -11,25 +11,20 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.SimulationResultsRepos
 
   @impl true
   def save_simulation_result(attrs) do
-    # Convert string keys to atoms if needed
-    attrs = convert_map_keys(attrs)
-
     Repo.transaction(fn ->
       # Create the simulation result
       simulation_result =
         %SimulationResult{}
-        |> SimulationResult.changeset(Map.delete(attrs, :trades))
+        |> SimulationResult.changeset(Map.delete(attrs, "trades"))
         |> Repo.insert!()
 
       # Create all trades associated with this simulation result
       trades =
-        Enum.map(attrs.trades, fn trade ->
-          # Convert trade keys to atoms if needed
-          trade = convert_map_keys(trade)
-
+        Enum.map(attrs["trades"], fn trade ->
           %SimulationTrade{}
           |> SimulationTrade.changeset(
-            Map.put(trade, :simulation_result_id, simulation_result.id)
+            Map.put(trade, "simulation_result_id", simulation_result.id)
+            |> Map.put("date", trade["date"] |> DateTime.from_unix!(:millisecond))
           )
           |> Repo.insert!()
         end)

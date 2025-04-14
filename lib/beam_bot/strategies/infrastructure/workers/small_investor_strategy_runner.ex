@@ -140,7 +140,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     %SmallInvestorStrategy{} = strategy
 
     with {:ok, saved_strategy} <- save_strategy(strategy),
-         {:ok, result} <- SmallInvestorStrategy.analyze_market(strategy),
+         {:ok, result} <- SmallInvestorStrategy.analyze_market_with_data([], strategy),
          {:ok, order_id} <- place_order(result, strategy, exchange_credentials) do
       execution_result = %{
         timestamp: DateTime.utc_now(),
@@ -312,7 +312,7 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     # Run simulation through each kline
     final_state =
       Enum.reduce(klines, initial_state, fn kline, state ->
-        [_open, _high, _low, current_price, _, open_time | _rest] = kline
+        [current_price, open_time] = kline |> get_kline_close_price_and_open_time()
         klines_for_analysis = state.klines ++ [kline]
 
         klines_for_analysis =
@@ -339,13 +339,13 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
   defp build_simulation_results(strategy, final_state, []) do
     {:ok,
      %{
-       start_date: DateTime.utc_now(),
-       end_date: DateTime.utc_now(),
-       trading_pair: strategy.trading_pair,
-       initial_investment: strategy.investment_amount,
-       final_value: final_state.cash,
-       roi_percentage: Decimal.new("0"),
-       trades: []
+       "start_date" => DateTime.utc_now(),
+       "end_date" => DateTime.utc_now(),
+       "trading_pair" => strategy.trading_pair,
+       "initial_investment" => strategy.investment_amount,
+       "final_value" => final_state.cash,
+       "roi_percentage" => Decimal.new("0"),
+       "trades" => []
      }}
   end
 
@@ -354,24 +354,27 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     final_value =
       Decimal.add(
         final_state.cash,
-        Decimal.mult(final_state.holdings, get_last_price(klines))
+        Decimal.mult(final_state.holdings, Decimal.from_float(get_last_price(klines)))
       )
 
     roi_percentage = calculate_roi_percentage(strategy.investment_amount, final_value)
 
     # Get first and last klines for date range
-    first_kline = List.first(klines)
-    last_kline = List.last(klines)
+    first_kline_timestamp = List.first(klines) |> List.last()
+    last_kline_timestamp = List.last(klines) |> List.last()
+
+    {:ok, first_kline_date, _} = DateTime.from_iso8601(first_kline_timestamp)
+    {:ok, last_kline_date, _} = DateTime.from_iso8601(last_kline_timestamp)
 
     {:ok,
      %{
-       start_date: first_kline.timestamp,
-       end_date: last_kline.timestamp,
-       trading_pair: strategy.trading_pair,
-       initial_investment: strategy.investment_amount,
-       final_value: final_value,
-       roi_percentage: roi_percentage,
-       trades: Enum.reverse(final_state.trades)
+       "start_date" => first_kline_date,
+       "end_date" => last_kline_date,
+       "trading_pair" => strategy.trading_pair,
+       "initial_investment" => strategy.investment_amount,
+       "final_value" => final_value,
+       "roi_percentage" => roi_percentage,
+       "trades" => Enum.reverse(final_state.trades)
      }}
   end
 
@@ -391,8 +394,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
 
   defp execute_buy_trade(state, current_price, timestamp, strategy) do
     # Calculate position size (using all available cash for simplicity in simulation)
-    position_size = Decimal.div(state.cash, current_price)
-    cost = Decimal.mult(position_size, current_price)
+    position_size = Decimal.div(state.cash, Decimal.from_float(current_price))
+    cost = Decimal.mult(position_size, Decimal.from_float(current_price))
 
     # Calculate fees (using taker fee for market orders)
     fee = Decimal.mult(cost, Decimal.div(strategy.taker_fee, Decimal.new("100")))
@@ -446,8 +449,13 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
     }
   end
 
+  defp get_kline_close_price_and_open_time(kline) do
+    [_open, _high, _low, close_price, _volume, open_time | _rest] = kline
+    [close_price, open_time]
+  end
+
   defp get_last_price(klines) do
-    List.last(klines).close
+    List.last(klines) |> get_kline_close_price_and_open_time() |> List.first()
   end
 
   defp calculate_roi_percentage(initial_investment, final_value) do
@@ -463,24 +471,16 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
   defp save_simulation_results(results, user_id) do
     # Convert atom keys to strings for trades
     trades =
-      Enum.map(results.trades, fn trade ->
+      Enum.map(results["trades"], fn trade ->
         trade
         |> Map.update!(:type, &Atom.to_string/1)
         |> Map.new(fn {k, v} -> {Atom.to_string(k), v} end)
       end)
 
-    # Prepare simulation attributes with string keys
-    simulation_attrs = %{
-      "trading_pair" => results.trading_pair,
-      "initial_investment" => results.initial_investment,
-      "final_value" => results.final_value,
-      "roi_percentage" => results.roi_percentage,
-      "start_date" => results.start_date,
-      "end_date" => results.end_date,
-      "user_id" => user_id,
-      "trades" => trades
-    }
-
-    @simulation_results_repository.save_simulation_result(simulation_attrs)
+    @simulation_results_repository.save_simulation_result(
+      results
+      |> Map.put("trades", trades)
+      |> Map.put("user_id", user_id)
+    )
   end
 end
