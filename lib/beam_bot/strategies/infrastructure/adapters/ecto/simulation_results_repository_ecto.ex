@@ -59,37 +59,4 @@ defmodule BeamBot.Strategies.Infrastructure.Adapters.Ecto.SimulationResultsRepos
     |> order_by([sr], desc: sr.roi_percentage)
     |> Repo.all()
   end
-
-  # Private helper to convert string keys to atoms
-  defp convert_map_keys(map) when is_map(map) do
-    cond do
-      # Handle DateTime structs
-      match?(%DateTime{}, map) ->
-        map
-
-      # Handle Decimal structs
-      match?(%Decimal{}, map) ->
-        map
-
-      # Handle other structs
-      is_struct(map) ->
-        map
-
-      # Handle regular maps
-      true ->
-        Map.new(map, fn
-          {key, value} when is_binary(key) ->
-            {String.to_existing_atom(key), convert_map_keys(value)}
-
-          {key, value} ->
-            {key, convert_map_keys(value)}
-        end)
-    end
-  end
-
-  defp convert_map_keys(value) when is_list(value) do
-    Enum.map(value, &convert_map_keys/1)
-  end
-
-  defp convert_map_keys(value), do: value
 end
