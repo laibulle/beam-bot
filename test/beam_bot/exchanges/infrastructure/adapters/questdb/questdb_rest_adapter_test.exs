@@ -32,16 +32,27 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapterTe
       assert {:ok,
               [
                 [
+                  # Open price
                   0.0163479,
+                  # High price
                   0.8,
+                  # Low price
                   0.015758,
+                  # Close price
                   0.015771,
+                  # Volume
                   148_976.11427815,
+                  # Close time (timestamp)
                   1_499_644_799_999,
+                  # Quote asset volume
                   2434.19055334,
+                  # Number of trades
                   308,
+                  # Taker buy base asset volume
                   1756.87402397,
+                  # Taker buy quote asset volume
                   28.46694368,
+                  # Open time (ISO 8601 format)
                   "2017-07-03T00:00:00.000000Z"
                 ]
               ]} ==

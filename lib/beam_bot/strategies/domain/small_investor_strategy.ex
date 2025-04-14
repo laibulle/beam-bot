@@ -61,7 +61,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
     - taker_fee: Taker fee percentage (default: 0.1%)
 
   ## Examples
-      iex> SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1)
+      iex> BeamBot.Strategies.Domain.SmallInvestorStrategy.new("BTCUSDT", Decimal.new("500"), 1)
       %SmallInvestorStrategy{trading_pair: "BTCUSDT", investment_amount: #Decimal<500>...}
   """
   def new(trading_pair, investment_amount, user_id, options \\ []) do
