@@ -11,6 +11,8 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
   alias BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.KlinesTuplesRepositoryMock
   alias BeamBot.Strategies.Domain.SmallInvestorStrategy
   alias BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner
+  alias BeamBotWeb.KlinesData
+  alias BeamBotWeb.KlinesData.InputSettings
   alias Ecto.Adapters.SQL.Sandbox
 
   setup :set_mox_global
@@ -28,35 +30,11 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
 
     # Generate enough klines data for indicator calculation (ma_long_period * 3 = 60)
     klines_data =
-      Enum.map(1..60, fn i ->
-        timestamp = DateTime.utc_now() |> DateTime.add(-i * 3600, :second)
-        base_price = Decimal.new("50000.0")
-        price_variation = Decimal.new(i) |> Decimal.div(Decimal.new("1000"))
-
-        {
-          timestamp,
-          # Open price
-          Decimal.add(base_price, price_variation),
-          # High price
-          Decimal.add(base_price, Decimal.new("100.0")),
-          # Low price
-          Decimal.sub(base_price, Decimal.new("100.0")),
-          # Close price
-          Decimal.sub(base_price, price_variation),
-          # Volume
-          Decimal.new("150.0"),
-          # Quote asset volume
-          Decimal.new("7500000.0"),
-          # Number of trades
-          1200,
-          # Taker buy base asset volume
-          Decimal.new("75.0"),
-          # Taker buy quote asset volume
-          Decimal.new("3750000.0"),
-          # Ignore field
-          Decimal.new("0")
-        }
-      end)
+      KlinesData.generate_klines_data(%InputSettings{
+        interval: "1h",
+        start_time: DateTime.utc_now() |> DateTime.add(-3600 * 60, :second),
+        end_time: DateTime.utc_now()
+      })
 
     # Create a test strategy
     strategy = %SmallInvestorStrategy{
