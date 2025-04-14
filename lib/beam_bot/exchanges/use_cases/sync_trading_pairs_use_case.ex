@@ -22,7 +22,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncTradingPairsUseCase do
   def sync_trading_pairs do
     with {:ok, %{"symbols" => symbols}} <- @binance_req_adapter.get_exchange_info(),
          {:ok, exchange} <- get_or_create_binance_exchange(),
-         {:ok, filtered_symbols} <- filter_disabled_symbols(symbols),
+         {:ok, filtered_symbols} <- filter_symbols(symbols),
          trading_pairs <- Enum.map(filtered_symbols, &create_trading_pair(&1, exchange.id)) do
       @trading_pairs_repository.upsert_trading_pairs(trading_pairs)
     else
@@ -31,16 +31,18 @@ defmodule BeamBot.Exchanges.UseCases.SyncTradingPairsUseCase do
     end
   end
 
-  defp filter_disabled_symbols(symbols) do
+  defp filter_symbols(symbols) do
     filtered_symbols =
-      Enum.filter(symbols, fn symbol ->
-        not Enum.any?(@disabled_coins, fn coin ->
-          String.contains?(symbol["baseAsset"], coin) or
-            String.contains?(symbol["quoteAsset"], coin)
-        end)
-      end)
+      Enum.filter(symbols, &valid_symbol?/1)
 
     {:ok, filtered_symbols}
+  end
+
+  defp valid_symbol?(symbol) do
+    not Enum.any?(@disabled_coins, fn coin ->
+      String.contains?(symbol["baseAsset"], coin) or
+        String.contains?(symbol["quoteAsset"], coin)
+    end) and symbol["status"] == "TRADING"
   end
 
   defp get_or_create_binance_exchange do
