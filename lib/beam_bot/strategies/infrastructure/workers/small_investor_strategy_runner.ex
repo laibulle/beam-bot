@@ -328,8 +328,9 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunner 
             execute_simulation_trade(state, analysis, current_price, open_time, strategy)
 
           {:error, _reason} ->
-            state |> Map.put(:klines, klines_for_analysis)
+            state
         end
+        |> Map.put(:klines, klines_for_analysis)
       end)
 
     {:ok, final_state}
