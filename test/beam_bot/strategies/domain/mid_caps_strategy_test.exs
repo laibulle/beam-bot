@@ -72,15 +72,32 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
       strategy = MidCapsStrategy.new("BTCUSDT", Decimal.new("500"), 1)
 
       klines =
-        KlinesData.generate_klines_data(%InputSettings{
-          interval: "1h",
-          start_time: DateTime.utc_now() |> DateTime.add(-3600 * 60, :second),
-          end_time: DateTime.utc_now()
-        })
+        Enum.map(0..60, fn i ->
+          [
+            # Adjusted to ensure lower price changes
+            0.0163479 + i * 0.00001,
+            # Adjusted to ensure lower volatility
+            0.8 + i * 0.00001,
+            0.015758 + i * 0.00001,
+            0.015771 + i * 0.00001,
+            # Adjusted to ensure lower volume
+            148_976.11427815 - i * 100,
+            DateTime.utc_now() |> DateTime.add(i * 60, :second) |> DateTime.to_unix(:millisecond),
+            # Adjusted to ensure lower volume
+            2434.19055334 - i * 10,
+            # Adjusted to ensure lower trades
+            308 - i,
+            # Adjusted to ensure lower taker volume
+            1756.87402397 - i * 5,
+            # Adjusted to ensure lower volatility
+            28.46694368 - i * 0.1,
+            DateTime.utc_now() |> DateTime.add(i * 60 - 60, :second) |> DateTime.to_iso8601()
+          ]
+        end)
 
       assert {:ok, result} = MidCapsStrategy.analyze_market_with_data(klines, strategy)
       # assert result.signal == :sell
-      # assert result.price == 50_100.0
+      # assert result.price == 0.015773
       assert is_struct(result.max_risk_amount, Decimal)
     end
 
