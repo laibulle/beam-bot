@@ -7,6 +7,7 @@ defmodule BeamBot.Exchanges.UseCases.SyncTradingPairsUseCase do
 
   @trading_pairs_repository Application.compile_env(:beam_bot, :trading_pairs_repository)
   @binance_req_adapter Application.compile_env(:beam_bot, :binance_req_adapter)
+  @disabled_coins Application.compile_env(:beam_bot, :disabled_coins)
 
   @doc """
   Fetches trading pairs from Binance and stores them in the database.
@@ -21,12 +22,25 @@ defmodule BeamBot.Exchanges.UseCases.SyncTradingPairsUseCase do
   def sync_trading_pairs do
     with {:ok, %{"symbols" => symbols}} <- @binance_req_adapter.get_exchange_info(),
          {:ok, exchange} <- get_or_create_binance_exchange(),
-         trading_pairs <- Enum.map(symbols, &create_trading_pair(&1, exchange.id)) do
+         {:ok, filtered_symbols} <- filter_disabled_symbols(symbols),
+         trading_pairs <- Enum.map(filtered_symbols, &create_trading_pair(&1, exchange.id)) do
       @trading_pairs_repository.upsert_trading_pairs(trading_pairs)
     else
       {:error, reason} -> {:error, reason}
       error -> {:error, "Failed to sync trading pairs: #{inspect(error)}"}
     end
+  end
+
+  defp filter_disabled_symbols(symbols) do
+    filtered_symbols =
+      Enum.filter(symbols, fn symbol ->
+        not Enum.any?(@disabled_coins, fn coin ->
+          String.contains?(symbol["baseAsset"], coin) or
+            String.contains?(symbol["quoteAsset"], coin)
+        end)
+      end)
+
+    {:ok, filtered_symbols}
   end
 
   defp get_or_create_binance_exchange do

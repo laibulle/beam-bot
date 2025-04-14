@@ -50,7 +50,7 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategy do
 
   ## Options
     - max_risk_percentage: Maximum percentage of capital at risk (default: 1.5%)
-    - volume_threshold: Minimum 24h volume in USDT (default: 1,000,000)
+    - volume_threshold: Minimum 24h volume in USDC (default: 1,000,000)
     - volatility_threshold: Minimum daily volatility percentage (default: 2%)
     - ma_short_period: Short moving average period (default: 5)
     - ma_long_period: Long moving average period (default: 20)

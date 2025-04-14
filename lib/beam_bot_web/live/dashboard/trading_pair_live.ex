@@ -145,7 +145,7 @@ defmodule BeamBotWeb.TradingPairLive do
         strategy_status = get_strategy_status()
 
         message =
-          "Started strategy for #{trading_pair.symbol} with investment amount #{investment_amount} USDT"
+          "Started strategy for #{trading_pair.symbol} with investment amount #{investment_amount} USDC"
 
         {:noreply,
          socket
@@ -405,7 +405,7 @@ defmodule BeamBotWeb.TradingPairLive do
                   </div>
                   <div>
                     <span class="font-medium text-gray-600">Investment Amount:</span>
-                    <span class="ml-2">{@strategy_status.strategy.investment_amount} USDT</span>
+                    <span class="ml-2">{@strategy_status.strategy.investment_amount} USDC</span>
                   </div>
                   <div>
                     <span class="font-medium text-gray-600">Timeframe:</span>
@@ -438,7 +438,7 @@ defmodule BeamBotWeb.TradingPairLive do
                     </div>
                     <div>
                       <span class="font-medium text-gray-600">Price:</span>
-                      <span class="ml-2">{@strategy_status.last_result.price} USDT</span>
+                      <span class="ml-2">{@strategy_status.last_result.price} USDC</span>
                     </div>
                     <%= if Map.get(@strategy_status.last_result, :reasons) do %>
                       <div>
@@ -482,7 +482,7 @@ defmodule BeamBotWeb.TradingPairLive do
           <form phx-submit="simulate_strategy" class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                Investment Amount (USDT)
+                Investment Amount (USDC)
               </label>
               <input
                 type="number"
@@ -601,7 +601,7 @@ defmodule BeamBotWeb.TradingPairLive do
                     <div class="bg-gray-50 p-3 rounded-lg">
                       <div class="text-sm text-gray-600">Initial Investment</div>
                       <div class="text-lg font-medium">
-                        {@simulation_results.initial_investment} USDT
+                        {@simulation_results.initial_investment} USDC
                       </div>
                     </div>
                     <div class="bg-gray-50 p-3 rounded-lg">
@@ -609,7 +609,7 @@ defmodule BeamBotWeb.TradingPairLive do
                       <div class="text-lg font-medium">
                         {:erlang.float_to_binary(Decimal.to_float(@simulation_results.final_value),
                           decimals: 2
-                        )} USDT
+                        )} USDC
                       </div>
                     </div>
                     <div class={"bg-gray-50 p-3 rounded-lg #{if Decimal.to_float(@simulation_results.roi_percentage) > 0, do: "text-green-600", else: "text-red-600"}"}>
@@ -649,13 +649,13 @@ defmodule BeamBotWeb.TradingPairLive do
                                 {trade.type}
                               </td>
                               <td class="px-4 py-2">
-                                {:erlang.float_to_binary(Decimal.to_float(trade.price), decimals: 4)} USDT
+                                {:erlang.float_to_binary(Decimal.to_float(trade.price), decimals: 4)} USDC
                               </td>
                               <td class="px-4 py-2">
                                 {:erlang.float_to_binary(Decimal.to_float(trade.amount), decimals: 8)} BTC
                               </td>
                               <td class="px-4 py-2 text-gray-600">
-                                {:erlang.float_to_binary(Decimal.to_float(trade.fee), decimals: 2)} USDT
+                                {:erlang.float_to_binary(Decimal.to_float(trade.fee), decimals: 2)} USDC
                               </td>
                             </tr>
                           <% end %>
@@ -712,12 +712,12 @@ defmodule BeamBotWeb.TradingPairLive do
                         {simulation.start_date |> Calendar.strftime("%Y-%m-%d %H:%M")}
                       </td>
                       <td class="px-4 py-2">
-                        {simulation.initial_investment} USDT
+                        {simulation.initial_investment} USDC
                       </td>
                       <td class="px-4 py-2">
                         {:erlang.float_to_binary(Decimal.to_float(simulation.final_value),
                           decimals: 2
-                        )} USDT
+                        )} USDC
                       </td>
                       <td class={"px-4 py-2 #{if Decimal.to_float(simulation.roi_percentage) > 0, do: "text-green-600", else: "text-red-600"}"}>
                         {:erlang.float_to_binary(Decimal.to_float(simulation.roi_percentage),
@@ -752,7 +752,7 @@ defmodule BeamBotWeb.TradingPairLive do
             <form phx-submit="start_strategy" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                  Investment Amount (USDT)
+                  Investment Amount (USDC)
                 </label>
                 <input
                   type="number"

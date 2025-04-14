@@ -37,7 +37,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   ## Examples
 
       iex> BeamBot.Infrastructure.Adapters.BinanceReqAdapter.get_exchange_info()
-      {:ok, %{symbols: [%{baseAsset: "BTC", quoteAsset: "USDT", symbol: "BTCUSDT", baseAssetPrecision: 8, quotePrecision: 8, orderTypes: ["LIMIT", "MARKET"]}}
+      {:ok, %{symbols: [%{baseAsset: "BTC", quoteAsset: "USDC", symbol: "BTCUSDT", baseAssetPrecision: 8, quotePrecision: 8, orderTypes: ["LIMIT", "MARKET"]}}
   """
   def get_exchange_info do
     request("/api/v3/exchangeInfo", %{}, %{weight: 20})

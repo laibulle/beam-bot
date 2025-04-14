@@ -5,9 +5,9 @@ defmodule BeamBot.Exchanges.Domain.TradingPairTest do
   describe "JSON encoding" do
     test "encodes all specified fields" do
       trading_pair = %TradingPair{
-        symbol: "BTC/USDT",
+        symbol: "BTC/USDC",
         base_asset: "BTC",
-        quote_asset: "USDT",
+        quote_asset: "USDC",
         min_price: Decimal.new("1000"),
         max_price: Decimal.new("50000"),
         tick_size: Decimal.new("0.1"),
@@ -22,9 +22,9 @@ defmodule BeamBot.Exchanges.Domain.TradingPairTest do
       decoded = Jason.decode!(encoded)
 
       assert decoded == %{
-               "symbol" => "BTC/USDT",
+               "symbol" => "BTC/USDC",
                "base_asset" => "BTC",
-               "quote_asset" => "USDT",
+               "quote_asset" => "USDC",
                "min_price" => "1000",
                "max_price" => "50000",
                "tick_size" => "0.1",

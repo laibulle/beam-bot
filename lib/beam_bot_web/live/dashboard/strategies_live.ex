@@ -185,7 +185,7 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
           <form phx-submit="find_best_pairs" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                Investment Amount (USDT)
+                Investment Amount (USDC)
               </label>
               <input
                 type="number"
@@ -361,10 +361,10 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
                       </.link>
                       <div class="ml-4 flex-shrink-0">
                         <div class="text-sm text-gray-900">
-                          Initial: {result.simulation_results.initial_investment} USDT
+                          Initial: {result.simulation_results.initial_investment} USDC
                         </div>
                         <div class="text-sm text-gray-500">
-                          Final: {Decimal.round(result.simulation_results.final_value, 2)} USDT
+                          Final: {Decimal.round(result.simulation_results.final_value, 2)} USDC
                         </div>
                       </div>
                     </div>
@@ -402,12 +402,12 @@ defmodule BeamBotWeb.Dashboard.StrategiesLive do
                           {simulation.trading_pair}
                         </td>
                         <td class="px-4 py-2">
-                          {simulation.initial_investment} USDT
+                          {simulation.initial_investment} USDC
                         </td>
                         <td class="px-4 py-2">
                           {:erlang.float_to_binary(Decimal.to_float(simulation.final_value),
                             decimals: 2
-                          )} USDT
+                          )} USDC
                         </td>
                         <td class={"px-4 py-2 #{if Decimal.to_float(simulation.roi_percentage) > 0, do: "text-green-600", else: "text-red-600"}"}>
                           {:erlang.float_to_binary(Decimal.to_float(simulation.roi_percentage),

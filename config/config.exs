@@ -9,6 +9,7 @@ import Config
 
 config :beam_bot,
   ecto_repos: [BeamBot.Repo],
+  disabled_coins: ["USDT"],
   trading_pairs_repository:
     BeamBot.Exchanges.Infrastructure.Adapters.Ecto.TradingPairsRepositoryEcto,
   strategy_repository: BeamBot.Strategies.Infrastructure.Adapters.Ecto.StrategyRepositoryEcto,
