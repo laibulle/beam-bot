@@ -31,7 +31,7 @@ defmodule BeamBotWeb.KlinesData do
         %InputSettings{
           interval: interval,
           start_time: start_time,
-          end_time: end_time
+          end_time: _end_time
         } = input
       ) do
     interval_in_seconds =
