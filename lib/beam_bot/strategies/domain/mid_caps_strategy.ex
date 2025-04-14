@@ -110,18 +110,10 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategy do
     # Extract closing prices and volumes from Kline structs
     {closing_prices, volumes} =
       Enum.map(klines, fn kline ->
-        case {kline.close, kline.volume} do
-          {%Decimal{} = close, %Decimal{} = volume} ->
-            {Decimal.to_float(close), Decimal.to_float(volume)}
-
-          _ ->
-            {nil, nil}
-        end
+        [_open, _high, _low, close_price, volume, _open_time | _rest] = kline
+        {close_price, volume}
       end)
       |> Enum.unzip()
-      |> then(fn {prices, vols} ->
-        {Enum.reject(prices, &is_nil/1), Enum.reject(vols, &is_nil/1)}
-      end)
 
     # Only calculate indicators if we have enough data
     if length(closing_prices) >= strategy.ma_long_period * 3 do
