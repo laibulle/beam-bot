@@ -16,7 +16,7 @@ defmodule BeamBot.Strategies.Domain.Indicators do
     - The SMA value or nil if there are not enough data points
 
   ## Examples
-      iex> Indicators.sma([1, 2, 3, 4, 5], 3)
+      iex> BeamBot.Strategies.Domain.Indicators.sma([1, 2, 3, 4, 5], 3)
       4.0
   """
   def sma(prices, period) when length(prices) >= period do

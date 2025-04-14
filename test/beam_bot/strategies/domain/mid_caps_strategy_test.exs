@@ -52,52 +52,136 @@ defmodule BeamBot.Strategies.Domain.MidCapsStrategyTest do
   end
 
   describe "analyze_market_with_data/2" do
-    test "generates buy signal when volume and volatility are above thresholds" do
+    @tag :aaa
+    test "generates sell signal when volume and volatility are bellow thresholds" do
       strategy = MidCapsStrategy.new("BTCUSDT", Decimal.new("500"), 1)
+      variation = 0.0001
 
       klines =
-        KlinesData.generate_klines_data(%InputSettings{
-          interval: "1h",
-          start_time: DateTime.utc_now() |> DateTime.add(-3600 * 60, :second),
-          end_time: DateTime.utc_now()
-        })
+        Enum.reduce(0..60, [], fn i, acc ->
+          previous =
+            List.last(acc) ||
+              [
+                # open_price
+                0.0163479,
+                # high_price
+                0.5,
+                # low_price
+                0.015758,
+                # close_price
+                0.015771,
+                # volume
+                1_000_000.0,
+                DateTime.utc_now() |> DateTime.to_unix(:millisecond),
+                # quote_asset_volume
+                74_950,
+                # number_of_trades
+                50,
+                # taker_buy_base_asset_volume
+                74_950.0,
+                # taker_buy_quote_asset_volume
+                10.0,
+                DateTime.utc_now() |> DateTime.to_iso8601()
+              ]
 
-      assert {:ok, result} = MidCapsStrategy.analyze_market_with_data(klines, strategy)
-      # assert result.signal == :buy
-      # assert result.price == 51_000.0
-      assert is_struct(result.max_risk_amount, Decimal)
-    end
-
-    test "generates sell signal when volume and volatility are below thresholds" do
-      strategy = MidCapsStrategy.new("BTCUSDT", Decimal.new("500"), 1)
-
-      klines =
-        Enum.map(0..60, fn i ->
-          [
-            # Adjusted to ensure lower price changes
-            0.0163479 + i * 0.00001,
-            # Adjusted to ensure lower volatility
-            0.8 + i * 0.00001,
-            0.015758 + i * 0.00001,
-            0.015771 + i * 0.00001,
-            # Adjusted to ensure lower volume
-            148_976.11427815 - i * 100,
-            DateTime.utc_now() |> DateTime.add(i * 60, :second) |> DateTime.to_unix(:millisecond),
-            # Adjusted to ensure lower volume
-            2434.19055334 - i * 10,
-            # Adjusted to ensure lower trades
-            308 - i,
-            # Adjusted to ensure lower taker volume
-            1756.87402397 - i * 5,
-            # Adjusted to ensure lower volatility
-            28.46694368 - i * 0.1,
-            DateTime.utc_now() |> DateTime.add(i * 60 - 60, :second) |> DateTime.to_iso8601()
-          ]
+          acc ++
+            [
+              [
+                # open_price based on previous close_price
+                Enum.at(previous, 3),
+                # high_price
+                Enum.at(previous, 1) + variation,
+                # low_price
+                Enum.at(previous, 2) - variation,
+                # close_price
+                Enum.at(previous, 3) + variation,
+                # volume
+                Enum.at(previous, 4) - i * 100_000,
+                DateTime.utc_now()
+                |> DateTime.add(i * 60, :second)
+                |> DateTime.to_unix(:millisecond),
+                # quote_asset_volume
+                Enum.at(previous, 6),
+                # number_of_trades
+                Enum.at(previous, 7) + 1,
+                # taker_buy_base_asset_volume
+                Enum.at(previous, 8) + 100,
+                # taker_buy_quote_asset_volume
+                Enum.at(previous, 9) - 0.1,
+                DateTime.utc_now() |> DateTime.add(i * 60 - 60, :second) |> DateTime.to_iso8601()
+              ]
+            ]
         end)
 
       assert {:ok, result} = MidCapsStrategy.analyze_market_with_data(klines, strategy)
-      # assert result.signal == :sell
-      # assert result.price == 0.015773
+      assert result.signal == :sell
+      assert result.price == 0.021870999999999963
+      assert is_struct(result.max_risk_amount, Decimal)
+    end
+
+    test "generates buy signal when volume and volatility are above thresholds" do
+      strategy = MidCapsStrategy.new("BTCUSDT", Decimal.new("500"), 1)
+      variation = 0.0001
+
+      klines =
+        Enum.reduce(0..60, [], fn i, acc ->
+          previous =
+            List.last(acc) ||
+              [
+                # open_price
+                0.0163479,
+                # high_price
+                0.5,
+                # low_price
+                0.015758,
+                # close_price
+                0.015771,
+                # volume
+                1_000_000.0,
+                DateTime.utc_now() |> DateTime.to_unix(:millisecond),
+                # quote_asset_volume
+                74_950,
+                # number_of_trades
+                50,
+                # taker_buy_base_asset_volume
+                74_950.0,
+                # taker_buy_quote_asset_volume
+                10.0,
+                DateTime.utc_now() |> DateTime.to_iso8601()
+              ]
+
+          acc ++
+            [
+              [
+                # open_price based on previous close_price
+                Enum.at(previous, 3),
+                # high_price
+                Enum.at(previous, 1) + variation,
+                # low_price
+                Enum.at(previous, 2) - variation,
+                # close_price
+                Enum.at(previous, 3) + variation,
+                # volume
+                Enum.at(previous, 4) + variation,
+                DateTime.utc_now()
+                |> DateTime.add(i * 60, :second)
+                |> DateTime.to_unix(:millisecond),
+                # quote_asset_volume
+                Enum.at(previous, 6),
+                # number_of_trades
+                Enum.at(previous, 7) + 1,
+                # taker_buy_base_asset_volume
+                Enum.at(previous, 8) + 100,
+                # taker_buy_quote_asset_volume
+                Enum.at(previous, 9) - 0.1,
+                DateTime.utc_now() |> DateTime.add(i * 60 - 60, :second) |> DateTime.to_iso8601()
+              ]
+            ]
+        end)
+
+      assert {:ok, result} = MidCapsStrategy.analyze_market_with_data(klines, strategy)
+      assert result.signal == :buy
+      assert result.price == 0.021870999999999963
       assert is_struct(result.max_risk_amount, Decimal)
     end
 
