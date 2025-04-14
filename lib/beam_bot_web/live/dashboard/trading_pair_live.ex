@@ -10,6 +10,7 @@ defmodule BeamBotWeb.TradingPairLive do
 
   # Define refresh interval in milliseconds
   @refresh_interval 10_000
+  @chart_interval_available ["1m", "1h", "1M"]
 
   require Logger
 
@@ -340,6 +341,8 @@ defmodule BeamBotWeb.TradingPairLive do
 
   @impl true
   def render(assigns) do
+    assigns = Map.put(assigns, :chart_interval_available, @chart_interval_available)
+
     ~H"""
     <.live_component
       module={BeamBotWeb.Layouts.DashboardComponent}
@@ -354,9 +357,11 @@ defmodule BeamBotWeb.TradingPairLive do
               name="interval"
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
-              <option value="1m" selected={@interval == "1m"}>1 Minute</option>
-              <option value="1h" selected={@interval == "1h"}>1 Hour</option>
-              <option value="1M" selected={@interval == "1M"}>1 Month</option>
+              <%= for interval <- @chart_interval_available do %>
+                <option value={interval} selected={@interval == interval}>
+                  {interval}
+                </option>
+              <% end %>
             </select>
           </form>
         </div>
