@@ -61,7 +61,7 @@ defmodule BeamBotWeb.TradingPairsLive do
                   <div class="flex justify-between items-center mb-2">
                     <h5 class="text-lg font-semibold">{symbol.symbol}</h5>
                     <span class={"px-2 py-1 rounded-full text-xs font-medium #{if symbol.status == "TRADING", do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800"}"}>
-                      {if symbol.status == "TRADING", do: "ACTIVE", else: "INACTIVE"}
+                      {symbol.status}
                     </span>
                   </div>
                   <div class="text-sm text-gray-600 mb-4 space-y-2">
