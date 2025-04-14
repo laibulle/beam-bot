@@ -68,7 +68,7 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategyTest do
       end)
 
       assert {:error, "Failed to fetch market data"} =
-               SmallInvestorStrategy.analyze_market(strategy)
+               SmallInvestorStrategy.analyze_market_with_data([], strategy)
     end
 
     test "returns error when not enough data points" do
