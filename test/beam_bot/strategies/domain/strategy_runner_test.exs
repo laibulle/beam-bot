@@ -33,18 +33,28 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
         base_price = Decimal.new("50000.0")
         price_variation = Decimal.new(i) |> Decimal.div(Decimal.new("1000"))
 
-        %{
-          timestamp: timestamp,
-          open: Decimal.add(base_price, price_variation),
-          high: Decimal.add(base_price, Decimal.add(price_variation, Decimal.new("1000"))),
-          low: Decimal.sub(base_price, Decimal.add(price_variation, Decimal.new("1000"))),
-          close: Decimal.add(base_price, price_variation),
-          volume: Decimal.new("100.0"),
-          quote_volume: Decimal.new("5050000.0"),
-          trades_count: 1000,
-          taker_buy_base_volume: Decimal.new("50.0"),
-          taker_buy_quote_volume: Decimal.new("2525000.0"),
-          ignore: Decimal.new("0")
+        {
+          timestamp,
+          # Open price
+          Decimal.add(base_price, price_variation),
+          # High price
+          Decimal.add(base_price, Decimal.new("100.0")),
+          # Low price
+          Decimal.sub(base_price, Decimal.new("100.0")),
+          # Close price
+          Decimal.sub(base_price, price_variation),
+          # Volume
+          Decimal.new("150.0"),
+          # Quote asset volume
+          Decimal.new("7500000.0"),
+          # Number of trades
+          1200,
+          # Taker buy base asset volume
+          Decimal.new("75.0"),
+          # Taker buy quote asset volume
+          Decimal.new("3750000.0"),
+          # Ignore field
+          Decimal.new("0")
         }
       end)
 
@@ -139,18 +149,18 @@ defmodule BeamBot.Strategies.Infrastructure.Workers.SmallInvestorStrategyRunnerT
           base_price = Decimal.new("50000.0")
           price_variation = Decimal.new(i) |> Decimal.div(Decimal.new("1000"))
 
-          %{
-            timestamp: timestamp,
-            open: Decimal.add(base_price, price_variation),
-            high: Decimal.add(base_price, Decimal.add(price_variation, Decimal.new("1000"))),
-            low: Decimal.sub(base_price, Decimal.add(price_variation, Decimal.new("1000"))),
-            close: Decimal.add(base_price, price_variation),
-            volume: Decimal.new("100.0"),
-            quote_volume: Decimal.new("5050000.0"),
-            trades_count: 1000,
-            taker_buy_base_volume: Decimal.new("50.0"),
-            taker_buy_quote_volume: Decimal.new("2525000.0"),
-            ignore: Decimal.new("0")
+          {
+            timestamp,
+            Decimal.add(base_price, price_variation),
+            Decimal.add(base_price, Decimal.add(price_variation, Decimal.new("1000"))),
+            Decimal.sub(base_price, Decimal.add(price_variation, Decimal.new("1000"))),
+            Decimal.add(base_price, price_variation),
+            Decimal.new("100.0"),
+            Decimal.new("5050000.0"),
+            1000,
+            Decimal.new("50.0"),
+            Decimal.new("2525000.0"),
+            Decimal.new("0")
           }
         end)
 

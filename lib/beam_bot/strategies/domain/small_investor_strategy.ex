@@ -148,15 +148,9 @@ defmodule BeamBot.Strategies.Domain.SmallInvestorStrategy do
   end
 
   defp calculate_indicators(klines, strategy) do
-    # Extract closing prices from Kline structs
+    # Extract closing prices from the tuple data
     closing_prices =
-      Enum.map(klines, fn kline ->
-        case kline.close do
-          %Decimal{} = decimal -> Decimal.to_float(decimal)
-          _ -> nil
-        end
-      end)
-      |> Enum.reject(&is_nil/1)
+      Enum.map(klines, fn [_open, _high, _low, close | _rest] -> close end)
 
     # Only calculate indicators if we have enough data
     if length(closing_prices) >= strategy.ma_long_period * 3 do
