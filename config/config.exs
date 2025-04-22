@@ -7,6 +7,16 @@
 # General application configuration
 import Config
 
+import_config "./env.exs"
+
+# Load environment variables from .env file in development and test
+if config_env() != :prod do
+  case BeamBot.Env.load() do
+    :ok -> :ok
+    {:error, _} -> IO.puts("No .env file found, using default configuration")
+  end
+end
+
 config :beam_bot,
   ecto_repos: [BeamBot.Repo],
   disabled_coins: ["USDT", "BTCUP", "BTCDOWN", "ETHUP", "ETHDOWN", "XMR", "ZEC", "DASH"],
