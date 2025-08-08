@@ -1,0 +1,18 @@
+{
+  "skip_files": [
+    "lib/beam_bot/repo.ex",
+    "lib/beam_bot/release",
+    "lib/beam_bot_web/controllers/page_html.ex",
+    "lib/beam_bot_web/controllers/page_controller.ex",
+    "test/",
+    "deps/"
+  ],
+  "coverage_options": {
+    "treat_no_relevant_lines_as_covered": true,
+    "output_dir": "cover/",
+    "minimum_coverage": 30
+  },
+  "terminal_options": {
+    "file_column_width": 80
+  }
+}
