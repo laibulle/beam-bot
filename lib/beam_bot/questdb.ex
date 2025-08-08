@@ -12,10 +12,10 @@ defmodule BeamBot.QuestDB do
 
   @impl true
   def init(opts) do
-    host = Keyword.get(opts, :host, "localhost")
-    port = Keyword.get(opts, :port, 9000)
-    username = Keyword.get(opts, :username, "admin")
-    password = Keyword.get(opts, :password, "quest")
+    host = Keyword.get(opts, :host)
+    port = Keyword.get(opts, :port)
+    username = Keyword.get(opts, :username)
+    password = Keyword.get(opts, :password)
 
     base_url = "http://#{host}:#{port}"
     auth = Base.encode64("#{username}:#{password}")

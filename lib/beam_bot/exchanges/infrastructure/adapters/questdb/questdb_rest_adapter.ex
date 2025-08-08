@@ -36,7 +36,7 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter d
 
   def drop_tuples(symbol, interval) do
     table_name = "klines_#{String.downcase(symbol)}_#{String.downcase(interval)}"
-    query = "DROP TABLE #{table_name}"
+    query = "DROP TABLE IF EXISTS #{table_name}"
 
     case BeamBot.QuestDB.query(query) do
       {:ok, %{"ddl" => "OK"}} ->

@@ -30,7 +30,7 @@ config :beam_bot,
     BeamBot.Strategies.Infrastructure.Adapters.Ecto.SimulationResultsRepositoryEcto,
   # QuestDB configuration
   questdb_host: "localhost",
-  questdb_port: 9000,
+  questdb_port: 9100,
   questdb_username: "admin",
   questdb_password: "quest",
   # Rate limiter configuration
