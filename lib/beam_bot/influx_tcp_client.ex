@@ -5,8 +5,13 @@ defmodule BeamBot.InfluxTCPClient do
 
   require Logger
 
-  @host ~c"localhost"
-  @port 9009
+  def get_port do
+    Application.get_env(:beam_bot, :questdb_tcp_port)
+  end
+
+  def get_host do
+    to_charlist(Application.get_env(:beam_bot, :questdb_host))
+  end
 
   @doc """
   LogSends a line of Influx Line Protocol data to QuestDB via TCP.
@@ -15,7 +20,7 @@ defmodule BeamBot.InfluxTCPClient do
 
   """
   def send_line(line_protocol_string) when is_binary(line_protocol_string) do
-    :gen_tcp.connect(@host, @port, [:binary, packet: :raw, active: false])
+    :gen_tcp.connect(get_host(), get_port(), [:binary, packet: :raw, active: false])
     |> case do
       {:ok, socket} ->
         case :gen_tcp.send(socket, line_protocol_string <> "\n") do

@@ -31,6 +31,7 @@ config :beam_bot,
   # QuestDB configuration
   questdb_host: "localhost",
   questdb_port: 9100,
+  questdb_tcp_port: 9109,
   questdb_username: "admin",
   questdb_password: "quest",
   # Rate limiter configuration
