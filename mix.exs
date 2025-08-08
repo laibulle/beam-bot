@@ -106,11 +106,8 @@ defmodule BeamBot.MixProject do
       {:bandit, "~> 1.5"},
       {:req, "~> 0.5.8"},
       {:websockex, "~> 0.4.3"},
-      {:mox, "~> 1.0", only: :test},
-      {:faker, "~> 0.19.0-alpha.1", only: :test},
       {:redix, "~> 1.5"},
       {:dotenv, "~> 3.1.0", only: [:dev, :test]},
-      {:excoveralls, "~> 0.18", only: :test},
       {:gnat, "~> 1.7"},
       # Quality of life
       {:faker, "~> 0.19.0-alpha.1", only: [:dev, :test]},
