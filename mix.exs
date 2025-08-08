@@ -1,4 +1,7 @@
 defmodule BeamBot.MixProject do
+  @moduledoc """
+  Mix Project for BeamBot
+  """
   use Mix.Project
 
   def project do

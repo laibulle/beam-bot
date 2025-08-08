@@ -1,4 +1,7 @@
 defmodule BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapterTest do
+  @moduledoc """
+  This module is responsible for testing the QuestDB REST adapter.
+  """
   use ExUnit.Case, async: true
 
   alias BeamBot.Exchanges.Infrastructure.Adapters.QuestDB.QuestDBRestAdapter
