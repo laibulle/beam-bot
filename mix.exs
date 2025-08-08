@@ -44,6 +44,18 @@ defmodule BeamBot.MixProject do
     ]
   end
 
+  def cli do
+    [
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.cobertura": :test
+      ]
+    ]
+  end
+
   # Configuration for the OTP application.
   #
   # Type `mix help compile.app` for more information.
@@ -96,13 +108,17 @@ defmodule BeamBot.MixProject do
       {:websockex, "~> 0.4.3"},
       {:mox, "~> 1.0", only: :test},
       {:faker, "~> 0.19.0-alpha.1", only: :test},
-      {:git_hooks, "~> 0.8.0", only: [:dev], runtime: false},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
       {:redix, "~> 1.5"},
       {:dotenv, "~> 3.1.0", only: [:dev, :test]},
       {:excoveralls, "~> 0.18", only: :test},
-      {:gnat, "~> 1.7"}
+      {:gnat, "~> 1.7"},
+      # Quality of life
+      {:faker, "~> 0.19.0-alpha.1", only: [:dev, :test]},
+      {:git_hooks, "~> 0.8.0", only: [:dev], runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
+      {:excoveralls, "~> 0.18", only: :test},
+      {:mox, "~> 1.2"}
     ]
   end
 

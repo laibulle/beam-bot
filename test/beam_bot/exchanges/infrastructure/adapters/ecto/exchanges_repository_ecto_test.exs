@@ -1,4 +1,8 @@
 defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryEctoTest do
+  @moduledoc """
+  This module is responsible for managing the exchanges.
+  """
+
   use BeamBot.DataCase
 
   alias BeamBot.Exchanges.Infrastructure.Adapters.Ecto.ExchangesRepositoryEcto

@@ -7,8 +7,17 @@ stop:
 asdf:
 	asdf install
 
-test:
-	mix test
+
+reset-test-db:
+	MIX_ENV=test mix ecto.drop
+	MIX_ENV=test mix ecto.create
+	MIX_ENV=test mix ecto.migrate
+
+test: reset-test-db
+	MIX_ENV=test mix test
+
+coverage: reset-test-db
+	MIX_ENV=test mix coveralls.lcov 
 	
 coverage:
 	mix coveralls.cobertura

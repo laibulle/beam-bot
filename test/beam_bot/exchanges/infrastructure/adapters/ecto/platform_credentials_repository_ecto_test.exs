@@ -1,4 +1,7 @@
 defmodule BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEctoTest do
+  @moduledoc """
+  This module is responsible for managing platform credentials.
+  """
   use BeamBot.DataCase
 
   alias BeamBot.Exchanges.Domain.PlatformCredentials
