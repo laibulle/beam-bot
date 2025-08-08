@@ -44,6 +44,66 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   end
 
   @doc """
+  Fetches the wallet balance for a specific wallet type.
+  ## Examples
+
+      iex> {:ok, platform_credentials} = BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEcto.get_by_user_id_and_exchange_id(1, 1)
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.get_assets(platform_credentials)
+  """
+  def get_assets(%PlatformCredentials{api_key: api_key, api_secret: api_secret}) do
+    headers = [{"X-MBX-APIKEY", api_key}]
+
+    signed_params =
+      sign_params(%{timestamp: :os.system_time(:millisecond), api_secret: api_secret})
+
+    Req.post!("#{@base_url}/sapi/v3/asset/getUserAsset",
+      params: signed_params,
+      headers: headers
+    )
+    |> case do
+      %{status: 200, body: body} -> {:ok, body}
+      %{status: status, body: body} -> {:error, %{status: status, body: body}}
+    end
+  end
+
+  @doc """
+  Fetches the wallet balance for a specific wallet type.
+  ## Examples
+
+      iex> {:ok, platform_credentials} = BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEcto.get_by_user_id_and_exchange_id(1, 1)
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.get_wallet(platform_credentials)
+      {:ok,
+        [
+          %{"activate" => true, "balance" => "0.00068037", "walletName" => "Spot"},
+          %{"activate" => true, "balance" => "0", "walletName" => "Funding"},
+          %{"activate" => true, "balance" => "0", "walletName" => "Cross Margin"},
+          %{"activate" => true, "balance" => "0", "walletName" => "Isolated Margin"},
+          %{"activate" => false, "balance" => "0", "walletName" => "USDⓈ-M Futures"},
+          %{"activate" => false, "balance" => "0", "walletName" => "COIN-M Futures"},
+          %{"activate" => true, "balance" => "0", "walletName" => "Earn"},
+          %{"activate" => false, "balance" => "0", "walletName" => "Options"},
+          %{"activate" => false, "balance" => "0", "walletName" => "Trading Bots"},
+          %{"activate" => true, "balance" => "0", "walletName" => "Copy Trading"},
+          %{"activate" => true, "balance" => "0", "walletName" => "Loan"}
+        ]}
+  """
+  def get_wallet(%PlatformCredentials{api_key: api_key, api_secret: api_secret}) do
+    headers = [{"X-MBX-APIKEY", api_key}]
+
+    signed_params =
+      sign_params(%{timestamp: :os.system_time(:millisecond), api_secret: api_secret})
+
+    Req.get!("#{@base_url}/sapi/v1/asset/wallet/balance",
+      params: signed_params,
+      headers: headers
+    )
+    |> case do
+      %{status: 200, body: body} -> {:ok, body}
+      %{status: status, body: body} -> {:error, %{status: status, body: body}}
+    end
+  end
+
+  @doc """
   Fetches ticker information for a specific symbol.
 
   ## Examples
