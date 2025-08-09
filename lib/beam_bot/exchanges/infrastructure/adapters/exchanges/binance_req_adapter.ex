@@ -71,15 +71,18 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   ## Examples
 
       iex> {:ok, platform_credentials} = BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEcto.get_by_user_id_and_exchange_id(1, 1)
-      iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.get_transactions(platform_credentials)
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.get_transactions(platform_credentials, %{start_time: DateTime.utc_now() |> DateTime.add(-120, :day), end_time: DateTime.utc_now() |> DateTime.add(-90, :day)})
   """
-  def get_transactions(%PlatformCredentials{api_key: api_key, api_secret: api_secret}) do
+  def get_transactions(%PlatformCredentials{api_key: api_key, api_secret: api_secret}, %{
+        start_time: start_time,
+        end_time: end_time
+      }) do
     now = :os.system_time(:millisecond)
 
     params = [
       timestamp: now,
-      startTime: now - 7 * 24 * 60 * 60 * 1000,
-      endTime: now,
+      startTime: start_time |> DateTime.to_unix(:millisecond),
+      endTime: end_time |> DateTime.to_unix(:millisecond),
       recvWindow: 5000,
       api_secret: api_secret
     ]
