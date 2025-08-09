@@ -71,6 +71,29 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
   ## Examples
 
       iex> {:ok, platform_credentials} = BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEcto.get_by_user_id_and_exchange_id(1, 1)
+      iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.get_transactions(platform_credentials)
+  """
+  def get_transactions(%PlatformCredentials{api_key: api_key, api_secret: api_secret}) do
+    now = :os.system_time(:millisecond)
+
+    params = [
+      timestamp: now,
+      startTime: now - 7 * 24 * 60 * 60 * 1000,
+      endTime: now,
+      recvWindow: 5000,
+      api_secret: api_secret
+    ]
+
+    signed_params = sign_params(params)
+
+    request("/sapi/v1/pay/transactions", signed_params, %{api_key: api_key, weight: 1})
+  end
+
+  @doc """
+  Fetches the wallet balance for a specific wallet type.
+  ## Examples
+
+      iex> {:ok, platform_credentials} = BeamBot.Exchanges.Infrastructure.Adapters.Ecto.PlatformCredentialsRepositoryEcto.get_by_user_id_and_exchange_id(1, 1)
       iex> BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter.get_wallet(platform_credentials)
       {:ok,
         [
@@ -400,22 +423,27 @@ defmodule BeamBot.Exchanges.Infrastructure.Adapters.Exchanges.BinanceReqAdapter 
     end
   end
 
-  defp sign_params(params) do
-    # Remove api_secret from params before generating query string
-    params_without_secret = Map.delete(params, :api_secret)
+  defp sign_params(params) when is_list(params) do
+    {api_secret, params_wo} = Keyword.pop(params, :api_secret)
 
-    # Sort parameters alphabetically and generate query string
-    query_string =
-      params_without_secret
-      |> Enum.sort_by(fn {key, _} -> key end)
-      |> Enum.map_join("&", fn {key, value} -> "#{key}=#{value}" end)
+    # Build query string preserving order & proper encoding per Binance expectations
+    query_string = URI.encode_query(params_wo)
 
-    # Generate signature using the query string
     signature =
-      :crypto.mac(:hmac, :sha256, params.api_secret, query_string) |> Base.encode16(case: :lower)
+      :crypto.mac(:hmac, :sha256, api_secret, query_string) |> Base.encode16(case: :lower)
 
-    # Add signature to params and remove api_secret
-    params_without_secret
-    |> Map.put(:signature, signature)
+    params_wo ++ [signature: signature]
+  end
+
+  defp sign_params(params) when is_map(params) do
+    # Fallback for existing map usage (order not guaranteed). Prefer passing a keyword list.
+    api_secret = Map.fetch!(params, :api_secret)
+    params_wo = Map.delete(params, :api_secret)
+    query_string = URI.encode_query(params_wo)
+
+    signature =
+      :crypto.mac(:hmac, :sha256, api_secret, query_string) |> Base.encode16(case: :lower)
+
+    Map.put(params_wo, :signature, signature)
   end
 end
